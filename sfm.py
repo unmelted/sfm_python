@@ -1,6 +1,7 @@
 import os
-from util import *
 import open3d as o3d
+import logging
+from util import *
 from pair import CameraPair
 
 
@@ -54,7 +55,7 @@ class SFM:
         if is_baseline and view2:
 
             match_object = self.matches[(view1.name, view2.name)]
-            baseline_pose = Baseline(view1, view2, match_object)
+            baseline_pose = CameraPair(view1, view2, match_object)
             view2.R, view2.t = baseline_pose.get_pose(self.K)
             print("baseline -- R : ", view2.R)
             print("baseline -- T : ", view2.t)

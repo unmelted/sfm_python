@@ -1,7 +1,16 @@
+import os
+from re import I
+import sys
+import glob
 import numpy as np
+import logging
 import camera
+from view import *
 
 class Group(object):
+
+    def __init__ (self):
+        print("Group Init")
 
     def create_group(root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -18,7 +27,9 @@ class Group(object):
         logging.info("Computing features")
         print(image_names)
         views = []
+       
         for image_name in image_names:
+            print(image_name, root_path)
             views.append(View(image_name, root_path, feature_path=feature_path))
 
         return views

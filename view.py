@@ -7,11 +7,11 @@ import glob
 import logging
 
 
-class View:
+class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, feature_path, feature_type='sift'):
-
+        print("View init")
         self.name = image_path[image_path.rfind('/') + 1:-4]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
@@ -56,8 +56,8 @@ class View:
             descriptors = []
 
             for point in features:
-                keypoint = cv2.KeyPoint(x=point[0][0], y=point[0][1], _size=point[1], _angle=point[2],
-                                        _response=point[3], _octave=point[4], _class_id=point[5])
+                keypoint = cv2.KeyPoint(x=point[0][0], y=point[0][1], size=point[1], angle=point[2],
+                                        response=point[3], octave=point[4], class_id=point[5])
                 descriptor = point[6]
                 keypoints.append(keypoint)
                 descriptors.append(descriptor)

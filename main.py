@@ -10,7 +10,7 @@ import argparse
 def run(args):
 
     logging.basicConfig(level=logging.INFO)
-    group = Group.create_group(args.root_dir, args.image_format)
+    group = Group.create_group(args.root_dir, 'jpg')
     matches = create_matches(group)
     K = np.loadtxt(os.path.join(args.root_dir, 'images', 'K.txt'))
     sfm = SFM(group, matches, K)
