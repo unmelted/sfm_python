@@ -83,19 +83,18 @@ class Match:
             self.get_matches(self.view1, self.view2)
 
 
-def create_matches(views):
+def create_matches(cameras):
     """Computes matches between every possible pair of views and stores in a dictionary"""
 
     match_path = False
 
-    root_path = views[0].root_path
+    root_path = cameras[0].view.root_path
 
     if os.path.exists(os.path.join(root_path, 'matches')):
         match_path = True
 
     matches = {}
-    for i in range(0, len(views) - 1):
-        for j in range(i+1, len(views)):
-            matches[(views[i].name, views[j].name)] = Match(views[i], views[j], match_path)
+    for j in range(1, len(cameras)):
+        matches[(cameras[j].view.name, cameras[j-1].views.name)] = Match(cameras[j].view, cameras.view[j -1], match_path)
 
     return matches

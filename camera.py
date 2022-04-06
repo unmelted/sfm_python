@@ -1,12 +1,22 @@
 import numpy as np
 import util
-import view
+from view import *
 
 
 class Camera(object):
     """ Class for representing pin-hole camera """
 
-    def __init__(self, P=None, K=None, R=None, t=None):
+    def __init__(self, image_name, root_path, feature_path):
+        self.id = None
+        self.index = None
+        self.P = None     # camera matrix
+        self.K = None     # intrinsic matrix
+        self.R = None     # rotation
+        self.t = None     # translation
+        self.c = None  # camera center
+        self.view = View(image_name, root_path, feature_path=feature_path)        
+
+    def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)
          Must either supply P or K, R, t """
         if P is None:
@@ -16,12 +26,6 @@ class Camera(object):
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
-        self.P = P     # camera matrix
-        self.K = K     # intrinsic matrix
-        self.R = R     # rotation
-        self.t = t     # translation
-        self.c = None  # camera center
-        self.view = None        
 
     def project(self, X):
         """ Project 3D homogenous points X (4 * n) and normalize coordinates.

@@ -2,6 +2,7 @@ from cam_group import *
 import numpy as np
 import logging
 import argparse
+import visualize
 
 
 def run(args):
@@ -12,6 +13,7 @@ def run(args):
     preset1.create_group(args.root_dir, 'jpg')
     preset1.run_sfm()
 
+    plot_cameragroup(preset1)
 
 def set_args(parser):
 

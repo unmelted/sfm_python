@@ -4,15 +4,20 @@ import sys
 import glob
 import numpy as np
 import logging
-import camera
+
+from camera import *
 from match import *
 from view import *
 from sfm import *
+from visualize import *
+
+
 
 class Group(object):
 
     def __init__ (self):
         print("Group Init")
+        self.cameras= []
         self.views = []
         self.matches = None
         self.sfm = None
@@ -35,7 +40,8 @@ class Group(object):
         print(image_names)
       
         for image_name in image_names:
-            self.views.append(View(image_name, root_path, feature_path=feature_path))
+            self.cameras.append(Camera(image_name, root_path, feature_path=feature_path))
+#            self.views.append(View(image_name, root_path, feature_path=feature_path))
 
         self.matches = create_matches(self.views)
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
@@ -45,4 +51,5 @@ class Group(object):
         self.sfm.reconstruct()
 
     def visualize_group(self) :
+
         pass
