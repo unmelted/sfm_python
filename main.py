@@ -1,7 +1,4 @@
 from cam_group import *
-from view import *
-from match import *
-from sfm import *
 import numpy as np
 import logging
 import argparse
@@ -10,11 +7,10 @@ import argparse
 def run(args):
 
     logging.basicConfig(level=logging.INFO)
-    group = Group.create_group(args.root_dir, 'jpg')
-    matches = create_matches(group)
-    K = np.loadtxt(os.path.join(args.root_dir, 'images', 'K.txt'))
-    sfm = SFM(group, matches, K)
-    sfm.reconstruct()
+
+    preset1 = Group()
+    preset1.create_group(args.root_dir, 'jpg')
+    preset1.run_sfm()
 
 
 def set_args(parser):
