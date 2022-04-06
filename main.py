@@ -1,3 +1,4 @@
+from cam_group import *
 from view import *
 from match import *
 from sfm import *
@@ -9,10 +10,10 @@ import argparse
 def run(args):
 
     logging.basicConfig(level=logging.INFO)
-    views = create_views(args.root_dir, args.image_format)
-    matches = create_matches(views)
+    group = Group.create_group(args.root_dir, args.image_format)
+    matches = create_matches(group)
     K = np.loadtxt(os.path.join(args.root_dir, 'images', 'K.txt'))
-    sfm = SFM(views, matches, K)
+    sfm = SFM(group, matches, K)
     sfm.reconstruct()
 
 
