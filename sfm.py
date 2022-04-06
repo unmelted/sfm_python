@@ -2,37 +2,30 @@ import os
 import open3d as o3d
 import logging
 from util import *
-from pair import CameraPair
+from pair import *
 
 
 class SFM:
     """Represents the main reconstruction loop"""
 
-    def __init__(self, views, matches, K):
+    def __init__(self, view1, view2, K1, K2, match):
+        self.view1 = view1
+        self.view2 = view2
+        self.match_object = match
+        self.K1 = K1  # intrinsic matrix
+        self.K2 = K2  # intrinsic matrix
 
-        self.views = views  # list of views
-        self.matches = matches  # dictionary of matches
-        self.names = []  # image names
         self.done = []  # list of views that have been reconstructed
-        self.K = K  # intrinsic matrix
         self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
         self.point_counter = 0  # keeps track of the reconstructed points
         self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
-        self.errors = []  # list of mean reprojection errors taken at the end of every new view being added
+        self.errors = None  # list of mean reprojection errors taken at the end of every new view being added
 
-        for view in self.views:
-            self.names.append(view.name)
-
-        if not os.path.exists(self.views[0].root_path + '/points'):
-            os.makedirs(self.views[0].root_path + '/points')
+        if not os.path.exists(self.view1.root_path + '/points'):
+            os.makedirs(self.views1.root_path + '/points')
 
         # store results in a root_path/points
-        self.results_path = os.path.join(self.views[0].root_path, 'points')
-
-    def get_index_of_view(self, view):
-        """Extracts the position of a view in the list of views"""
-
-        return self.names.index(view.name)
+        self.results_path = os.path.join(self.view1.root_path, 'points')
 
     def remove_mapped_points(self, match_object, image_idx):
         """Removes points that have already been reconstructed in the completed views"""
@@ -48,15 +41,13 @@ class SFM:
         match_object.inliers1 = inliers1
         match_object.inliers2 = inliers2
 
-    def compute_pose(self, view1, view2=None, is_baseline=False):
+    def compute_pose(self, view1, view2, is_baseline=False):
         """Computes the pose of the new view"""
 
         # procedure for baseline pose estimation
         if is_baseline and view2:
 
-            match_object = self.matches[(view1.name, view2.name)]
-            baseline_pose = CameraPair(view1, view2, match_object)
-            view2.R, view2.t = baseline_pose.get_pose(self.K)
+            view2.R, view2.t = self.get_pose(self.K2)
             print("baseline -- R : ", view2.R)
             print("baseline -- T : ", view2.t)
 
@@ -166,6 +157,94 @@ class SFM:
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
         R, _ = cv2.Rodrigues(R)
         return R, t
+
+    def get_pose(self, K):
+        """Computes and returns the rotation and translation components for the second view"""
+
+        F = remove_outliers_using_F(self.view1, self.view2, self.match_object)
+        E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
+        logging.info("Computed essential matrix")
+        logging.info("Choosing correct pose out of 4 solutions")
+
+        print("get_pose.. F: ", F)
+        print("get_pose.. normal E: ", E)        
+        print('Computed essential matrix:', (-E / E[0][1]))
+
+        return self.check_pose(E, K)
+
+    def check_pose(self, E, K):
+        """Retrieves the rotation and translation components from the essential matrix by decomposing it and verifying the validity of the 4 possible solutions"""
+
+        R1, R2, t1, t2 = get_camera_from_E(E)  # decompose E
+        if not check_determinant(R1):
+            R1, R2, t1, t2 = get_camera_from_E(-E)  # change sign of E if R1 fails the determinant test
+
+        # solution 1
+        reprojection_error, points_3D = self.triangulate(K, R1, t1)
+        # check if reprojection is not faulty and if the points are correctly triangulated in the front of the camera
+        if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R1, t1))):
+
+            # solution 2
+            reprojection_error, points_3D = self.triangulate(K, R1, t2)
+            if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R1, t2))):
+
+                # solution 3
+                reprojection_error, points_3D = self.triangulate(K, R2, t1)
+                if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R2, t1))):
+
+                    # solution 4
+                    return R2, t2
+
+                else:
+                    return R2, t1
+
+            else:
+                return R1, t2
+
+        else:
+            return R1, t1
+
+    def triangulate(self, K, R, t):
+        """Triangulate points between the baseline views and calculates the mean reprojection error of the triangulation"""
+
+        K_inv = np.linalg.inv(K)
+        P1 = np.hstack((self.view1.R, self.view1.t))
+        P2 = np.hstack((R, t))
+
+        # only reconstructs the inlier points filtered using the fundamental matrix
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.view1.keypoints,
+                                                                  keypoints2=self.view2.keypoints,
+                                                                  index_list1=self.match_object.inliers1,
+                                                                  index_list2=self.match_object.inliers2)
+
+        # convert 2D pixel points to homogeneous coordinates
+        pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
+        pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
+
+        reprojection_error = []
+
+        points_3D = np.zeros((0, 3))  # stores the triangulated points
+
+        for i in range(len(pixel_points1)):
+            u1 = pixel_points1[i, :]
+            u2 = pixel_points2[i, :]
+
+            # convert homogeneous 2D points to normalized device coordinates
+            u1_normalized = K_inv.dot(u1)
+            u2_normalized = K_inv.dot(u2)
+
+            # calculate 3D point
+            point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
+
+            # calculate reprojection error
+            error = calculate_reprojection_error(point_3D, u2[0:2], K, R, t)
+            reprojection_error.append(error)
+
+            # append point
+            points_3D = np.concatenate((points_3D, point_3D.T), axis=0)
+
+        return np.mean(reprojection_error), points_3D
+
 
     def plot_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""

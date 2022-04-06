@@ -18,8 +18,8 @@ class View(object):
         self.descriptors = []  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
-        self.R = np.zeros((3, 3), dtype=float)  # rotation matrix for the view
-        self.t = np.zeros((3, 1), dtype=float)  # translation vector for the view
+        # self.R = np.zeros((3, 3), dtype=float)  # rotation matrix for the view
+        # self.t = np.zeros((3, 1), dtype=float)  # translation vector for the view
 
         if not feature_path:
             self.extract_features()
