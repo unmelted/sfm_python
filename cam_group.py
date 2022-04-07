@@ -35,12 +35,12 @@ class Group(object):
 
         logging.info("Computing features")
         print(image_names)
-      
+        self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
+
         for image_name in image_names:
-            self.cameras.append(Camera(image_name, root_path, feature_path=feature_path))
+            self.cameras.append(Camera(image_name, root_path, self.K, feature_path=feature_path))
 
         self.pairs = Pair.create_pair(self.cameras)
-        self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
         print(self.pairs)
 
     def run_sfm(self) :
@@ -48,7 +48,7 @@ class Group(object):
         for pair in self.pairs :
             pair_obj = self.pairs[pair]
             pair_obj.run_sfm(baseline)
-            
+
             if baseline == True:
                 baseline = False
 

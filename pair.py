@@ -16,12 +16,10 @@ class Pair:
         self.image_name1 = camera1.view.name  # name of the first view
         self.image_name2 = camera2.view.name  # name of the second view
         self.root_path = camera1.view.root_path  # root directory containing the image folder
-        self.inliers1 = []  # list to store the indices of the keypoints from the first view not removed using the fundamental matrix
-        self.inliers2 = []  # list to store the indices of the keypoints from the second view not removed using the fundamental matrix
-        self.view1 = camera1.view
-        self.view2 = camera2.view
-        self.K1 = camera1.K
-        self.K2 = camera2.K
+        self.inliers1 = None  # list to store the indices of the keypoints from the first view not removed using the fundamental matrix
+        self.inliers2 = None  # list to store the indices of the keypoints from the second view not removed using the fundamental matrix
+        self.camera1 = camera1
+        self.camera2 = camera2
         self.match = None
 
         self.sfm = None
@@ -32,10 +30,11 @@ class Pair:
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
         if not match_path:
-            self.get_matches(camera1.view, camera1.view)
+            self.get_matches(self.camera1.view, self.camera1.view)
         else:
             self.read_matches()
-        self.sfm = SFM(self.view1, self.view2, self.K1, self.K2, self.match)
+
+        self.sfm = SFM(self)
         
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
@@ -101,13 +100,13 @@ class Pair:
         pairs = {}
 
         for j in range(1, len(cameras)):
-            key = (cameras[j].view.name, cameras[j-1].view.name)
-            pairs[key] = Pair(cameras[j], cameras[j-1], match_path)
+            key = (cameras[j-1].view.name, cameras[j].view.name)
+            pairs[key] = Pair(cameras[j-1], cameras[j], match_path)
             print("pair name : ", key, pairs[key])
 
         return pairs
 
     def run_sfm(self, baseline = False) :
         print("called run_sfm ")
-        self.sfm.compute_pose(self.view1, self.view2, baseline)
+        self.sfm.compute_pose(baseline)
         

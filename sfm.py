@@ -8,88 +8,81 @@ from pair import *
 class SFM:
     """Represents the main reconstruction loop"""
 
-    def __init__(self, view1, view2, K1, K2, match):
-        self.view1 = view1
-        self.view2 = view2
-        self.match_object = match
-        self.K1 = K1  # intrinsic matrix
-        self.K2 = K2  # intrinsic matrix
+    #def __init__(self, view1, view2, indices1, indices2, K1, K2):
+    def __init__(self, pairobj):    
+        self.pair = pairobj
 
-        self.done = []  # list of views that have been reconstructed
+        self.done = None 
         self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
         self.point_counter = 0  # keeps track of the reconstructed points
         self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
-        self.errors = None  # list of mean reprojection errors taken at the end of every new view being added
+        self.errors = None  #  mean reprojection errors taken at the end of every new view being added
 
-        if not os.path.exists(self.view1.root_path + '/points'):
-            os.makedirs(self.views1.root_path + '/points')
+        if not os.path.exists(self.pair.camera1.view.root_path + '/points'):
+            os.makedirs(self.pair.camera1.view.root_path + '/points')
 
         # store results in a root_path/points
-        self.results_path = os.path.join(self.view1.root_path, 'points')
+        self.results_path = os.path.join(self.pair.camera1.view.root_path, 'points')
 
-    def remove_mapped_points(self, match_object, image_idx):
+    def remove_mapped_points(self):
         """Removes points that have already been reconstructed in the completed views"""
 
         inliers1 = []
         inliers2 = []
 
-        for i in range(len(match_object.inliers1)):
-            if (image_idx, match_object.inliers1[i]) not in self.point_map:
-                inliers1.append(match_object.inliers1[i])
-                inliers2.append(match_object.inliers2[i])
+        for i in range(len(self.pair.inliers1)):
+            if (self.pair.match.inliers1[i]) not in self.point_map:            
+                inliers1.append(self.pair.inliers1[i])
+                inliers2.append(self.pair.inliers2[i])
 
-        match_object.inliers1 = inliers1
-        match_object.inliers2 = inliers2
+        self.pair.inliers1.clear()
+        self.pair.inliers2.clear()        
+        self.pair.inliers1 = inliers1
+        self.pair.inliers2 = inliers2
 
-    def compute_pose(self, view1, view2, is_baseline=False):
+    def compute_pose(self, is_baseline=False):
         """Computes the pose of the new view"""
 
         # procedure for baseline pose estimation
-        if is_baseline and view2:
+        if is_baseline and self.pair.camera2.view:
+            print("Base line true .. Compute pose ")
+            self.pair.camera2.R, self.pair.camera2.t = self.get_pose()
+            print("baseline -- R : ", self.pair.camera2.R)
+            print("baseline -- T : ", self.pair.camera2.t)
 
-            view2.R, view2.t = self.get_pose(self.K2)
-            print("baseline -- R : ", view2.R)
-            print("baseline -- T : ", view2.t)
+            rpe1, rpe2 = self.triangulate_with()
+            self.errors = (np.mean(rpe1))
+            self.errors = (np.mean(rpe2))
 
-            rpe1, rpe2 = self.triangulate(view1, view2)
-            self.errors.append(np.mean(rpe1))
-            self.errors.append(np.mean(rpe2))
-
-            self.done.append(view1)
-            self.done.append(view2)
+            self.done = True
 
         # procedure for estimating the pose of all other views
         else:
-
-            view1.R, view1.t = self.compute_pose_PNP(view1)
-            print("view -- R ", view1.R)
-            print("view -- T ", view1.t)
-            errors = []
+            print("Base line false .. Compute pose PNP ")
+            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(self.pair.camera1.view)
+            print("view -- R ", self.pair.camera2.view.R)
+            print("view -- T ", self.pair.camera2.view.t)
 
             # reconstruct unreconstructed points from all of the previous views
-            for i, old_view in enumerate(self.done):
+            _ = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.match)
+            self.remove_mapped_points()
+            _, rpe = self.triangulate_with()
+            errors += rpe
 
-                match_object = self.matches[(old_view.name, view1.name)]
-                _ = remove_outliers_using_F(old_view, view1, match_object)
-                self.remove_mapped_points(match_object, i)
-                _, rpe = self.triangulate(old_view, view1)
-                errors += rpe
+            self.done = True
+            self.errors = np.mean(errors)
 
-            self.done.append(view1)
-            self.errors.append(np.mean(errors))
-
-    def triangulate(self, view1, view2):
+    def triangulate_with(self):
         """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
 
-        K_inv = np.linalg.inv(self.K)
-        P1 = np.hstack((view1.R, view1.t))
-        P2 = np.hstack((view2.R, view2.t))
+        K_inv = np.linalg.inv(self.pair.camera2.K)
+        P1 = np.hstack((self.pair.camera1.R, self.pair.camera1.t))
+        P2 = np.hstack((self.pair.camera2.R, self.pair.camera2.t))
 
-        match_object = self.matches[(view1.name, view2.name)]
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=view1.keypoints,
-                                                                  keypoints2=view2.keypoints,
-                                                                  index_list1=match_object.inliers1,
-                                                                  index_list2=match_object.inliers2)
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
+                                                                  keypoints2=self.pair.camera2.view.keypoints,
+                                                                  index_list1=self.pair.inliers1,
+                                                                  index_list2=self.pair.inliers2)
         pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
@@ -106,15 +99,15 @@ class SFM:
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
-            error1 = calculate_reprojection_error(point_3D, u1[0:2], self.K, view1.R, view1.t)
+            error1 = calculate_reprojection_error(point_3D, u1[0:2], self.pair.camera1.K, self.pair.camera1.R, self.pair.camera1.t)
             reprojection_error1.append(error1)
-            error2 = calculate_reprojection_error(point_3D, u2[0:2], self.K, view2.R, view2.t)
+            error2 = calculate_reprojection_error(point_3D, u2[0:2], self.pair.camera2.K, self.pair.camera2.R, self.pair.camera2.t)
             reprojection_error2.append(error2)
 
             # updates point_map with the key (index of view, index of point in the view) and value point_counter
             # multiple keys can have the same value because a 3D point is reconstructed using 2 points
-            self.point_map[(self.get_index_of_view(view1), match_object.inliers1[i])] = self.point_counter
-            self.point_map[(self.get_index_of_view(view2), match_object.inliers2[i])] = self.point_counter
+            self.point_map[self.pair.inliers1[i]] = self.point_counter
+            self.point_map[self.pair.inliers2[i]] = self.point_counter
             self.point_counter += 1
 
         return reprojection_error1, reprojection_error2
@@ -158,10 +151,12 @@ class SFM:
         R, _ = cv2.Rodrigues(R)
         return R, t
 
-    def get_pose(self, K):
+    def get_pose(self):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F = remove_outliers_using_F(self.view1, self.view2, self.match_object)
+        F , self.pair.inliers1, self.pair.inliers2 = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
+
+        K = self.pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
         logging.info("Computed essential matrix")
         logging.info("Choosing correct pose out of 4 solutions")
@@ -170,14 +165,16 @@ class SFM:
         print("get_pose.. normal E: ", E)        
         print('Computed essential matrix:', (-E / E[0][1]))
 
-        return self.check_pose(E, K)
+        return self.check_pose(E)
 
-    def check_pose(self, E, K):
+    def check_pose(self, E):
         """Retrieves the rotation and translation components from the essential matrix by decomposing it and verifying the validity of the 4 possible solutions"""
-
+        K = self.pair.camera2.K
         R1, R2, t1, t2 = get_camera_from_E(E)  # decompose E
+
         if not check_determinant(R1):
             R1, R2, t1, t2 = get_camera_from_E(-E)  # change sign of E if R1 fails the determinant test
+
 
         # solution 1
         reprojection_error, points_3D = self.triangulate(K, R1, t1)
@@ -206,16 +203,15 @@ class SFM:
 
     def triangulate(self, K, R, t):
         """Triangulate points between the baseline views and calculates the mean reprojection error of the triangulation"""
-
         K_inv = np.linalg.inv(K)
-        P1 = np.hstack((self.view1.R, self.view1.t))
+        P1 = np.hstack((self.pair.camera1.R, self.pair.camera1.t))
         P2 = np.hstack((R, t))
 
         # only reconstructs the inlier points filtered using the fundamental matrix
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.view1.keypoints,
-                                                                  keypoints2=self.view2.keypoints,
-                                                                  index_list1=self.match_object.inliers1,
-                                                                  index_list2=self.match_object.inliers2)
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
+                                                                  keypoints2=self.pair.camera2.view.keypoints,
+                                                                  index_list1=self.pair.inliers1,
+                                                                  index_list2=self.pair.inliers2)
 
         # convert 2D pixel points to homogeneous coordinates
         pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
@@ -254,23 +250,3 @@ class SFM:
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(self.points_3D)
         o3d.io.write_point_cloud(filename, pcd)
-
-    def reconstruct(self):
-        """Starts the main reconstruction loop for a given set of views and matches"""
-
-        # compute baseline pose
-        baseline_view1, baseline_view2 = self.views[0], self.views[1]
-        logging.info("Computing baseline pose and reconstructing points")
-        self.compute_pose(view1=baseline_view1, view2=baseline_view2, is_baseline=True)
-        logging.info("Mean reprojection error for 1 image is %f", self.errors[0])
-        logging.info("Mean reprojection error for 2 images is %f", self.errors[1])
-        self.plot_points()
-        logging.info("Points plotted for %d views", len(self.done))
-
-        for i in range(2, len(self.views)):
-
-            logging.info("Computing pose and reconstructing points for view %d", i+1)
-            self.compute_pose(view1=self.views[i])
-            logging.info("Mean reprojection error for %d images is %f", i+1, self.errors[i])
-            self.plot_points()
-            logging.info("Points plotted for %d views", i+1)
