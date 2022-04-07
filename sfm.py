@@ -106,8 +106,8 @@ class SFM:
 
             # updates point_map with the key (index of view, index of point in the view) and value point_counter
             # multiple keys can have the same value because a 3D point is reconstructed using 2 points
-            self.point_map[self.pair.inliers1[i]] = self.point_counter
-            self.point_map[self.pair.inliers2[i]] = self.point_counter
+            self.point_map[self.pair.camera1.view.name, self.pair.inliers1[i]] = self.point_counter
+            self.point_map[self.pair.camera2.view.name, self.pair.inliers2[i]] = self.point_counter
             self.point_counter += 1
 
         return reprojection_error1, reprojection_error2

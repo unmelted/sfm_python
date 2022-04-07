@@ -17,6 +17,7 @@ class Group(object):
         print("Group Init")
         self.cameras = []
         self.views = []
+        self.point_map = []
         self.pairs = None
         self.K = None
 
@@ -47,6 +48,8 @@ class Group(object):
         baseline = True
         for pair in self.pairs :
             pair_obj = self.pairs[pair]
+            print(" pair  ", pair)
+            print("pair_obj " , pair_obj)
             pair_obj.run_sfm(baseline)
 
             if baseline == True:
