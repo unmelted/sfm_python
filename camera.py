@@ -6,13 +6,13 @@ from view import *
 class Camera(object):
     """ Class for representing pin-hole camera """
 
-    def __init__(self, image_name, root_path, feature_path):
+    def __init__(self, image_name, root_path, K, feature_path):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
-        self.K = None     # intrinsic matrix
-        self.R = None     # rotation
-        self.t = None     # translation
+        self.K = K        # intrinsic matrix
+        self.R = np.zeros((3,3), dtype=float)     # rotation
+        self.t = np.zeros((3,1), dtype=float)     # translation
         self.c = None  # camera center
         self.view = View(image_name, root_path, feature_path=feature_path)        
 

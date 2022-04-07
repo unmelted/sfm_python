@@ -96,21 +96,22 @@ def get_3D_point(u1, P1, u2, P2):
     return X[1]
 
 
-def remove_outliers_using_F(view1, view2, match_object):
+def remove_outliers_using_F(view1, view2, indices1, indices2):
     """Removes outlier keypoints using the fundamental matrix"""
 
     pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=view1.keypoints,
                                                               keypoints2=view2.keypoints,
-                                                              index_list1=match_object.indices1,
-                                                              index_list2=match_object.indices2)
+                                                              index_list1=indices1,
+                                                              index_list2=indices2)
     F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
                                      ransacReprojThreshold=0.9, confidence=0.99)
     print("FindFundamental : ", F)
     mask = mask.astype(bool).flatten()
-    match_object.inliers1 = np.array(match_object.indices1)[mask]
-    match_object.inliers2 = np.array(match_object.indices2)[mask]
-
-    return F
+    inliers1 = np.array(indices1)[mask]
+    inliers2 = np.array(indices2)[mask]
+    # print("--- remove_outliers_using F indices1 : ", indices1)
+    print("--- remove_outliers_using F inliers1 : ", inliers1)
+    return F, inliers1, inliers2
 
 
 def calculate_reprojection_error(point_3D, point_2D, K, R, t):

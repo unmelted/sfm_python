@@ -6,21 +6,19 @@ import numpy as np
 import logging
 
 from camera import *
-from match import *
+from pair import *
 from view import *
-from sfm import *
 from visualize import *
-
 
 
 class Group(object):
 
     def __init__ (self):
         print("Group Init")
-        self.cameras= []
+        self.cameras = []
         self.views = []
-        self.matches = None
-        self.sfm = None
+        self.point_map = []
+        self.pairs = None
         self.K = None
 
     def create_group(self, root_path, image_format='jpg'):
@@ -38,18 +36,24 @@ class Group(object):
 
         logging.info("Computing features")
         print(image_names)
-      
-        for image_name in image_names:
-            self.cameras.append(Camera(image_name, root_path, feature_path=feature_path))
-#            self.views.append(View(image_name, root_path, feature_path=feature_path))
-
-        self.matches = create_matches(self.views)
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
-        self.sfm = SFM(self.views, self.matches, self.K)
+
+        for image_name in image_names:
+            self.cameras.append(Camera(image_name, root_path, self.K, feature_path=feature_path))
+
+        self.pairs = Pair.create_pair(self.cameras)
+        print(self.pairs)
 
     def run_sfm(self) :
-        self.sfm.reconstruct()
+        baseline = True
+        for pair in self.pairs :
+            pair_obj = self.pairs[pair]
+            print(" pair  ", pair)
+            print("pair_obj " , pair_obj)
+            pair_obj.run_sfm(baseline)
+
+            if baseline == True:
+                baseline = False
 
     def visualize_group(self) :
-
-        pass
+        print("visualize camera in group")
