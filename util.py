@@ -109,8 +109,6 @@ def remove_outliers_using_F(view1, view2, indices1, indices2):
     mask = mask.astype(bool).flatten()
     inliers1 = np.array(indices1)[mask]
     inliers2 = np.array(indices2)[mask]
-    # print("--- remove_outliers_using F indices1 : ", indices1)
-    print("--- remove_outliers_using F inliers1 : ", inliers1)
     return F, inliers1, inliers2
 
 

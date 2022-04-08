@@ -17,7 +17,7 @@ class Group(object):
         print("Group Init")
         self.cameras = []
         self.views = []
-        self.point_map = []
+        self.point_map = {} # key : view name, value : match inliers
         self.pairs = None
         self.K = None
 
@@ -52,8 +52,8 @@ class Group(object):
             print("pair_obj " , pair_obj)
             pair_obj.run_sfm(baseline)
 
-            if baseline == True:
-                baseline = False
+            # if baseline == True:
+            #     baseline = False
 
     def visualize_group(self) :
         print("visualize camera in group")

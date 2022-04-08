@@ -11,15 +11,12 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, feature_path, feature_type='sift'):
-        print("View init")
         self.name = image_path[image_path.rfind('/') + 1:-4]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = []  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
-        # self.R = np.zeros((3, 3), dtype=float)  # rotation matrix for the view
-        # self.t = np.zeros((3, 1), dtype=float)  # translation vector for the view
 
         if not feature_path:
             self.extract_features()
