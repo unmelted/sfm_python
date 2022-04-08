@@ -50,7 +50,7 @@ class Group(object):
             pair_obj = self.pairs[pair]
             print(" pair  ", pair)
             print("pair_obj " , pair_obj)
-            pair_obj.run_sfm(baseline)
+            self.point_map = pair_obj.run_sfm(baseline, self.point_map)
 
             # if baseline == True:
             #     baseline = False

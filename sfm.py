@@ -40,7 +40,7 @@ class SFM:
         self.pair.inliers1 = inliers1
         self.pair.inliers2 = inliers2
 
-    def compute_pose(self, is_baseline=False):
+    def compute_pose(self, is_baseline=False, pointmap=None):
         """Computes the pose of the new view"""
 
         # procedure for baseline pose estimation
@@ -57,9 +57,9 @@ class SFM:
             self.done = True
 
         # procedure for estimating the pose of all other views
-        else:
+        elif (is_baseline == False and pointmap != None) :
             print("Base line false .. Compute pose PNP ")
-            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(self.pair.camera1.view)
+            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(self.pair.camera2.view, pointmap)
             print("view -- R ", self.pair.camera2.view.R)
             print("view -- T ", self.pair.camera2.view.t)
 
@@ -71,6 +71,9 @@ class SFM:
 
             self.done = True
             self.errors = np.mean(errors)
+
+        
+        return self.point_map
 
     def triangulate_with(self):
         """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
@@ -112,33 +115,19 @@ class SFM:
 
         return reprojection_error1, reprojection_error2
 
-    def compute_pose_PNP(self, view):
+    def compute_pose_PNP(self, point_map):
         """Computes pose of new view using perspective n-point"""
 
-        if view.feature_type in ['sift', 'surf']:
-            matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-        else:
-            matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-
-        # collects all the descriptors of the reconstructed views
-        old_descriptors = []
-        for old_view in self.done:
-            old_descriptors.append(old_view.descriptors)
-
-        # match old descriptors against the descriptors in the new view
-        matcher.add(old_descriptors)
-        matcher.train()
-        matches = matcher.match(queryDescriptors=view.descriptors)
         points_3D, points_2D = np.zeros((0, 3)), np.zeros((0, 2))
 
         # build corresponding array of 2D points and 3D points
-        for match in matches:
+        for match in self.pair.match:
             old_image_idx, new_image_kp_idx, old_image_kp_idx = match.imgIdx, match.queryIdx, match.trainIdx
 
-            if (old_image_idx, old_image_kp_idx) in self.point_map:
+            if (old_image_idx, old_image_kp_idx) in point_map:
 
                 # obtain the 2D point from match
-                point_2D = np.array(view.keypoints[new_image_kp_idx].pt).T.reshape((1, 2))
+                point_2D = np.array(self.pair.camera2.view.keypoints[new_image_kp_idx].pt).T.reshape((1, 2))
                 points_2D = np.concatenate((points_2D, point_2D), axis=0)
 
                 # obtain the 3D point from the point_map
