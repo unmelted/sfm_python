@@ -58,8 +58,7 @@ class SFM:
 
         # procedure for estimating the pose of all other views
         elif (is_baseline == False and pointmap != None) :
-            print("Base line false .. Compute pose PNP ")
-            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(self.pair.camera2.view, pointmap)
+            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(pointmap)
             print("view -- R ", self.pair.camera2.view.R)
             print("view -- T ", self.pair.camera2.view.t)
 
@@ -119,24 +118,33 @@ class SFM:
         """Computes pose of new view using perspective n-point"""
 
         points_3D, points_2D = np.zeros((0, 3)), np.zeros((0, 2))
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
+                                                              keypoints2=self.pair.camera2.view.keypoints,
+                                                              index_list1=self.pair.indices1,
+                                                              index_list2=self.pair.indices2)
 
         # build corresponding array of 2D points and 3D points
-        for match in self.pair.match:
-            old_image_idx, new_image_kp_idx, old_image_kp_idx = match.imgIdx, match.queryIdx, match.trainIdx
+        for i in range(len(pixel_points1)):
+            train_kp = pixel_points1[i]
+            query_kp = pixel_points2[i]            
+            train_idx = self.pair.indices1[i]
+            query_idx = self.pair.indices2[i]
 
-            if (old_image_idx, old_image_kp_idx) in point_map:
+            if (self.pair.camera1.view.name, train_idx) in point_map:
+                print(" PNP .. ", train_kp, query_kp, train_idx)
 
                 # obtain the 2D point from match
-                point_2D = np.array(self.pair.camera2.view.keypoints[new_image_kp_idx].pt).T.reshape((1, 2))
+                point_2D = np.array(query_kp).T.reshape((1, 2))
                 points_2D = np.concatenate((points_2D, point_2D), axis=0)
 
+                print("PNP .. ", point_map[(self.pair.camera1.view.name, train_idx)])
+                print("PNP .. ", self.points_3D[point_map[(self.pair.camera1.view.name, train_idx)], :])
                 # obtain the 3D point from the point_map
-                point_3D = self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3))
+                point_3D = self.points_3D[point_map[(self.pair.camera1.view.name, train_idx)], :].T.reshape((1, 3))
                 points_3D = np.concatenate((points_3D, point_3D), axis=0)
 
         # compute new pose using solvePnPRansac
-        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.K, None,
-                                        confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
+        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.pair.camera2.K, None, confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
         R, _ = cv2.Rodrigues(R)
         return R, t
 

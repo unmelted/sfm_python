@@ -29,11 +29,7 @@ class Pair:
         else:
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-        if not match_path:
-            self.get_matches(self.camera1.view, self.camera1.view)
-        else:
-            self.read_matches()
-
+        self.get_matches(self.camera1.view, self.camera2.view)
         self.sfm = SFM(self)
         
     def get_matches(self, view1, view2):
@@ -44,9 +40,10 @@ class Pair:
 
         # store match components in their respective lists
         for i in range(len(self.match)):
+            self.indices2.append(self.match[i].trainIdx)            
             self.indices1.append(self.match[i].queryIdx)
-            self.indices2.append(self.match[i].trainIdx)
             self.distances.append(self.match[i].distance)
+
 
         logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
         self.write_matches()
@@ -106,8 +103,8 @@ class Pair:
 
         return pairs
 
-    def run_sfm(self, baseline=False, point_map=False) :
+    def run_sfm(self, baseline=False, pointmap=None) :
         print("called run_sfm ")
-        pointmap = self.sfm.compute_pose(baseline, point_map)
-        return pointmap
+        point_map = self.sfm.compute_pose(baseline, pointmap)
+        return point_map
         

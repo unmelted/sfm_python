@@ -50,10 +50,12 @@ class Group(object):
             pair_obj = self.pairs[pair]
             print(" pair  ", pair)
             print("pair_obj " , pair_obj)
-            self.point_map = pair_obj.run_sfm(baseline, self.point_map)
+            if baseline == True:
+                self.point_map = pair_obj.run_sfm(baseline)
+                baseline = False
+            else :
+                self.point_map = pair_obj.run_sfm(baseline, self.point_map)
 
-            # if baseline == True:
-            #     baseline = False
 
     def visualize_group(self) :
         print("visualize camera in group")
