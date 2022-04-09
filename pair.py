@@ -103,8 +103,8 @@ class Pair:
 
         return pairs
 
-    def run_sfm(self, baseline=False, pointmap=None) :
+    def run_sfm(self, baseline, pointmap, point3D) :
         print("called run_sfm ")
-        point_map = self.sfm.compute_pose(baseline, pointmap)
+        point_map = self.sfm.compute_pose(baseline, pointmap, point3D)
         return point_map
         
