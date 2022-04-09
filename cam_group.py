@@ -17,7 +17,8 @@ class Group(object):
         print("Group Init")
         self.cameras = []
         self.views = []
-        self.point_map = []
+        self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
+        self.point_map = {} # key : view name, value : match inliers
         self.pairs = None
         self.K = None
 
@@ -50,10 +51,12 @@ class Group(object):
             pair_obj = self.pairs[pair]
             print(" pair  ", pair)
             print("pair_obj " , pair_obj)
-            pair_obj.run_sfm(baseline)
-
             if baseline == True:
+                self.point_map, self.points_3D = pair_obj.run_sfm(baseline, self.point_map, self.points_3D)
                 baseline = False
+            else :
+                self.point_map, self.point_3D = pair_obj.run_sfm(baseline, self.point_map, self.points_3D)
+
 
     def visualize_group(self) :
         print("visualize camera in group")

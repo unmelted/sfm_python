@@ -13,9 +13,8 @@ class SFM:
         self.pair = pairobj
 
         self.done = None 
-        self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
         self.point_counter = 0  # keeps track of the reconstructed points
-        self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
+        #self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
         self.errors = None  #  mean reprojection errors taken at the end of every new view being added
 
         if not os.path.exists(self.pair.camera1.view.root_path + '/points'):
@@ -24,14 +23,14 @@ class SFM:
         # store results in a root_path/points
         self.results_path = os.path.join(self.pair.camera1.view.root_path, 'points')
 
-    def remove_mapped_points(self):
+    def remove_mapped_points(self, pointmap):
         """Removes points that have already been reconstructed in the completed views"""
 
         inliers1 = []
         inliers2 = []
 
         for i in range(len(self.pair.inliers1)):
-            if (self.pair.match.inliers1[i]) not in self.point_map:            
+            if (self.pair.match.inliers1[i]) not in pointmap:            
                 inliers1.append(self.pair.inliers1[i])
                 inliers2.append(self.pair.inliers2[i])
 
@@ -40,7 +39,7 @@ class SFM:
         self.pair.inliers1 = inliers1
         self.pair.inliers2 = inliers2
 
-    def compute_pose(self, is_baseline=False):
+    def compute_pose(self, is_baseline, pointmap, point3D):
         """Computes the pose of the new view"""
 
         # procedure for baseline pose estimation
@@ -50,29 +49,31 @@ class SFM:
             print("baseline -- R : ", self.pair.camera2.R)
             print("baseline -- T : ", self.pair.camera2.t)
 
-            rpe1, rpe2 = self.triangulate_with()
+            rpe1, rpe2, pointmap, point3D = self.triangulate_with(pointmap, point3D)
             self.errors = (np.mean(rpe1))
             self.errors = (np.mean(rpe2))
 
             self.done = True
 
         # procedure for estimating the pose of all other views
-        else:
-            print("Base line false .. Compute pose PNP ")
-            self.pair.camera2.view.R, self.pair.camera2.view.t = self.compute_pose_PNP(self.pair.camera1.view)
+        elif (is_baseline == False and pointmap != None) :
+            self.pair.camera2.view.R, self.pair.camera2.view.t, pointmap, point3D = self.compute_pose_PNP(pointmap, point3D)
             print("view -- R ", self.pair.camera2.view.R)
             print("view -- T ", self.pair.camera2.view.t)
 
             # reconstruct unreconstructed points from all of the previous views
-            _ = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.match)
-            self.remove_mapped_points()
-            _, rpe = self.triangulate_with()
+            _ = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
+            self.remove_mapped_points(pointmap)
+            _, rpe = self.triangulate_with(pointmap, point3D)
             errors += rpe
 
             self.done = True
             self.errors = np.mean(errors)
 
-    def triangulate_with(self):
+        
+        return pointmap, point3D
+
+    def triangulate_with(self, pointmap, point3D):
         """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
 
         K_inv = np.linalg.inv(self.pair.camera2.K)
@@ -97,7 +98,7 @@ class SFM:
             u2_normalized = K_inv.dot(u2)
 
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
-            self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
+            point3D = np.concatenate((point3D, point_3D.T), axis=0)
 
             error1 = calculate_reprojection_error(point_3D, u1[0:2], self.pair.camera1.K, self.pair.camera1.R, self.pair.camera1.t)
             reprojection_error1.append(error1)
@@ -106,50 +107,45 @@ class SFM:
 
             # updates point_map with the key (index of view, index of point in the view) and value point_counter
             # multiple keys can have the same value because a 3D point is reconstructed using 2 points
-            self.point_map[self.pair.camera1.view.name, self.pair.inliers1[i]] = self.point_counter
-            self.point_map[self.pair.camera2.view.name, self.pair.inliers2[i]] = self.point_counter
+            pointmap[self.pair.camera1.view.name, self.pair.inliers1[i]] = self.point_counter
+            pointmap[self.pair.camera2.view.name, self.pair.inliers2[i]] = self.point_counter
             self.point_counter += 1
 
-        return reprojection_error1, reprojection_error2
+        return reprojection_error1, reprojection_error2, pointmap, point3D
 
-    def compute_pose_PNP(self, view):
+    def compute_pose_PNP(self, pointmap, point3D):
         """Computes pose of new view using perspective n-point"""
 
-        if view.feature_type in ['sift', 'surf']:
-            matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-        else:
-            matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
-
-        # collects all the descriptors of the reconstructed views
-        old_descriptors = []
-        for old_view in self.done:
-            old_descriptors.append(old_view.descriptors)
-
-        # match old descriptors against the descriptors in the new view
-        matcher.add(old_descriptors)
-        matcher.train()
-        matches = matcher.match(queryDescriptors=view.descriptors)
         points_3D, points_2D = np.zeros((0, 3)), np.zeros((0, 2))
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
+                                                              keypoints2=self.pair.camera2.view.keypoints,
+                                                              index_list1=self.pair.indices1,
+                                                              index_list2=self.pair.indices2)
 
         # build corresponding array of 2D points and 3D points
-        for match in matches:
-            old_image_idx, new_image_kp_idx, old_image_kp_idx = match.imgIdx, match.queryIdx, match.trainIdx
+        for i in range(len(pixel_points1)):
+            train_kp = pixel_points1[i]
+            query_kp = pixel_points2[i]            
+            train_idx = self.pair.indices1[i]
+            query_idx = self.pair.indices2[i]
 
-            if (old_image_idx, old_image_kp_idx) in self.point_map:
+            if (self.pair.camera1.view.name, train_idx) in pointmap:
+                print(" PNP .. ", train_kp, query_kp, train_idx)
 
                 # obtain the 2D point from match
-                point_2D = np.array(view.keypoints[new_image_kp_idx].pt).T.reshape((1, 2))
+                point_2D = np.array(query_kp).T.reshape((1, 2))
                 points_2D = np.concatenate((points_2D, point_2D), axis=0)
 
+                print("PNP .. ", pointmap[(self.pair.camera1.view.name, train_idx)])
+                print("PNP .. ", point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :])
                 # obtain the 3D point from the point_map
-                point_3D = self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3))
+                point_3D = point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :].T.reshape((1, 3))
                 points_3D = np.concatenate((points_3D, point_3D), axis=0)
 
         # compute new pose using solvePnPRansac
-        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.K, None,
-                                        confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
+        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.pair.camera2.K, None, confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
         R, _ = cv2.Rodrigues(R)
-        return R, t
+        return R, t, pointmap, point3D
 
     def get_pose(self):
         """Computes and returns the rotation and translation components for the second view"""
