@@ -30,12 +30,12 @@ class SFM:
         inliers2 = []
 
         for i in range(len(self.pair.inliers1)):
-            if (self.pair.match.inliers1[i]) not in pointmap:            
+            if (self.pair.inliers1[i]) not in pointmap:            
                 inliers1.append(self.pair.inliers1[i])
                 inliers2.append(self.pair.inliers2[i])
 
-        self.pair.inliers1.clear()
-        self.pair.inliers2.clear()        
+        self.pair.inliers1 = np.array([])
+        self.pair.inliers2 = np.array([])
         self.pair.inliers1 = inliers1
         self.pair.inliers2 = inliers2
 
@@ -62,10 +62,10 @@ class SFM:
             print("view -- T ", self.pair.camera2.view.t)
 
             # reconstruct unreconstructed points from all of the previous views
-            _ = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
+            _, self.pair.inliers1, self.pair.inliers2 = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
             self.remove_mapped_points(pointmap)
-            _, rpe = self.triangulate_with(pointmap, point3D)
-            errors += rpe
+            _, rpe, pointmap, point3D = self.triangulate_with(pointmap, point3D)
+            errors = rpe
 
             self.done = True
             self.errors = np.mean(errors)
