@@ -130,20 +130,23 @@ class SFM:
             query_idx = self.pair.indices2[i]
 
             if (self.pair.camera1.view.name, train_idx) in pointmap:
-                print(" PNP .. ", train_kp, query_kp, train_idx)
+                #print(" PNP .. ", train_kp, query_kp, train_idx)
 
                 # obtain the 2D point from match
                 point_2D = np.array(query_kp).T.reshape((1, 2))
                 points_2D = np.concatenate((points_2D, point_2D), axis=0)
 
-                print("PNP .. ", pointmap[(self.pair.camera1.view.name, train_idx)])
-                print("PNP .. ", point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :])
+                #print("PNP .. ", pointmap[(self.pair.camera1.view.name, train_idx)])
+                #print("PNP .. ", point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :])
                 # obtain the 3D point from the point_map
                 point_3D = point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :].T.reshape((1, 3))
                 points_3D = np.concatenate((points_3D, point_3D), axis=0)
 
+        print("PNP .. point 3D ", np.shape(points_3D))
+        print(points_3D)
         # compute new pose using solvePnPRansac
         _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.pair.camera2.K, None, confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
+        print("PNP R, t ", R, t)
         R, _ = cv2.Rodrigues(R)
         return R, t, pointmap, point3D
 

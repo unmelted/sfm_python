@@ -49,8 +49,7 @@ class Group(object):
         baseline = True
         for pair in self.pairs :
             pair_obj = self.pairs[pair]
-            print(" pair  ", pair)
-            print("pair_obj " , pair_obj)
+            print("pair_obj " , pair)
             if baseline == True:
                 self.point_map, self.points_3D = pair_obj.run_sfm(baseline, self.point_map, self.points_3D)
                 baseline = False
