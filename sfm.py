@@ -57,7 +57,6 @@ class SFM:
             print("baseline -- T : ", pair.camera2.t)
 
             rpe1, rpe2 = self.triangulate_with(pair)
-            print(rpe1, rpe2)
             self.errors.append(np.mean(rpe1))
             self.errors.append(np.mean(rpe2))
 
@@ -76,11 +75,13 @@ class SFM:
             # reconstruct unreconstructed points from all of the previous views
             for i, old_view in enumerate(self.done):
                 print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
-                match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, match_object)
-                self.remove_mapped_points(match_object, i)
-                _, rpe = self.triangulate(old_view, pair.camera2.view)
-                errors += rpe
+                if(old_view.name, pair.camera2.view.name) in self.matches : 
+                    print("-- in key --- ")
+                    match_object = self.matches[(old_view.name, pair.camera2.view.name)]
+                    _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    self.remove_mapped_points(match_object, i)
+                    _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
+                    errors += rpe
 
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
@@ -135,21 +136,28 @@ class SFM:
         else:
             return R1, t1
 
-    def triangulate_with(self, pair):
+    def triangulate_with(self, pair, view1=None, view2=None):
         """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
 
         K_inv = np.linalg.inv(pair.camera2.K)
         P1 = np.hstack((pair.camera1.R, pair.camera1.t))
         P2 = np.hstack((pair.camera2.R, pair.camera2.t))
-        print(" --- triangulate _ with ---- ")
-        print(P1)
-        print(P2)
+        pixel_points1 = None
+        pixle_points2 = None
 
-        match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=pair.camera1.view.keypoints,
-                                                                  keypoints2=pair.camera2.view.keypoints,
-                                                                  index_list1=pair.inliers1,
-                                                                  index_list2=pair.inliers2)
+        if(view1 == None or view2 == None) :
+            pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=pair.camera1.view.keypoints,
+                                                                    keypoints2=pair.camera2.view.keypoints,
+                                                                    index_list1=pair.inliers1,
+                                                                    index_list2=pair.inliers2)
+        else : 
+            match_object = self.matches[(view1.name, view2.name)]
+            pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=pair.camera1.view.keypoints,
+                                                                    keypoints2=pair.camera2.view.keypoints,
+                                                                    index_list1=match_object.inliers1,
+                                                                    index_list2=match_object.inliers2)
+
+
         pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
