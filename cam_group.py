@@ -4,6 +4,7 @@ import sys
 import glob
 import numpy as np
 import logging
+from sfm import *
 
 from camera import *
 from pair import *
@@ -17,10 +18,10 @@ class Group(object):
         print("Group Init")
         self.cameras = []
         self.views = []
-        self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
-        self.point_map = {} # key : view name, value : match inliers
         self.pairs = None
+        self.matches = {}        
         self.K = None
+        self.sfm = None
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -40,23 +41,31 @@ class Group(object):
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
 
         for image_name in image_names:
-            self.cameras.append(Camera(image_name, root_path, self.K, feature_path=feature_path))
+            tcam = Camera(image_name, root_path, self.K, feature_path=feature_path)
+            self.cameras.append(tcam)
+            self.views.append(tcam.view)
 
         self.pairs = Pair.create_pair(self.cameras)
-        print(self.pairs)
+        self.sfm = SFM(self.views, self.pairs)
 
     def run_sfm(self) :
         baseline = True
         for pair in self.pairs :
             pair_obj = self.pairs[pair]
-            print(" pair  ", pair)
-            print("pair_obj " , pair_obj)
+            print("pair_obj ------ " , pair)
+            j  = 0
             if baseline == True:
-                self.point_map, self.points_3D = pair_obj.run_sfm(baseline, self.point_map, self.points_3D)
+                self.sfm.compute_pose(pair_obj, baseline)
                 baseline = False
+                logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
+                logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
+                j = 2
             else :
-                self.point_map, self.point_3D = pair_obj.run_sfm(baseline, self.point_map, self.points_3D)
+                self.sfm.compute_pose(pair_obj, baseline)
+                logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[j])
+                j += 1
 
+            self.sfm.plot_points()
 
     def visualize_group(self) :
         print("visualize camera in group")

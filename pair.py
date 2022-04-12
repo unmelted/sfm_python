@@ -2,7 +2,6 @@ import os
 import pickle
 import cv2
 import logging
-from sfm import *
 
 
 class Pair:
@@ -22,15 +21,12 @@ class Pair:
         self.camera2 = camera2
         self.match = None
 
-        self.sfm = None
-
         if camera1.view.feature_type in ['sift', 'surf']:
             self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
         else:
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
         self.get_matches(self.camera1.view, self.camera2.view)
-        self.sfm = SFM(self)
         
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
@@ -102,9 +98,3 @@ class Pair:
             print("pair name : ", key, pairs[key])
 
         return pairs
-
-    def run_sfm(self, baseline, pointmap, point3D) :
-        print("called run_sfm ")
-        point_map = self.sfm.compute_pose(baseline, pointmap, point3D)
-        return point_map
-        
