@@ -65,7 +65,7 @@ class Group(object):
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[j])
                 j += 1
 
-   
+            self.sfm.plot_points()
 
     def visualize_group(self) :
         print("visualize camera in group")
