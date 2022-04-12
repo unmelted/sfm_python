@@ -1,161 +1,96 @@
 import os
-import open3d as o3d
-import logging
 from util import *
-from pair import *
-
+import open3d as o3d
 
 class SFM:
     """Represents the main reconstruction loop"""
 
-    #def __init__(self, view1, view2, indices1, indices2, K1, K2):
-    def __init__(self, pairobj):    
-        self.pair = pairobj
+    def __init__(self, views, pairs):
 
-        self.done = None 
+        self.views = views  # list of views
+        self.matches = pairs  # dictionary of matches
+        self.names = []  # image names
+        self.done = []  # list of views that have been reconstructed
+        self.points_3D = np.zeros((0, 3))  # reconstructed 3D points
         self.point_counter = 0  # keeps track of the reconstructed points
-        #self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
-        self.errors = None  #  mean reprojection errors taken at the end of every new view being added
+        self.point_map = {}  # a dictionary of the 2D points that contributed to a given 3D point
+        self.errors = []  # list of mean reprojection errors taken at the end of every new view being added
 
-        if not os.path.exists(self.pair.camera1.view.root_path + '/points'):
-            os.makedirs(self.pair.camera1.view.root_path + '/points')
+        for view in self.views:
+            self.names.append(view.name)
+
+        if not os.path.exists(self.views[0].root_path + '/points'):
+            os.makedirs(self.views[0].root_path + '/points')
 
         # store results in a root_path/points
-        self.results_path = os.path.join(self.pair.camera1.view.root_path, 'points')
+        self.results_path = os.path.join(self.views[0].root_path, 'points')
 
-    def remove_mapped_points(self, pointmap):
+    def get_index_of_view(self, view):
+        """Extracts the position of a view in the list of views"""
+
+        return self.names.index(view.name)
+
+    def remove_mapped_points(self, match_object, image_idx):
         """Removes points that have already been reconstructed in the completed views"""
 
         inliers1 = []
         inliers2 = []
 
-        for i in range(len(self.pair.inliers1)):
-            if (self.pair.inliers1[i]) not in pointmap:            
-                inliers1.append(self.pair.inliers1[i])
-                inliers2.append(self.pair.inliers2[i])
+        for i in range(len(match_object.inliers1)):
+            if (image_idx, match_object.inliers1[i]) not in self.point_map:
+                inliers1.append(match_object.inliers1[i])
+                inliers2.append(match_object.inliers2[i])
 
-        self.pair.inliers1 = np.array([])
-        self.pair.inliers2 = np.array([])
-        self.pair.inliers1 = inliers1
-        self.pair.inliers2 = inliers2
+        match_object.inliers1 = inliers1
+        match_object.inliers2 = inliers2
 
-    def compute_pose(self, is_baseline, pointmap, point3D):
+    def compute_pose(self, pair, is_baseline=False):
         """Computes the pose of the new view"""
 
         # procedure for baseline pose estimation
-        if is_baseline and self.pair.camera2.view:
-            print("Base line true .. Compute pose ")
-            self.pair.camera2.R, self.pair.camera2.t = self.get_pose()
-            print("baseline -- R : ", self.pair.camera2.R)
-            print("baseline -- T : ", self.pair.camera2.t)
+        if is_baseline:
+            print("view -- 1 : 2 ", pair.camera1.view.name, pair.camera2.view.name)
+            pair.camera1.R = np.eye(3, 3)  # identity rotation since the first view is said to be at the origin            
+            match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
+            pair.camera2.R, pair.camera2.t = self.get_pose(pair)
+            print("baseline -- R : ", pair.camera2.R)
+            print("baseline -- T : ", pair.camera2.t)
 
-            rpe1, rpe2, pointmap, point3D = self.triangulate_with(pointmap, point3D)
-            self.errors = (np.mean(rpe1))
-            self.errors = (np.mean(rpe2))
+            rpe1, rpe2 = self.triangulate_with(pair)
+            print(rpe1, rpe2)
+            self.errors.append(np.mean(rpe1))
+            self.errors.append(np.mean(rpe2))
 
-            self.done = True
+            self.done.append(pair.camera1.view)
+            self.done.append(pair.camera2.view)
 
         # procedure for estimating the pose of all other views
-        elif (is_baseline == False and pointmap != None) :
-            self.pair.camera2.view.R, self.pair.camera2.view.t, pointmap, point3D = self.compute_pose_PNP(pointmap, point3D)
-            print("view -- R ", self.pair.camera2.view.R)
-            print("view -- T ", self.pair.camera2.view.t)
+        else:
 
+            pair.camera2.R, pair.camera2.t = self.compute_pose_PNP(pair.camera2.view, pair.camera2.K)
+            print("view -- R ", pair.camera2.R)
+            print("view -- T ", pair.camera2.t)
+            errors = []
+            print("-- view2 : ", pair.camera2.view.name)
+            
             # reconstruct unreconstructed points from all of the previous views
-            _, self.pair.inliers1, self.pair.inliers2 = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
-            self.remove_mapped_points(pointmap)
-            _, rpe, pointmap, point3D = self.triangulate_with(pointmap, point3D)
-            errors = rpe
+            for i, old_view in enumerate(self.done):
+                print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
+                match_object = self.matches[(old_view.name, pair.camera2.view.name)]
+                _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, match_object)
+                self.remove_mapped_points(match_object, i)
+                _, rpe = self.triangulate(old_view, pair.camera2.view)
+                errors += rpe
 
-            self.done = True
-            self.errors = np.mean(errors)
+            self.done.append(pair.camera2.view)
+            self.errors.append(np.mean(errors))
 
-        
-        return pointmap, point3D
-
-    def triangulate_with(self, pointmap, point3D):
-        """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
-
-        K_inv = np.linalg.inv(self.pair.camera2.K)
-        P1 = np.hstack((self.pair.camera1.R, self.pair.camera1.t))
-        P2 = np.hstack((self.pair.camera2.R, self.pair.camera2.t))
-
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
-                                                                  keypoints2=self.pair.camera2.view.keypoints,
-                                                                  index_list1=self.pair.inliers1,
-                                                                  index_list2=self.pair.inliers2)
-        pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
-        pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
-        reprojection_error1 = []
-        reprojection_error2 = []
-
-        for i in range(len(pixel_points1)):
-
-            u1 = pixel_points1[i, :]
-            u2 = pixel_points2[i, :]
-
-            u1_normalized = K_inv.dot(u1)
-            u2_normalized = K_inv.dot(u2)
-
-            point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
-            point3D = np.concatenate((point3D, point_3D.T), axis=0)
-
-            error1 = calculate_reprojection_error(point_3D, u1[0:2], self.pair.camera1.K, self.pair.camera1.R, self.pair.camera1.t)
-            reprojection_error1.append(error1)
-            error2 = calculate_reprojection_error(point_3D, u2[0:2], self.pair.camera2.K, self.pair.camera2.R, self.pair.camera2.t)
-            reprojection_error2.append(error2)
-
-            # updates point_map with the key (index of view, index of point in the view) and value point_counter
-            # multiple keys can have the same value because a 3D point is reconstructed using 2 points
-            pointmap[self.pair.camera1.view.name, self.pair.inliers1[i]] = self.point_counter
-            pointmap[self.pair.camera2.view.name, self.pair.inliers2[i]] = self.point_counter
-            self.point_counter += 1
-
-        return reprojection_error1, reprojection_error2, pointmap, point3D
-
-    def compute_pose_PNP(self, pointmap, point3D):
-        """Computes pose of new view using perspective n-point"""
-
-        points_3D, points_2D = np.zeros((0, 3)), np.zeros((0, 2))
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
-                                                              keypoints2=self.pair.camera2.view.keypoints,
-                                                              index_list1=self.pair.indices1,
-                                                              index_list2=self.pair.indices2)
-
-        # build corresponding array of 2D points and 3D points
-        for i in range(len(pixel_points1)):
-            train_kp = pixel_points1[i]
-            query_kp = pixel_points2[i]            
-            train_idx = self.pair.indices1[i]
-            query_idx = self.pair.indices2[i]
-
-            if (self.pair.camera1.view.name, train_idx) in pointmap:
-                #print(" PNP .. ", train_kp, query_kp, train_idx)
-
-                # obtain the 2D point from match
-                point_2D = np.array(query_kp).T.reshape((1, 2))
-                points_2D = np.concatenate((points_2D, point_2D), axis=0)
-
-                #print("PNP .. ", pointmap[(self.pair.camera1.view.name, train_idx)])
-                #print("PNP .. ", point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :])
-                # obtain the 3D point from the point_map
-                point_3D = point3D[pointmap[(self.pair.camera1.view.name, train_idx)], :].T.reshape((1, 3))
-                points_3D = np.concatenate((points_3D, point_3D), axis=0)
-
-        print("PNP .. point 3D ", np.shape(points_3D))
-        print(points_3D)
-        # compute new pose using solvePnPRansac
-        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], self.pair.camera2.K, None, confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
-        print("PNP R, t ", R, t)
-        R, _ = cv2.Rodrigues(R)
-        return R, t, pointmap, point3D
-
-    def get_pose(self):
+    def get_pose(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , self.pair.inliers1, self.pair.inliers2 = remove_outliers_using_F(self.pair.camera1.view, self.pair.camera2.view, self.pair.indices1, self.pair.indices2)
+        F , pair.inliers1, pair.inliers2 = remove_outliers_using_F(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
 
-        K = self.pair.camera2.K
+        K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
         logging.info("Computed essential matrix")
         logging.info("Choosing correct pose out of 4 solutions")
@@ -164,11 +99,11 @@ class SFM:
         print("get_pose.. normal E: ", E)        
         print('Computed essential matrix:', (-E / E[0][1]))
 
-        return self.check_pose(E)
+        return self.check_pose(pair, E)
 
-    def check_pose(self, E):
+    def check_pose(self, pair, E):
         """Retrieves the rotation and translation components from the essential matrix by decomposing it and verifying the validity of the 4 possible solutions"""
-        K = self.pair.camera2.K
+        K = pair.camera2.K
         R1, R2, t1, t2 = get_camera_from_E(E)  # decompose E
 
         if not check_determinant(R1):
@@ -176,16 +111,16 @@ class SFM:
 
 
         # solution 1
-        reprojection_error, points_3D = self.triangulate(K, R1, t1)
+        reprojection_error, points_3D = self.triangulate(pair, K, R1, t1)
         # check if reprojection is not faulty and if the points are correctly triangulated in the front of the camera
         if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R1, t1))):
 
             # solution 2
-            reprojection_error, points_3D = self.triangulate(K, R1, t2)
+            reprojection_error, points_3D = self.triangulate(pair, K, R1, t2)
             if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R1, t2))):
 
                 # solution 3
-                reprojection_error, points_3D = self.triangulate(K, R2, t1)
+                reprojection_error, points_3D = self.triangulate(pair, K, R2, t1)
                 if reprojection_error > 100.0 or not check_triangulation(points_3D, np.hstack((R2, t1))):
 
                     # solution 4
@@ -200,17 +135,136 @@ class SFM:
         else:
             return R1, t1
 
-    def triangulate(self, K, R, t):
+    def triangulate_with(self, pair):
+        """Triangulates 3D points from two views whose poses have been recovered. Also updates the point_map dictionary"""
+
+        K_inv = np.linalg.inv(pair.camera2.K)
+        P1 = np.hstack((pair.camera1.R, pair.camera1.t))
+        P2 = np.hstack((pair.camera2.R, pair.camera2.t))
+        print(" --- triangulate _ with ---- ")
+        print(P1)
+        print(P2)
+
+        match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=pair.camera1.view.keypoints,
+                                                                  keypoints2=pair.camera2.view.keypoints,
+                                                                  index_list1=pair.inliers1,
+                                                                  index_list2=pair.inliers2)
+        pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
+        pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
+        reprojection_error1 = []
+        reprojection_error2 = []
+
+        for i in range(len(pixel_points1)):
+
+            u1 = pixel_points1[i, :]
+            u2 = pixel_points2[i, :]
+
+            u1_normalized = K_inv.dot(u1)
+            u2_normalized = K_inv.dot(u2)
+
+            point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
+            self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
+
+            error1 = calculate_reprojection_error(point_3D, u1[0:2], pair.camera1.K, pair.camera1.R, pair.camera1.t)
+            reprojection_error1.append(error1)
+            error2 = calculate_reprojection_error(point_3D, u2[0:2], pair.camera2.K, pair.camera2.R, pair.camera2.t)
+            reprojection_error2.append(error2)
+
+            # updates point_map with the key (index of view, index of point in the view) and value point_counter
+            # multiple keys can have the same value because a 3D point is reconstructed using 2 points
+            self.point_map[(self.get_index_of_view(pair.camera1.view), pair.inliers1[i])] = self.point_counter
+            self.point_map[(self.get_index_of_view(pair.camera2.view), pair.inliers2[i])] = self.point_counter
+            self.point_counter += 1
+
+        return reprojection_error1, reprojection_error2
+
+    def compute_pose_PNP(self, view, K):
+        """Computes pose of new view using perspective n-point"""
+
+        if view.feature_type in ['sift', 'surf']:
+            matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
+        else:
+            matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+
+        # collects all the descriptors of the reconstructed views
+        old_descriptors = []
+        for old_view in self.done:
+            old_descriptors.append(old_view.descriptors)
+            print(" old view name : ", old_view.name)            
+
+        # match old descriptors against the descriptors in the new view
+        matcher.add(old_descriptors)
+        matcher.train()
+        matches = matcher.match(queryDescriptors=view.descriptors)
+        points_3D, points_2D = np.zeros((0, 3)), np.zeros((0, 2))
+
+        # build corresponding array of 2D points and 3D points
+        for match in matches:
+            old_image_idx, new_image_kp_idx, old_image_kp_idx = match.imgIdx, match.queryIdx, match.trainIdx
+
+            if (old_image_idx, old_image_kp_idx) in self.point_map:
+                # obtain the 2D point from match
+                point_2D = np.array(view.keypoints[new_image_kp_idx].pt).T.reshape((1, 2))
+                points_2D = np.concatenate((points_2D, point_2D), axis=0)
+
+                # obtain the 3D point from the point_map
+                point_3D = self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3))
+                #print("PNP .. ", self.point_map[(old_image_idx, old_image_kp_idx)])
+                #print("PNP .. ", self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :])                
+                #print("PNP .. ", self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3)))
+
+                points_3D = np.concatenate((points_3D, point_3D), axis=0)
+
+        # compute new pose using solvePnPRansac
+        print("PNP .. point 3D", np.shape(points_3D))
+        print(points_3D)
+        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
+                                        confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
+        print("PNP .. R t ", R, t)
+        R, _ = cv2.Rodrigues(R)
+        return R, t
+
+    def plot_points(self):
+        """Saves the reconstructed 3D points to ply files using Open3D"""
+
+        number = len(self.done)
+        filename = os.path.join(self.results_path, str(number) + '_images.ply')
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(self.points_3D)
+        o3d.io.write_point_cloud(filename, pcd)
+
+    def reconstruct(self):
+        """Starts the main reconstruction loop for a given set of views and matches"""
+
+        # compute baseline pose
+        baseline_view1, baseline_view2 = self.views[0], self.views[1]
+        logging.info("Computing baseline pose and reconstructing points")
+        self.compute_pose(view1=baseline_view1, view2=baseline_view2, is_baseline=True)
+        logging.info("Mean reprojection error for 1 image is %f", self.errors[0])
+        logging.info("Mean reprojection error for 2 images is %f", self.errors[1])
+        self.plot_points()
+        logging.info("Points plotted for %d views", len(self.done))
+
+        for i in range(2, len(self.views)):
+
+            logging.info("Computing pose and reconstructing points for view %d", i+1)
+            self.compute_pose(view1=self.views[i])
+            logging.info("Mean reprojection error for %d images is %f", i+1, self.errors[i])
+            self.plot_points()
+            logging.info("Points plotted for %d views", i+1)
+
+    def triangulate(self, pair, K, R, t):
         """Triangulate points between the baseline views and calculates the mean reprojection error of the triangulation"""
         K_inv = np.linalg.inv(K)
-        P1 = np.hstack((self.pair.camera1.R, self.pair.camera1.t))
+        P1 = np.hstack((pair.camera1.R, pair.camera1.t))
         P2 = np.hstack((R, t))
 
         # only reconstructs the inlier points filtered using the fundamental matrix
-        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=self.pair.camera1.view.keypoints,
-                                                                  keypoints2=self.pair.camera2.view.keypoints,
-                                                                  index_list1=self.pair.inliers1,
-                                                                  index_list2=self.pair.inliers2)
+        pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=pair.camera1.view.keypoints,
+                                                                  keypoints2=pair.camera2.view.keypoints,
+                                                                  index_list1=pair.inliers1,
+                                                                  index_list2=pair.inliers2)
 
         # convert 2D pixel points to homogeneous coordinates
         pixel_points1 = cv2.convertPointsToHomogeneous(pixel_points1)[:, 0, :]
@@ -239,13 +293,3 @@ class SFM:
             points_3D = np.concatenate((points_3D, point_3D.T), axis=0)
 
         return np.mean(reprojection_error), points_3D
-
-
-    def plot_points(self):
-        """Saves the reconstructed 3D points to ply files using Open3D"""
-
-        number = len(self.done)
-        filename = os.path.join(self.results_path, str(number) + '_images.ply')
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(self.points_3D)
-        o3d.io.write_point_cloud(filename, pcd)
