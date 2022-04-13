@@ -62,7 +62,7 @@ class Group(object):
                 j = 2
             else :
                 self.sfm.compute_pose(pair_obj, baseline)
-                logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[j])
+                logging.info("Mean reprojection error for images is %f ", self.sfm.errors[j])
                 j += 1
 
             self.sfm.plot_points()
