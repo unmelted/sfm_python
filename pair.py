@@ -95,6 +95,5 @@ class Pair:
         for j in range(1, len(cameras)):
             key = (cameras[j-1].view.name, cameras[j].view.name)
             pairs[key] = Pair(cameras[j-1], cameras[j], match_path)
-            print("pair name : ", key, pairs[key])
 
         return pairs

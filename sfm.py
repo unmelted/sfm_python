@@ -66,7 +66,7 @@ class SFM:
         # procedure for estimating the pose of all other views
         else:
 
-            pair.camera2.R, pair.camera2.t = self.compute_pose_PNP(pair.camera2.view, pair.camera2.K)
+            pair.camera2.R, pair.camera2.t = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
             errors = []
@@ -161,6 +161,9 @@ class SFM:
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
         reprojection_error2 = []
+        
+        print("triangulate_with .. len(pixel_points) : ", len(pixel_points1))
+        print("K_inv : ", K_inv)
 
         for i in range(len(pixel_points1)):
 
@@ -169,7 +172,9 @@ class SFM:
 
             u1_normalized = K_inv.dot(u1)
             u2_normalized = K_inv.dot(u2)
-
+            print(i, u1, u2)
+            print(i, u1_normalized, u2_normalized)
+            
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
@@ -186,7 +191,7 @@ class SFM:
 
         return reprojection_error1, reprojection_error2
 
-    def compute_pose_PNP(self, view, K):
+    def compute_pose_pnp(self, view, K):
         """Computes pose of new view using perspective n-point"""
 
         if view.feature_type in ['sift', 'surf']:
