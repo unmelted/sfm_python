@@ -15,6 +15,7 @@ class Camera(object):
         self.t = np.zeros((3,1), dtype=float)     # translation
         self.c = None  # camera center
         self.view = View(image_name, root_path, feature_path=feature_path)        
+        self.pts = []
 
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)

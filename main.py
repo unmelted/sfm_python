@@ -12,8 +12,7 @@ def run(args):
     preset1 = Group()
     preset1.create_group(args.root_dir, 'jpg')
     preset1.run_sfm()
-    #sfm.plot_points()
-    plot_cameragroup(preset1)
+    #plot_cameragroup(preset1)
 
 def set_args(parser):
 

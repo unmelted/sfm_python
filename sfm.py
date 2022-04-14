@@ -66,7 +66,7 @@ class SFM:
         # procedure for estimating the pose of all other views
         else:
 
-            pair.camera2.R, pair.camera2.t = self.compute_pose_PNP(pair.camera2.view, pair.camera2.K)
+            pair.camera2.R, pair.camera2.t = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
             errors = []
@@ -76,7 +76,6 @@ class SFM:
             for i, old_view in enumerate(self.done):
                 print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
-                    print("-- in key --- ")
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
                     _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
@@ -162,6 +161,9 @@ class SFM:
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
         reprojection_error2 = []
+        
+        print("triangulate_with .. len(pixel_points) : ", len(pixel_points1))
+        print("K_inv : ", K_inv)
 
         for i in range(len(pixel_points1)):
 
@@ -170,7 +172,9 @@ class SFM:
 
             u1_normalized = K_inv.dot(u1)
             u2_normalized = K_inv.dot(u2)
-
+            print(i, u1, u2)
+            print(i, u1_normalized, u2_normalized)
+            
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
@@ -187,7 +191,7 @@ class SFM:
 
         return reprojection_error1, reprojection_error2
 
-    def compute_pose_PNP(self, view, K):
+    def compute_pose_pnp(self, view, K):
         """Computes pose of new view using perspective n-point"""
 
         if view.feature_type in ['sift', 'surf']:
@@ -218,18 +222,14 @@ class SFM:
 
                 # obtain the 3D point from the point_map
                 point_3D = self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3))
-                #print("PNP .. ", self.point_map[(old_image_idx, old_image_kp_idx)])
-                #print("PNP .. ", self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :])                
-                #print("PNP .. ", self.points_3D[self.point_map[(old_image_idx, old_image_kp_idx)], :].T.reshape((1, 3)))
-
                 points_3D = np.concatenate((points_3D, point_3D), axis=0)
 
         # compute new pose using solvePnPRansac
-        print("PNP .. point 3D", np.shape(points_3D))
-        print(points_3D)
+        # print("PNP .. point 3D", np.shape(points_3D))
+        # print(points_3D)
         _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
-        print("PNP .. R t ", R, t)
+
         R, _ = cv2.Rodrigues(R)
         return R, t
 
@@ -241,26 +241,6 @@ class SFM:
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(self.points_3D)
         o3d.io.write_point_cloud(filename, pcd)
-
-    def reconstruct(self):
-        """Starts the main reconstruction loop for a given set of views and matches"""
-
-        # compute baseline pose
-        baseline_view1, baseline_view2 = self.views[0], self.views[1]
-        logging.info("Computing baseline pose and reconstructing points")
-        self.compute_pose(view1=baseline_view1, view2=baseline_view2, is_baseline=True)
-        logging.info("Mean reprojection error for 1 image is %f", self.errors[0])
-        logging.info("Mean reprojection error for 2 images is %f", self.errors[1])
-        self.plot_points()
-        logging.info("Points plotted for %d views", len(self.done))
-
-        for i in range(2, len(self.views)):
-
-            logging.info("Computing pose and reconstructing points for view %d", i+1)
-            self.compute_pose(view1=self.views[i])
-            logging.info("Mean reprojection error for %d images is %f", i+1, self.errors[i])
-            self.plot_points()
-            logging.info("Points plotted for %d views", i+1)
 
     def triangulate(self, pair, K, R, t):
         """Triangulate points between the baseline views and calculates the mean reprojection error of the triangulation"""

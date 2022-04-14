@@ -10,6 +10,8 @@ from camera import *
 from pair import *
 from view import *
 from visualize import *
+from adjust import *
+from world import *
 
 
 class Group(object):
@@ -22,6 +24,8 @@ class Group(object):
         self.matches = {}        
         self.K = None
         self.sfm = None
+        self.world = World()
+        self.adjust = None
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -60,12 +64,23 @@ class Group(object):
                 logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
                 j = 2
+
             else :
                 self.sfm.compute_pose(pair_obj, baseline)
-                logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[j])
+                logging.info("Mean reprojection error for images is %f ", self.sfm.errors[j])
                 j += 1
 
             self.sfm.plot_points()
+
+    def generate_refpoints(self) :
+        self.adjust = Adjust(self.world.get_world())
+        is_first = True
+
+        for i in enumerate(self.cameras):
+            if (is_first == True): 
+                self.cameras[i].pts = self.adjust.get_first_cp()
+            else :
+                self.adjust.convert_pts(self.cameras[i-1], self.cameras[i])
 
     def visualize_group(self) :
         print("visualize camera in group")
