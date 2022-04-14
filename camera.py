@@ -14,8 +14,15 @@ class Camera(object):
         self.R = np.zeros((3,3), dtype=float)     # rotation
         self.t = np.zeros((3,1), dtype=float)     # translation
         self.c = None  # camera center
+        self.focal = None        
         self.view = View(image_name, root_path, feature_path=feature_path)        
+
+        ## releated adjust value
         self.pts = []
+        self.normal = []
+        self.center = None
+        self.angle = None
+        self.norm = None
 
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)

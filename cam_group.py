@@ -79,8 +79,9 @@ class Group(object):
         for i in enumerate(self.cameras):
             if (is_first == True): 
                 self.cameras[i].pts = self.adjust.get_first_cp()
-            else :
-                self.adjust.convert_pts(self.cameras[i-1], self.cameras[i])
+                self.adjust.convert_pts(self.cameras[i])
+            # else : 
+            #     self.adjust.convert_pts(self.cameras[i-1], self.cameras[i])
 
     def visualize_group(self) :
         print("visualize camera in group")
