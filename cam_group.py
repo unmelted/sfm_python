@@ -73,7 +73,14 @@ class Group(object):
             self.sfm.plot_points()
 
     def generate_refpoints(self) :
-        self.adjust(self.world.get_world())
+        self.adjust = Adjust(self.world.get_world())
+        is_first = True
+
+        for i in enumerate(self.cameras):
+            if (is_first == True): 
+                self.cameras[i].pts = self.adjust.get_first_cp()
+            else :
+                self.adjust.convert_pts(self.cameras[i-1], self.cameras[i])
 
     def visualize_group(self) :
         print("visualize camera in group")
