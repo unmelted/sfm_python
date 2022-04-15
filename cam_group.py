@@ -77,7 +77,7 @@ class Group(object):
                 j += 1
 
             self.sfm.plot_points()
-            if j == 2 :
+            if j == 3 :
                 break
 
     def generate_points(self) :
@@ -92,8 +92,10 @@ class Group(object):
             self.adjust.convert_pts(cam)
             j += 1
 
-            if j == 2 :
+            if j == 3 :
                 break
 
-    def visualize_group(self) :
-        print("visualize camera in group")
+    def visualize(self) :
+        print("visualize camera in  group")        
+        plot_cameras(self.cameras)
+        plot_pointmap(self.sfm)

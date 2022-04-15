@@ -14,9 +14,10 @@ def run(args):
     if( ret < 0 ):
         logging.error("terminated. ")
         return 0
-        
+
     preset1.run_sfm()
     preset1.generate_points()
+    preset1.visualize()
 
 def set_args(parser):
 

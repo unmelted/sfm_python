@@ -12,8 +12,8 @@ class Adjust(object):
     def __init__(self, world):
         self.calib_type = None  # 2d, 3d
         self.world = world
-        scale = 50
-        self.normal = np.array([[50/scale, 50/scale, 0], [50/scale, 50/scale, -50/scale]])
+        scale = 100
+        self.normal = np.array([[50/scale, 50/scale, 0], [50/scale, 50/scale, 50/scale]])
     
     def get_initial_cp(self):
         if self.calib_type == '3D' : 
