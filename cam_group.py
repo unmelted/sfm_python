@@ -17,7 +17,6 @@ from world import *
 class Group(object):
 
     def __init__ (self):
-        print("Group Init")
         self.cameras = []
         self.views = []
         self.pairs = None
@@ -72,15 +71,15 @@ class Group(object):
 
             self.sfm.plot_points()
 
-    def generate_refpoints(self) :
-        self.adjust = Adjust(self.world.get_world())
-        is_first = True
+    def generate_points(self) :
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
+        first_index = 0
+        self.cameras[first_index].pts = self.adjust.get_initial_cp()
 
-        for i in enumerate(self.cameras):
-            if (is_first == True): 
-                self.cameras[i].pts = self.adjust.get_first_cp()
-            else :
-                self.adjust.convert_pts(self.cameras[i-1], self.cameras[i])
+        for i, cam in enumerate(self.cameras):
+            print(i, cam)
+            self.adjust.convert_pts(cam)
 
     def visualize_group(self) :
         print("visualize camera in group")
