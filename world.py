@@ -10,14 +10,16 @@ class World(object):
 
     def get_world(self) :
         '''insert world data by connecting db or storage / points insert'''
+
         self.stadium = "Football"
         self.event = "football"
-        pt1 = [220, 691]
+        pt1 = [220, 691, 0]
         self.world_points.append(pt1)        
-        pt2 = [427, 694]
+        pt2 = [427, 694, 0]
         self.world_points.append(pt2)
-        pt3 = [427, 574]
+        pt3 = [427, 574, 0]
         self.world_points.append(pt3)        
-        pt4 = [217, 578]
+        pt4 = [217, 578, 0]
         self.world_points.append(pt4)
+        print(" Get World .. " , self.world_points)
 

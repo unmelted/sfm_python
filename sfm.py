@@ -172,9 +172,9 @@ class SFM:
 
             u1_normalized = K_inv.dot(u1)
             u2_normalized = K_inv.dot(u2)
-            print(i, u1, u2)
-            print(i, u1_normalized, u2_normalized)
-            
+            # print(i, u1, u2)
+            # print(i, u1_normalized, u2_normalized)
+
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
