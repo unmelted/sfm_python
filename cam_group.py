@@ -38,6 +38,9 @@ class Group(object):
 
         print(root_path)
         image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + image_format)))
+        if len(image_names) < 1 : 
+            logging.error("can't read images . ")
+            return -1
 
         logging.info("Computing features")
         print(image_names)
@@ -51,12 +54,16 @@ class Group(object):
         self.pairs = Pair.create_pair(self.cameras)
         self.sfm = SFM(self.views, self.pairs)
 
+        return 0
+
     def run_sfm(self) :
         baseline = True
+        j  = 0          
+
         for pair in self.pairs :
             pair_obj = self.pairs[pair]
             print("pair_obj ------ " , pair)
-            j  = 0
+
             if baseline == True:
                 self.sfm.compute_pose(pair_obj, baseline)
                 baseline = False
@@ -70,16 +77,25 @@ class Group(object):
                 j += 1
 
             self.sfm.plot_points()
+            if j == 3 :
+                break
 
     def generate_points(self) :
         self.world.get_world()
         self.adjust = Adjust(self.world)
         first_index = 0
         self.cameras[first_index].pts = self.adjust.get_initial_cp()
-
+        j  = 0   
+        
         for i, cam in enumerate(self.cameras):
             print(i, cam)
             self.adjust.convert_pts(cam)
+            j += 1
 
-    def visualize_group(self) :
-        print("visualize camera in group")
+            if j == 3 :
+                break
+
+    def visualize(self) :
+        print("visualize camera in  group")        
+        plot_cameras(self.cameras)
+        plot_pointmap(self.sfm)

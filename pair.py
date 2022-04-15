@@ -26,7 +26,10 @@ class Pair:
         else:
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-        self.get_matches(self.camera1.view, self.camera2.view)
+        if not match_path:
+            self.get_matches(self.camera1.view, self.camera2.view)
+        else :
+            self.read_matches()
         
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
