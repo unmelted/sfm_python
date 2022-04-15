@@ -17,6 +17,9 @@ class View(object):
         self.descriptors = []  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
+        print(self.image.shape)        
+        self.image_width = self.image.shape[1]
+        self.image_height = self.image.shape[0]
 
         if not feature_path:
             self.extract_features()

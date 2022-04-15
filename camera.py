@@ -17,12 +17,13 @@ class Camera(object):
         self.focal = None        
         self.view = View(image_name, root_path, feature_path=feature_path)        
 
-        ## releated adjust value
-        self.pts = []
-        self.normal = []
-        self.center = None
-        self.angle = None
+        ''' related adjust value '''
+        self.pts = []    # 4points
+        self.normal = [] # 2 vectocs
+        self.center = [] # tracking center
         self.norm = None
+        self.angle = None
+        self.radian = None
 
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)

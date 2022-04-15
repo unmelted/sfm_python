@@ -10,9 +10,14 @@ def run(args):
     logging.basicConfig(level=logging.INFO)
 
     preset1 = Group()
-    preset1.create_group(args.root_dir, 'jpg')
+    ret = preset1.create_group(args.root_dir, 'png')
+    if( ret < 0 ):
+        logging.error("terminated. ")
+        return 0
+
     preset1.run_sfm()
-    preset1.generate_refpoints()
+    preset1.generate_points()
+    preset1.visualize()
 
 def set_args(parser):
 
