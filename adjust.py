@@ -54,17 +54,19 @@ class Adjust(object):
         print(ref.R, target.R)
         newR = np.dot(target.R, ref.R.T)
         print("get_camera_releative.. ", newR)
-        temp = np.dot(target.R, ref.R.T)
-        temp = np.dot(temp, ref.t)
+
+        temp = np.dot(newR, ref.t)
         newT = target.t - temp
         print("new T " , newT)
-        pts = np.array([[1208, 1550, 0]])                
+        K_inv = np.linalg.inv(target.K)
+        pts = K_inv.dot(np.array([[1208, 1550, 1]]).T)
         self.convert_pts_relative(target, newR, newT, pts)
 
     def convert_pts_relative(self, target, newR, newT, pts) : 
-        reproject = (newR.dot(pts.T) + newT)
+        reproject = target.K.dot(newR.dot(pts) + newT)
         #reproject = cv2.convertPointsFromHomogeneous(reproject.T)[:, 0, :].T
         print("convert_pts_releative.. ", reproject)
+
         return reproject
 
     def convert_pts(self, target):
