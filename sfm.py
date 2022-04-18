@@ -66,9 +66,10 @@ class SFM:
         # procedure for estimating the pose of all other views
         else:
 
-            pair.camera2.R, pair.camera2.t = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
+            pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
+            print("view -- Rvec ", pair.camera2.Rvec)
             errors = []
             print("-- view2 : ", pair.camera2.view.name)
             
@@ -193,7 +194,7 @@ class SFM:
 
     def compute_pose_pnp(self, view, K):
         """Computes pose of new view using perspective n-point"""
-
+        Rvec = np.zeros((3,1), dtype=float)
         if view.feature_type in ['sift', 'surf']:
             matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
         else:
@@ -227,11 +228,11 @@ class SFM:
         # compute new pose using solvePnPRansac
         # print("PNP .. point 3D", np.shape(points_3D))
         # print(points_3D)
-        _, R, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
+        _, Rvec, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
 
-        R, _ = cv2.Rodrigues(R)
-        return R, t
+        R, _ = cv2.Rodrigues(Rvec)
+        return R, t, Rvec
 
     def plot_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""

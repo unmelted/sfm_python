@@ -78,6 +78,7 @@ class Group(object):
                 j += 1
 
             self.sfm.plot_points()
+            print("run_sfm last -- Rvec2 ", pair_obj.camera2.Rvec)            
             if self.limit != 0 and j == self.limit :
                 break
 
@@ -90,12 +91,12 @@ class Group(object):
         
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
-            print(i, cam)
             self.adjust.get_camera_pos(cam)
-            self.adjust.convert_pts(cam)
+            print("-- index ", i, j)
 
-            if j > 0 :
-                self.adjust.get_camera_relative(self.cameras[i-1], cam)
+            if j > 1 :
+                self.adjust.convert_pts2(cam)
+                #self.adjust.get_camera_relative(self.cameras[i-1], cam)
             j += 1
 
             if self.limit != 0 and j == self.limit :

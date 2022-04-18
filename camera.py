@@ -14,6 +14,7 @@ class Camera(object):
         self.K = K        # intrinsic matrix
         self.R = np.zeros((3,3), dtype=float)     # rotation
         self.t = np.zeros((3,1), dtype=float)     # translation
+        self.Rvec = np.zeros((3,1), dtype=float)
         self.c = None  # camera center
         self.focal = None        
         self.view = View(image_name, root_path, feature_path=feature_path)        

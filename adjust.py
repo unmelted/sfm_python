@@ -14,7 +14,7 @@ class Adjust(object):
         self.calib_type = None  # 2d, 3d
         self.world = world
         scale = 1
-        self.normal = np.array([[1/scale, 0/scale, 0], [0/scale, 1/scale, 0/scale]])
+        self.normal = np.array([[50/scale, 50/scale, 0], [50/scale, 50/scale, -50/scale]])
     
     def get_initial_cp(self):
         if self.calib_type == '3D' : 
@@ -92,7 +92,20 @@ class Adjust(object):
             # print("reproject .. " ,reproject)
             target.pts.append(reproject)
     
-    def conver_center(self, target) :
+    def convert_pts2(self, target):
+        pts = (np.array([[1168.0, 1576.0, 0.0]]))
+        pts = pts.reshape((3,1))         
+        K_inv = np.linalg.inv(target.K)
+        pts = K_inv.dot(pts)  
+        distcoeff = np.array([[0., 0., 0., 0.]])
+        print("convert_pts2 .. start ")
+        print(target.Rvec)
+
+        projectvector, _ = cv2.projectPoints(pts, target.Rvec, target.t, target.K, distcoeff)
+        print("convert_pts2 .. " , projectvector)
+        print("convert_pts2 .. " , target.K.dot(projectvector))
+
+    def convert_center(self, target) :
         pass
 
 
