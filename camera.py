@@ -10,9 +10,11 @@ class Camera(object):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
+        self.extrinsic = None
         self.K = K        # intrinsic matrix
         self.R = np.zeros((3,3), dtype=float)     # rotation
         self.t = np.zeros((3,1), dtype=float)     # translation
+        self.Rvec = np.zeros((3,1), dtype=float)
         self.c = None  # camera center
         self.focal = None        
         self.view = View(image_name, root_path, feature_path=feature_path)        
@@ -28,10 +30,10 @@ class Camera(object):
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)
          Must either supply P or K, R, t """
-        if P is None:
+        if self.P is None:
             try:
-                self.extrinsic = np.hstack([R, t])
-                P = np.dot(K, self.extrinsic)
+                self.extrinsic = np.hstack([self.R, self.t])
+                self.P = np.dot(self.K, self.extrinsic)
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise

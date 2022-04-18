@@ -9,7 +9,7 @@ from cam_group import *
 
 
 
-def plot_cameras(cameras):
+def plot_cameras(cameras, limit):
     plt.figure(figsize=(24, 10))
     ax = make_3d_axis(1, 121, unit="m")
     plot_transform(ax)
@@ -22,8 +22,10 @@ def plot_cameras(cameras):
         plot_camera(ax, M=camera.K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=1)
         j += 1
 
-        if j == 3 : 
+        if limit != 0 and j == limit : 
             break
+        
+    plt.show()
 
 def plot_pointmap(sfm) :
     plt.figure()
