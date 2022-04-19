@@ -59,13 +59,15 @@ class Adjust(object):
         newT = target.t - temp
         print("new T " , newT)
         K_inv = np.linalg.inv(target.K)
-        pts = K_inv.dot(np.array([[1208, 1550, 0]]).T)
+        pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
         self.convert_pts_relative(target, newR, newT, pts)
 
     def convert_pts_relative(self, target, newR, newT, pts) : 
         reproject = target.K.dot(newR.dot(pts) + newT)
-        reproject = cv2.convertPointsFromHomogeneous(reproject.T)[:, 0, :].T
+        #reproject = cv2.convertPointsFromHomogeneous(reproject.T)[:, 0, :].T
         print("convert_pts_releative.. ", reproject)
+        K_inv = np.linalg.inv(target.K)      
+        print(".. " , K_inv.dot(reproject).T)          
 
         return reproject
 
@@ -106,7 +108,7 @@ class Adjust(object):
         print("convert_pts2 .. " , target.K.dot(projectvector))
 
     def convert_pts3(self, target) :
-        pts = np.array([[1208.0, 0.0, -1550.0]])
+        pts = np.array([[1470.0, 0.0, -630.0]])
         pts = pts.reshape((3, 1))
         K_inv = np.linalg.inv(target.K)
         #pts = K_inv.dot(pts)

@@ -95,8 +95,11 @@ class Group(object):
             print("-- index ", i, j)
 
             if j > 0 :
-                #self.adjust.get_camera_relative(self.cameras[i-1], cam)
                 self.adjust.convert_pts3(cam)
+            
+            if j > 1 : 
+                self.adjust.get_camera_relative(self.cameras[i-1], cam)
+                
             j += 1
 
             if self.limit != 0 and j == self.limit :
