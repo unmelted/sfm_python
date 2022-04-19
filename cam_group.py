@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 4
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -86,17 +86,20 @@ class Group(object):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         first_index = 0
-        self.cameras[first_index].pts = self.adjust.get_initial_cp()
+        #self.cameras[first_index].pts = self.adjust.get_initial_cp()
         j  = 0   
         
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
-            self.adjust.get_camera_pos(cam)
+            #self.adjust.get_camera_pos(cam)
             print("-- index ", i, j)
 
-            if j > 1 :
-                self.adjust.convert_pts2(cam)
-                #self.adjust.get_camera_relative(self.cameras[i-1], cam)
+            if j > 0 :
+                self.adjust.convert_pts3(cam)
+            
+            if j > 1 : 
+                self.adjust.get_camera_relative(self.cameras[i-1], cam)
+                
             j += 1
 
             if self.limit != 0 and j == self.limit :
