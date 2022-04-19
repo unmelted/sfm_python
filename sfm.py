@@ -173,10 +173,10 @@ class SFM:
 
             u1_normalized = K_inv.dot(u1)
             u2_normalized = K_inv.dot(u2)
-            # print(i, u1, u2)
-            # print(i, u1_normalized, u2_normalized)
 
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
+            #print("pix {} {} - u {} {} 3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], u1_normalized, u2_normalized, point_3D.T))
+
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
             error1 = calculate_reprojection_error(point_3D, u1[0:2], pair.camera1.K, pair.camera1.R, pair.camera1.t)
