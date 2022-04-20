@@ -20,5 +20,5 @@ class World(object):
                                     [572, 608, 0],
                                     [226, 608, 0]])
 
-        print(" Get World .. " , self.world_points)
+        #print(" Get World .. " , self.world_points)
 

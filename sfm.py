@@ -90,15 +90,15 @@ class SFM:
         """Computes and returns the rotation and translation components for the second view"""
 
         F , pair.inliers1, pair.inliers2 = remove_outliers_using_F(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
-
+        pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
-        logging.info("Computed essential matrix")
-        logging.info("Choosing correct pose out of 4 solutions")
+        # logging.info("Computed essential matrix")
+        # logging.info("Choosing correct pose out of 4 solutions")
 
-        print("get_pose.. F: ", F)
-        print("get_pose.. normal E: ", E)        
-        print('Computed essential matrix:', (-E / E[0][1]))
+        # print("get_pose.. F: ", F)
+        # print("get_pose.. normal E: ", E)        
+        # print('Computed essential matrix:', (-E / E[0][1]))
 
         return self.check_pose(pair, E)
 
@@ -163,8 +163,7 @@ class SFM:
         reprojection_error1 = []
         reprojection_error2 = []
         
-        print("triangulate_with .. len(pixel_points) : ", len(pixel_points1))
-        print("K_inv : ", K_inv)
+        # print("K_inv : ", K_inv)
 
         for i in range(len(pixel_points1)):
 

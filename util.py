@@ -105,7 +105,7 @@ def remove_outliers_using_F(view1, view2, indices1, indices2):
                                                               index_list2=indices2)
     F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
                                      ransacReprojThreshold=0.9, confidence=0.99)
-    print("FindFundamental : ", F)
+    # print("FindFundamental : ", F)
     mask = mask.astype(bool).flatten()
     inliers1 = np.array(indices1)[mask]
     inliers2 = np.array(indices2)[mask]
