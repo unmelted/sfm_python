@@ -17,7 +17,6 @@ class View(object):
         self.descriptors = []  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
-        print(self.image.shape)        
         self.image_width = self.image.shape[1]
         self.image_height = self.image.shape[0]
 
@@ -50,7 +49,7 @@ class View(object):
         # logic to compute features for images that don't have pkl files
         try:
             features = pickle.load(open(os.path.join(self.root_path, 'features', self.name + '.pkl'), "rb"))
-            logging.info("Read features from file for image %s", self.name)
+            # logging.info("Read features from file for image %s", self.name)
 
             keypoints = []
             descriptors = []

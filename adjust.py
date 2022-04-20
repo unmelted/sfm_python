@@ -36,11 +36,11 @@ class Adjust(object):
 
     def get_camera_pos(self, target):
         R_inv = np.linalg.inv(target.R)
-        zc = np.array([[0, 0, 1]]).T
+        zc = np.array([[0, 1, 0]]).T
         cam_pos = R_inv.dot(target.t)
         zw = R_inv.dot(zc)
         print("Camera pose z -- ", zw)
-        pan = math.atan2 (zw[1], zw[0]) - math.pi / 2
+        pan = math.atan2 (zw[2], zw[0]) - math.pi / 2
         xc = np.array([1, 0, 0]).T
         xw = R_inv.dot(xc)
         xpan = [math.cos(pan), math.sin(pan), 0]
@@ -50,17 +50,26 @@ class Adjust(object):
         print(roll, roll * 180/math.pi)
     
     def get_camera_relative(self, ref, target) :
-        print("get_camera_relative.. ref / target ") 
-        print(ref.R, target.R)
         newR = np.dot(target.R, ref.R.T)
-        print("get_camera_releative.. ", newR)
+        print("camera_releative.. ", newR)
 
         temp = np.dot(newR, ref.t)
         newT = target.t - temp
         print("new T " , newT)
         K_inv = np.linalg.inv(target.K)
-        pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
-        self.convert_pts_relative(target, newR, newT, pts)
+        # pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
+        # self.convert_pts_relative(target, newR, newT, pts)
+
+        temp = np.hstack([newR, newT])
+        P = np.dot(target.K, temp) 
+
+        ppts = ref.pts.reshape((3, 1))        
+        ppts = np.vstack([ppts, 1])
+        reproject = np.dot(P, ppts)
+        target.pts =  K_inv.dot(reproject).T    
+        target.pts[0][1] = 0            
+        print("camera_relative.. " , target.pts)
+
 
     def convert_pts_relative(self, target, newR, newT, pts) : 
         reproject = target.K.dot(newR.dot(pts) + newT)
@@ -107,8 +116,18 @@ class Adjust(object):
         print("convert_pts2 .. " , projectvector)
         print("convert_pts2 .. " , target.K.dot(projectvector))
 
-    def convert_pts3(self, target) :
-        pts = np.array([[1470.0, 0.0, -630.0]])
+    def convert_pts3(self, ppts, target) :
+        print("convert_pt3  ", ppts)
+        ppts = ppts.reshape((3, 1))        
+        K_inv = np.linalg.inv(target.K)
+        ppts = np.vstack([ppts, 1])
+        reproject = np.dot(target.P, ppts)
+        target.pts =  K_inv.dot(reproject).T
+        target.pts[0][1] = 0
+
+        print("convert_pt3 1.. " , target.pts)
+
+    def convert_pts4(self, ppts, target) :
         pts = pts.reshape((3, 1))
         K_inv = np.linalg.inv(target.K)
         #pts = K_inv.dot(pts)
@@ -116,10 +135,8 @@ class Adjust(object):
         reproject = np.dot(target.P, pts)        
         print("convert_pt3.. " , K_inv.dot(reproject).T)
 
-
-    def convert_center(self, target) :
-        pass
-
+        # reprojected_points = cv2.perspectiveTransform(src=points[np.newaxis], m=P)
+        # z = reprojected_points[0, :, -1]        
 
     def write_file(self):
         json_data = {

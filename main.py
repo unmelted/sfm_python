@@ -16,8 +16,8 @@ def run(args):
         return 0
 
     preset1.run_sfm()
-    preset1.generate_points()
-    preset1.visualize()
+    preset1.generate_points()    
+    preset1.visualize()    
 
 def set_args(parser):
 
