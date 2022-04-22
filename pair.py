@@ -43,23 +43,52 @@ class Pair:
         index = np.lexsort((unique[:, 0], unique[:, 2]))
         unique = unique[index]
         unique[:, 2] = np.round(unique[:, 2], 2)
-        abins=np.arange(min(unique[:, 2]), max(unique[:, 2])+0.01, step=0.1)
-        hist_z =  np.histogram(unique[:, 2], bins=abins)
-        print(hist_z)
-        maxz = np.max(hist_z[0])
-        print("check__ ", maxz)        
-        l = list(hist_z[0])
-        maxz_index = l.index(maxz)
-        print("check___  ", maxz_index)
-        maxz_val = hist_z[1][maxz_index]
-        print("check____  ", maxz_val)
 
-        # for i in range(len(self.points_3D)) :
-        #     print(sorted_3d[i][0], sorted_3d[i][1], sorted_3d[i][2], sorted_3d[i][3], sorted_3d[i][4], sorted_3d[i][5], sorted_3d[i][6])
-        for i in range(len(unique)) :
-            print(unique[i][0], unique[i][1], unique[i][2], unique[i][3], unique[i][4], unique[i][5], unique[i][6])
-        plt.hist(unique[:, 2], bins=abins)
-        plt.show()
+        # hist_z =  np.histogram(unique[:, 2], bins=abins)
+        # print(hist_z)
+        # maxz = np.max(hist_z[0])
+        # print("check__ ", maxz)        
+        # l = list(hist_z[0])
+        # maxz_index = l.index(maxz)
+        # print("check___  ", maxz_index)
+        # maxz_val = hist_z[1][maxz_index]
+        # print("check____  ", maxz_val)
+        zunique, counts = np.unique(unique[:, 2], return_counts=True)
+        max_index = np.argmax(counts)
+        zvalue = zunique[max_index]
+        print("hist __ " , max_index, zunique[max_index], unique[max_index, :])
+
+        find = np.where(unique == zvalue)
+        print(find)
+
+        # for i in range(len(unique)) :
+        #     print(unique[i][0], unique[i][1], unique[i][2], unique[i][3], unique[i][4], unique[i][5], unique[i][6])
+
+        cam1_pt = []
+        cam2_pt = []
+
+        for i in range(len(find[0])) :
+            print(unique[find[0][i]])
+            # print( ([unique[find[0][i]][3] , unique[find[0][i]][4]]) )
+            # print( ([unique[find[0][i]][5] , unique[find[0][i]][6]]) )
+            cam1_pt.append([unique[find[0][i]][3] , unique[find[0][i]][4]])
+            cam2_pt.append([unique[find[0][i]][5] , unique[find[0][i]][6]])
+
+        # print(cam1_pt)
+        # print(cam2_pt)
+        cam1_np = np.array(cam1_pt)
+        cam2_np = np.array(cam2_pt)
+
+        M , mask = cv2.findHomography(cam1_np, cam2_np, cv2.RANSAC, 1)
+        print(M)
+
+        ori = np.float32([ [2214.09, 75.21], [2701.92, 70.73], [2481.49, 145.95] ]).reshape(-1, 1, 2)
+        dst = cv2.perspectiveTransform(ori, M)
+        print(dst)
+
+        # abins=np.arange(min(unique[:, 2]), max(unique[:, 2])+0.01, step=0.1)            
+        # plt.hist(unique[:, 2], bins=abins)
+        # plt.show()
 
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
