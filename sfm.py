@@ -163,7 +163,7 @@ class SFM:
         reprojection_error1 = []
         reprojection_error2 = []
         
-        # print("K_inv : ", K_inv)
+        print("triangulate_with len  : ", len(pixel_points1))
 
         for i in range(len(pixel_points1)):
 
@@ -174,7 +174,13 @@ class SFM:
             u2_normalized = K_inv.dot(u2)
 
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
-            #print("pix {} {} - u {} {} 3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], u1_normalized, u2_normalized, point_3D.T))
+            #print("pix {} {} - 3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], point_3D.T))
+            px1x = pixel_points1[i, 0:].reshape((1,3))
+            px2x = pixel_points2[i, 0:].reshape((1,3))            
+            # print(point_3D.T.shape, pixel_points1[i, :].shape, px1x, px1x.shape)
+            element = np.hstack([point_3D.T[0][0], point_3D.T[0][1], point_3D.T[0][2], px1x[0][0], px1x[0][1], px2x[0][0], px2x[0][1]])
+            element = element.reshape(7)
+            pair.points_3D = np.vstack((pair.points_3D, element))
 
             self.points_3D = np.concatenate((self.points_3D, point_3D.T), axis=0)
 
@@ -189,7 +195,7 @@ class SFM:
             self.point_map[(self.get_index_of_view(pair.camera2.view), pair.inliers2[i])] = self.point_counter
             self.point_counter += 1
 
-        #print(self.points_3D)
+        print("triangulate_with2 len  : ", len(pair.points_3D))
         return reprojection_error1, reprojection_error2
 
     def compute_pose_pnp(self, view, K):
@@ -233,10 +239,6 @@ class SFM:
 
         R, _ = cv2.Rodrigues(Rvec)
         return R, t, Rvec
-
-    def check_data(self) :
-        #point_t = self.points_3D[self.point_map[(0, 1)], :]
-        pass
 
     def plot_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""
