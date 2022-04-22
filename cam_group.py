@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 4
+        self.limit = 2
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -82,30 +82,41 @@ class Group(object):
             if self.limit != 0 and j == self.limit :
                 break
 
+    def check_pair(self) :
+        for i, pair in enumerate(self.pairs):
+            pair_obj = self.pairs[pair]
+            print("Pair name ", pair_obj.image_name1, pair_obj.image_name2)
+            pair_obj.check_points_3d()
+            break
+
     def generate_points(self) :
         self.world.get_world()
         self.adjust = Adjust(self.world)
         first_index = 0
         #self.cameras[first_index].pts = self.adjust.get_initial_cp()
-        j  = 0   
-        
+
+        self.check_pair()
+
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
             #self.adjust.get_camera_pos(cam)
-            print("-- index ", i, j)
 
-            if j == 0 :
-                cam.pts = np.array([[1208.0, 0, -1550.0]])
-            elif j > 0 :
+            continue
+            if i == 0 :
+                cam.pts = np.array([[1208.0, 1, -1550.0]])
+                self.adjust.convert_pts3(cam.pts, cam)                
+            elif i > 0 :
                 self.adjust.convert_pts3(self.cameras[j -1].pts, cam)
                 self.adjust.get_camera_relative(self.cameras[j -1], cam)
-            
-            j += 1
+                # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
 
-            if self.limit != 0 and j == self.limit :
+            if i > 1 :
+                self.adjust.convert_pts2(self.cameras[j -1].pts, cam)
+
+            if self.limit != 0 and i == self.limit :
                 break
 
     def visualize(self) :
         print("visualize camera in  group")        
-        plot_cameras(self.cameras, self.limit)
+        #plot_cameras(self.cameras, self.limit)
         #plot_pointmap(self.sfm)
