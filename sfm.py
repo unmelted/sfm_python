@@ -189,6 +189,7 @@ class SFM:
             self.point_map[(self.get_index_of_view(pair.camera2.view), pair.inliers2[i])] = self.point_counter
             self.point_counter += 1
 
+        #print(self.points_3D)
         return reprojection_error1, reprojection_error2
 
     def compute_pose_pnp(self, view, K):
@@ -232,6 +233,10 @@ class SFM:
 
         R, _ = cv2.Rodrigues(Rvec)
         return R, t, Rvec
+
+    def check_data(self) :
+        #point_t = self.points_3D[self.point_map[(0, 1)], :]
+        pass
 
     def plot_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""

@@ -20,6 +20,7 @@ class Pair:
         self.camera1 = camera1
         self.camera2 = camera2
         self.match = None
+        self.points_3D = []
 
         if camera1.view.feature_type in ['sift', 'surf']:
             self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)

@@ -94,12 +94,19 @@ class Group(object):
             #self.adjust.get_camera_pos(cam)
             print("-- index ", i, j)
 
+            self.sfm.check_data()
+            continue
             if j == 0 :
-                cam.pts = np.array([[1208.0, 0, -1550.0]])
+                cam.pts = np.array([[1208.0, 1, -1550.0]])
+                self.adjust.convert_pts3(cam.pts, cam)                
             elif j > 0 :
                 self.adjust.convert_pts3(self.cameras[j -1].pts, cam)
                 self.adjust.get_camera_relative(self.cameras[j -1], cam)
-            
+                # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
+
+            if j > 1 :
+                self.adjust.convert_pts2(self.cameras[j -1].pts, cam)
+
             j += 1
 
             if self.limit != 0 and j == self.limit :
@@ -107,5 +114,5 @@ class Group(object):
 
     def visualize(self) :
         print("visualize camera in  group")        
-        plot_cameras(self.cameras, self.limit)
+        #plot_cameras(self.cameras, self.limit)
         #plot_pointmap(self.sfm)
