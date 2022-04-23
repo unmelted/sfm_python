@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 2
+        self.limit = 3
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -95,23 +95,23 @@ class Group(object):
         first_index = 0
         #self.cameras[first_index].pts = self.adjust.get_initial_cp()
 
-        self.check_pair()
+        #self.check_pair()
 
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
             #self.adjust.get_camera_pos(cam)
 
-            continue
             if i == 0 :
-                cam.pts = np.array([[1208.0, 1, -1550.0]])
+                cam.pts = np.array([[1208, 0, -1550]])
+                #cam.pts = np.array([[-7.2317, -0.87646, 38.04794]])
+                #cam.pts = np.array([[-0.3315, -1.1581, 38.54]])                
                 self.adjust.convert_pts3(cam.pts, cam)                
             elif i > 0 :
-                self.adjust.convert_pts3(self.cameras[j -1].pts, cam)
-                self.adjust.get_camera_relative(self.cameras[j -1], cam)
-                # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
+                self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
+            # self.adjust.get_camera_relative(self.cameras[i -1], cam)
+            # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
 
-            if i > 1 :
-                self.adjust.convert_pts2(self.cameras[j -1].pts, cam)
+            self.adjust.convert_pts2(cam.pts, cam)
 
             if self.limit != 0 and i == self.limit :
                 break

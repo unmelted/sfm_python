@@ -104,21 +104,20 @@ class Adjust(object):
         #     target.pts.append(reproject)
     
     def convert_pts2(self, ppts, target):
-        # ppts[0][1] = -1 * ppts[0][2]
-        # ppts[0][2] = 0.0
-        print("convert_pts2 .. ", ppts)        
-        ppts = ppts.reshape((3,1))         
+        print("convert_pts2 .. ", target.view.name, ppts, ppts.shape)        
+        pts = np.zeros((3), dtype=np.float)
+        pts[0] = ppts[0][0]
+        pts[1] = -1*ppts[0][1]
+        pts[2] = ppts[0][2]
+        pts = np.array([pts])
+        print(pts)
+        #ppts = pts.reshape((3,1))         
         K_inv = np.linalg.inv(target.K)
-
+        #ppts = np.vstack([ppts, 1])        
+        #ppts = K_inv.dot(ppts)
         distcoeff = np.array([[0., 0., 0., 0.]])
         projectvector, _ = cv2.projectPoints(ppts, target.Rvec, target.t, target.K, distcoeff)
-        projectvector = projectvector[0][0]
         print("convert_pts2 .. " , projectvector)
-
-        projectvector = np.hstack([projectvector, 0])
-        projectvector = projectvector.reshape((3,1))
-        print(projectvector)
-        print("convert_pts2 .. " , K_inv.dot(projectvector))
 
     def convert_pts3(self, ppts, target) :
         print("convert_pt3  ", ppts)
@@ -127,8 +126,7 @@ class Adjust(object):
         ppts = np.vstack([ppts, 1])
         reproject = np.dot(target.P, ppts)
         target.pts =  K_inv.dot(reproject).T
-        # target.pts[0][1] = 0        
-
+        # target.pts =  reproject
         print("convert_pt3 1.. " , target.pts)
 
     def convert_pts4(self, ppts, target) :

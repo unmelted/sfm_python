@@ -40,10 +40,13 @@ class Pair:
         #sorted_3d = sorted(self.points_3D, key=lambda x: x[2])
         unique = np.unique(self.points_3D, axis=0)
         print("unique .. ", len(unique))
+        for i in range(len(unique)) :
+            print(("{0:0.5f} {1:0.5f} {2:0.5f} {3:0.2f} {4:0.2f} {5:0.2f} {6:0.2f}").format(unique[i][0], unique[i][1], unique[i][2], unique[i][3], unique[i][4], unique[i][5], unique[i][6]))
+
         index = np.lexsort((unique[:, 0], unique[:, 2]))
         unique = unique[index]
         unique[:, 2] = np.round(unique[:, 2], 2)
-
+        
         # hist_z =  np.histogram(unique[:, 2], bins=abins)
         # print(hist_z)
         # maxz = np.max(hist_z[0])
@@ -53,6 +56,7 @@ class Pair:
         # print("check___  ", maxz_index)
         # maxz_val = hist_z[1][maxz_index]
         # print("check____  ", maxz_val)
+
         zunique, counts = np.unique(unique[:, 2], return_counts=True)
         max_index = np.argmax(counts)
         zvalue = zunique[max_index]
@@ -60,9 +64,6 @@ class Pair:
 
         find = np.where(unique == zvalue)
         print(find)
-
-        # for i in range(len(unique)) :
-        #     print(unique[i][0], unique[i][1], unique[i][2], unique[i][3], unique[i][4], unique[i][5], unique[i][6])
 
         cam1_pt = []
         cam2_pt = []

@@ -55,7 +55,9 @@ class SFM:
             pair.camera2.R, pair.camera2.t = self.get_pose(pair)
             print("baseline -- R : ", pair.camera2.R)
             print("baseline -- T : ", pair.camera2.t)
-
+            pair.camera1.Rvec, _ = cv2.Rodrigues(pair.camera1.R)
+            pair.camera2.Rvec, _ = cv2.Rodrigues(pair.camera2.R)
+            print("baseline -- Rvec : ", pair.camera1.Rvec, pair.camera2.Rvec)
             rpe1, rpe2 = self.triangulate_with(pair)
             self.errors.append(np.mean(rpe1))
             self.errors.append(np.mean(rpe2))
@@ -162,7 +164,8 @@ class SFM:
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
         reprojection_error2 = []
-        
+        print(pixel_points1.shape)
+        print(pixel_points1)
         print("triangulate_with len  : ", len(pixel_points1))
 
         for i in range(len(pixel_points1)):
