@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 4
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -108,7 +108,7 @@ class Group(object):
                 self.adjust.convert_pts3(cam.pts, cam)                
             elif i > 0 :
                 self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
-            # self.adjust.get_camera_relative(self.cameras[i -1], cam)
+                self.adjust.get_camera_relative2(self.cameras[i -1], cam)
             # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
 
             self.adjust.convert_pts2(cam.pts, cam)
@@ -118,5 +118,5 @@ class Group(object):
 
     def visualize(self) :
         print("visualize camera in  group")        
-        #plot_cameras(self.cameras, self.limit)
+        plot_cameras(self.cameras, self.limit)
         #plot_pointmap(self.sfm)

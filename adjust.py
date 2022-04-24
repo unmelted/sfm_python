@@ -50,17 +50,17 @@ class Adjust(object):
         print(roll, roll * 180/math.pi)
     
     def get_camera_relative(self, ref, target) :
-        newR = np.dot(target.R, ref.R.T)
+        newR = np.dot(target.R.T, ref.R)
         print("camera_releative.. ", newR)
 
-        temp = np.dot(newR, ref.t)
-        newT = target.t - temp
-        print("new T " , np.dot(target.K, newT))
+        temp = -1* np.dot(newR, ref.t)
+        newT = temp + target.t
         K_inv = np.linalg.inv(target.K)
+        print("new T " , newT)
         # pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
         # self.convert_pts_relative(target, newR, newT, pts)
 
-        temp = np.hstack([newR, target.t])
+        temp = np.hstack([newR, newT])
         P = np.dot(target.K, temp) 
 
         ppts = ref.pts.reshape((3, 1))        
@@ -70,6 +70,24 @@ class Adjust(object):
         # target.pts[0][1] = 0            
         print("camera_relative.. " , target.pts)
 
+    def get_camera_relative2(self, ref, target) :
+        newR = np.dot(ref.R.T, target.R)
+        print("camera_releative.. ", newR)
+
+        temp = -1* np.dot(newR, target.t)
+        newT = temp + ref.t
+        K_inv = np.linalg.inv(target.K)
+        print("new T " , newT)
+
+        temp = np.hstack([newR, newT])
+        P = np.dot(target.K, temp) 
+
+        ppts = ref.pts.reshape((3, 1))        
+        ppts = np.vstack([ppts, 1])
+        reproject = np.dot(P, ppts)
+        target.pts =  K_inv.dot(reproject).T    
+        # target.pts[0][1] = 0            
+        print("camera_relative.. " , target.pts)
 
     def convert_pts_relative(self, target, newR, newT, pts) : 
         reproject = target.K.dot(newR.dot(pts) + newT)
@@ -107,12 +125,12 @@ class Adjust(object):
         print("convert_pts2 .. ", target.view.name, ppts, ppts.shape)        
         pts = np.zeros((3), dtype=np.float)
         pts[0] = ppts[0][0]
-        pts[1] = -1*ppts[0][1]
+        pts[1] = ppts[0][1]
         pts[2] = ppts[0][2]
         pts = np.array([pts])
         print(pts)
-        #ppts = pts.reshape((3,1))         
-        K_inv = np.linalg.inv(target.K)
+        ppts = pts.reshape((3,1))         
+        #K_inv = np.linalg.inv(target.K)
         #ppts = np.vstack([ppts, 1])        
         #ppts = K_inv.dot(ppts)
         distcoeff = np.array([[0., 0., 0., 0.]])

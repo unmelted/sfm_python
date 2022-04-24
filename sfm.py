@@ -53,6 +53,7 @@ class SFM:
             pair.camera1.R = np.eye(3, 3)  # identity rotation since the first view is said to be at the origin            
             match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
             pair.camera2.R, pair.camera2.t = self.get_pose(pair)
+            #pair.camera2.t = pair.camera2.t * -1
             print("baseline -- R : ", pair.camera2.R)
             print("baseline -- T : ", pair.camera2.t)
             pair.camera1.Rvec, _ = cv2.Rodrigues(pair.camera1.R)
@@ -69,6 +70,7 @@ class SFM:
         else:
 
             pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
+            #pair.camera2.t = pair.camera2.t * -1
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
             print("view -- Rvec ", pair.camera2.Rvec)
@@ -164,9 +166,9 @@ class SFM:
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
         reprojection_error2 = []
-        print(pixel_points1.shape)
-        print(pixel_points1)
-        print("triangulate_with len  : ", len(pixel_points1))
+        #print(pixel_points1.shape)
+        #print(pixel_points1)
+        #print("triangulate_with len  : ", len(pixel_points1))
 
         for i in range(len(pixel_points1)):
 
@@ -198,7 +200,7 @@ class SFM:
             self.point_map[(self.get_index_of_view(pair.camera2.view), pair.inliers2[i])] = self.point_counter
             self.point_counter += 1
 
-        print("triangulate_with2 len  : ", len(pair.points_3D))
+        #print("triangulate_with2 len  : ", len(pair.points_3D))
         return reprojection_error1, reprojection_error2
 
     def compute_pose_pnp(self, view, K):
