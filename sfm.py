@@ -241,7 +241,9 @@ class SFM:
         # print(points_3D)
         _, Rvec, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
-
+        # Rvec2, t2 = cv2.solvePnPRefineLM(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None, Rvec, t, criteria=(cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_COUNT, 20, 0.1))
+        # print(" LM .. ", Rvec, Rvec2)
+        # print(" LM .. ", t, t2)        
         R, _ = cv2.Rodrigues(Rvec)
         return R, t, Rvec
 

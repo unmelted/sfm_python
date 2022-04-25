@@ -109,9 +109,9 @@ class Group(object):
             elif i > 0 :
                 self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
                 self.adjust.get_camera_relative2(self.cameras[i -1], cam)
-            # self.adjust.convert_pts4(self.cameras[j -1].pts, cam)                
+                self.adjust.convert_pts5(self.cameras[i -1].pts, self.cameras[i -1], cam)
 
-            self.adjust.convert_pts2(cam.pts, cam)
+            #self.adjust.convert_pts2(cam.pts, cam)
 
             if self.limit != 0 and i == self.limit :
                 break
