@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 4
+        self.limit = 5
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
