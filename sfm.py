@@ -179,7 +179,7 @@ class SFM:
             u2_normalized = K_inv.dot(u2)
 
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
-            #print("pix {} {} - 3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], point_3D.T))
+            #print("pix {} {} - normal {} {} ,  3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], u1_normalized, u2_normalized, point_3D.T))
             px1x = pixel_points1[i, 0:].reshape((1,3))
             px2x = pixel_points2[i, 0:].reshape((1,3))            
             # print(point_3D.T.shape, pixel_points1[i, :].shape, px1x, px1x.shape)

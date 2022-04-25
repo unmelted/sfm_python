@@ -114,11 +114,10 @@ def remove_outliers_using_F(view1, view2, indices1, indices2):
 
 def calculate_reprojection_error(point_3D, point_2D, K, R, t):
     """Calculates the reprojection error for a 3D point by projecting it back into the image plane"""
-
+    #print("error input point : ", point_3D, point_2D)    
     reprojected_point = K.dot(R.dot(point_3D) + t)
-    # print(point_3D)
     reprojected_point = cv2.convertPointsFromHomogeneous(reprojected_point.T)[:, 0, :].T
-    # print(reprojected_point)    
+    #print("error output reproject : ", reprojected_point)    
     # print(point_2D.reshape((2, 1)))
     error = np.linalg.norm(point_2D.reshape((2, 1)) - reprojected_point)
     return error

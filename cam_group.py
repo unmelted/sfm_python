@@ -100,22 +100,32 @@ class Group(object):
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
             #self.adjust.get_camera_pos(cam)
-
             if i == 0 :
-                cam.pts = np.array([[-1208, -1550, 0]])
-                self.adjust.convert_pts5(cam.pts, cam)                
-                #cam.pts = np.array([[-7.2317, -0.87646, 38.04794]])
-                #cam.pts = np.array([[-0.3315, -1.1581, 38.54]])                
-                self.adjust.convert_pts3(cam.pts, cam)                
-            elif i > 0 :
-                self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
-                self.adjust.convert_pts5(cam.pts, cam)                                
-                self.adjust.get_camera_relative2(self.cameras[i -1], cam)
+                cam.pts = np.array([1208.0, 1550.0, 1.0])
+            elif i == 1 : 
+                cam.pts = np.array([1162.0, 1579.0, 1.0])
+                print("check shape : ", cam.pts.shape)
+            if i > 1 : 
+                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
 
+            if i > 0 :
+                self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
 
 
             if self.limit != 0 and i == self.limit :
-                break
+                break                
+
+            continue
+            if i == 0 :
+                cam.pts = np.array([[-1208, -1550, 0]])
+                self.adjust.convert_pts3(cam.pts, cam)                
+                # self.adjust.convert_pts5(cam.pts, cam)                                
+            elif i > 0 :
+                self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
+                # self.adjust.convert_pts5(cam.pts, cam)                                
+                self.adjust.get_camera_relative2(self.cameras[i -1], cam)
+
+
 
     def visualize(self) :
         print("visualize camera in  group")        

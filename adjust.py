@@ -168,13 +168,48 @@ class Adjust(object):
         ppts = K_inv.dot(ppts)        
         ppts = np.vstack([ppts, 1])
         R_inv = np.linalg.inv(target.R)                 
-        temp = -1 * np.hstack([R_inv, target.t])
+        temp = np.dot(R_inv, target.t)
+        print("convert_pt5.. campos : ", temp)
         temp = np.dot(target.K, temp)
-        back_proj = np.dot(temp, ppts)
-        back_proj = np.vstack([back_proj, 1])        
-        print("convert_pt5 .. ", back_proj)
-        move_pt = np.dot(target.P, back_proj)        
-        print("convert_pt5.. " , move_pt, np.dot(K_inv, move_pt))
+        # back_proj = np.dot(temp, ppts)
+        # back_proj = np.vstack([back_proj, 1])        
+        # print("convert_pt5 .. ", back_proj)
+        # move_pt = np.dot(target.P, back_proj)        
+        # print("convert_pt5.. " , move_pt, np.dot(K_inv, move_pt))
+
+
+    def make_3D(self, c0, c1) :
+        print("check_pts .. ", c0.view.name, c1.view.name)
+
+        cam0 = c0.pts
+        cam1 = c1.pts
+        c0.pts = c0.pts.reshape((3, 1))
+        c1.pts = c1.pts.reshape((3, 1))        
+        print(cam0, cam1)
+        K_inv = np.linalg.inv(c1.K)                         
+        u1_normalized = K_inv.dot(cam0)
+        u2_normalized = K_inv.dot(cam1)
+
+        point_3D = get_3D_point(u1_normalized, c0.extrinsic, u2_normalized, c1.extrinsic)
+
+        print("make 3D  .. point_3d : ", point_3D)
+        error1 = calculate_reprojection_error(point_3D, cam0[0:2], c0.K, c0.R, c0.t)
+        error2 = calculate_reprojection_error(point_3D, cam1[0:2], c1.K, c1.R, c1.t)
+        print("make 3D error  .. ", error1, error2)
+
+        c1.pts_3D = point_3D
+
+    def reproject_3D(self, c0, c1) :
+        print("reproject_3D ..", c1.view.name)
+        print("pts_3D : ", c0.pts_3D)
+        moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
+        moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
+        c1.pts = np.vstack([moved, 1])
+        c1.pts = c1.pts.reshape((3, 1))
+        print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
+        print("reproject fianl : ", moved, c1.pts)
+
+
 
     def write_file(self):
         json_data = {
