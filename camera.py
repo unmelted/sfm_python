@@ -33,7 +33,7 @@ class Camera(object):
          Must either supply P or K, R, t """
         if self.P is None:
             try:
-                self.extrinsic = np.hstack([self.R, self.t])
+                self.extrinsic =  np.hstack([self.R, self.t])
                 self.P = np.dot(self.K, self.extrinsic)
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
