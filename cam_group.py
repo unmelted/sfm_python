@@ -25,12 +25,15 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 0
+        self.limit = 3
+
+        self.root_path = None
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
 
         feature_path = False
+        self.root_path = root_path
 
         # if features directory exists, the feature files are read from there
         logging.info("Created features directory")
@@ -57,6 +60,52 @@ class Group(object):
 
         return 0
 
+    def write_cameras(self):
+        if not os.path.exists(os.path.join(self.root_path, 'cameras')):
+            os.makedirs(os.path.join(self.root_path, 'cameras'))
+
+        temp_array = []
+        for i, cam in enumerate(self.cameras):
+            temp = (cam.id, cam.P, cam.EX, cam.K, cam.R, cam.t, cam.F, cam.Rvec)
+            temp_array.append(temp)
+
+            matches_file = open(os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'), 'wb')
+            pickle.dump(temp_array, matches_file)
+            matches_file.close()
+
+            if self.limit != 0 and i == self.limit :
+                break
+
+
+
+    def read_cameras(self):
+            for i, cam in enumerate(self.cameras):            
+                try:                
+                    tcon = pickle.load(
+                        open(
+                            os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'),
+                            "rb"
+                        )
+                    )
+                except FileNotFoundError:
+                    logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
+                    break
+
+                cam.id = tcon[0]
+                cam.P = tcon[1]
+                cam.EX = tcon[2]
+                cam.K = tcon[3]
+                cam.R = tcon[4]
+                cam.T = tcon[5]
+                cam.F = tcon[6]
+                cam.Rvec = tcon[7]
+                logging.info("Read cameras from file for view %s ", cam.view.name)
+
+                if self.limit != 0 and i == self.limit :
+                    break
+
+
+    
     def run_sfm(self) :
         baseline = True
         j  = 0          
@@ -81,6 +130,8 @@ class Group(object):
 
             if self.limit != 0 and j == self.limit :
                 break
+
+        self.write_cameras()
 
     def check_pair(self) :
         for i, pair in enumerate(self.pairs):
@@ -158,6 +209,10 @@ class Group(object):
                 min = terr
 
             error += terr
+
+            if self.limit != 0 and i == self.limit :
+                break
+
 
         print("total real error : {} max {} min {} ".format(error, max, min))
 

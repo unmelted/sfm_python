@@ -35,7 +35,7 @@ class Camera(object):
         if self.P is None:
             try:
                 self.EX =  np.hstack([self.R, self.t])
-                self.P = np.dot(self.K, self.EX
+                self.P = np.dot(self.K, self.EX)
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
