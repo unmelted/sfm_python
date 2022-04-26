@@ -190,7 +190,7 @@ class Adjust(object):
         u1_normalized = K_inv.dot(cam0)
         u2_normalized = K_inv.dot(cam1)
 
-        point_3D = get_3D_point(u1_normalized, c0.extrinsic, u2_normalized, c1.extrinsic)
+        point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
 
         print("make 3D  .. point_3d : ", point_3D)
         error1 = calculate_reprojection_error(point_3D, cam0[0:2], c0.K, c0.R, c0.t)

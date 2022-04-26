@@ -10,7 +10,7 @@ class Camera(object):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
-        self.extrinsic = None
+        self.EX = None
         self.K = K        # intrinsic matrix
         self.R = np.zeros((3,3), dtype=float)     # rotation
         self.t = np.zeros((3,1), dtype=float)     # translation
@@ -34,8 +34,8 @@ class Camera(object):
          Must either supply P or K, R, t """
         if self.P is None:
             try:
-                self.extrinsic =  np.hstack([self.R, self.t])
-                self.P = np.dot(self.K, self.extrinsic)
+                self.EX =  np.hstack([self.R, self.t])
+                self.P = np.dot(self.K, self.EX
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise

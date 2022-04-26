@@ -10,8 +10,8 @@ from cam_group import *
 
 
 def plot_cameras(cameras, limit):
-    plt.figure(figsize=(24, 10))
-    ax = make_3d_axis(1, 121, unit="m")
+    plt.figure(figsize=(20, 10))
+    ax = make_3d_axis(1, 111, 10)
     plot_transform(ax)
     focal_length = 10
     j  = 0   
@@ -24,7 +24,8 @@ def plot_cameras(cameras, limit):
 
         if limit != 0 and j == limit : 
             break
-        
+
+    plt.rcParams['figure.figsize'] = [1, 1]
     plt.show()
 
 def plot_pointmap(sfm) :

@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 5
+        self.limit = 0
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -97,6 +97,7 @@ class Group(object):
 
         #self.check_pair()
 
+
         for i, cam in enumerate(self.cameras):
             cam.calculate_p()
             #self.adjust.get_camera_pos(cam)
@@ -125,6 +126,40 @@ class Group(object):
                 # self.adjust.convert_pts5(cam.pts, cam)                                
                 self.adjust.get_camera_relative2(self.cameras[i -1], cam)
 
+
+    def calculate_real_error(self) :
+        answer = np.array([[1208.0, 1550.0], #3085
+                         [1162.0, 1579.0], #3086
+                         [1150.0, 1538.0], #3087
+                         [1115.0, 1527.0], #3088
+                         [1080.0, 1520.0], #3089
+                         [1052.0, 1488.0], #3090
+                         [1039.0, 1446.0], #3091
+                         [1001.0, 1427.0], #3092
+                         [953.0, 1392.0], #3093
+                         [933.0, 1397.0], #3094
+                         [901.0, 1373.0], #3095
+        ])
+        max = 0
+        min = 10000
+        error = 0
+        for i in range(len(self.cameras)) :
+            if i < 2 : 
+                continue
+            tg = self.cameras[i].pts[:-1].reshape((2))
+            #print(" .. ", tg, tg.shape)
+            print("i {} pts {} - answer {}".format(i, tg, answer[i, :]))
+            terr = np.linalg.norm(tg - answer[i, :])
+            print("terr : ", terr)
+            if terr > max : 
+                max = terr
+
+            if terr < min : 
+                min = terr
+
+            error += terr
+
+        print("total real error : {} max {} min {} ".format(error, max, min))
 
 
     def visualize(self) :
