@@ -17,7 +17,7 @@ class Camera(object):
         self.F = np.zeros((3,3), dtype=float)
         self.Rvec = np.zeros((3,1), dtype=float)
         self.c = None  # camera center
-        self.focal = None        
+        self.focal = K[0][0]        
         self.view = View(image_name, root_path, feature_path=feature_path)        
 
         ''' related adjust value '''

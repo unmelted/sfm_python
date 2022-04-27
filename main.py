@@ -3,7 +3,6 @@ import numpy as np
 import logging
 import argparse
 import visualize
-import extn_util
 
 def run(args):
 
