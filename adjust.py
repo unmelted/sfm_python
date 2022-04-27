@@ -181,33 +181,43 @@ class Adjust(object):
     def make_3D(self, c0, c1) :
         print("check_pts .. ", c0.view.name, c1.view.name)
 
-        cam0 = c0.pts
-        cam1 = c1.pts
-        c0.pts = c0.pts.reshape((3, 1))
-        c1.pts = c1.pts.reshape((3, 1))        
-        print(cam0, cam1)
-        K_inv = np.linalg.inv(c1.K)                         
-        u1_normalized = K_inv.dot(cam0)
-        u2_normalized = K_inv.dot(cam1)
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
+        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
 
-        point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+        for i in range(c0.pts.shape[0]) :
+            K_inv = np.linalg.inv(c1.K)                         
+            u1_normalized = K_inv.dot(cam0[i, :])
+            u2_normalized = K_inv.dot(cam1[i, :])
 
-        print("make 3D  .. point_3d : ", point_3D)
-        error1 = calculate_reprojection_error(point_3D, cam0[0:2], c0.K, c0.R, c0.t)
-        error2 = calculate_reprojection_error(point_3D, cam1[0:2], c1.K, c1.R, c1.t)
-        print("make 3D error  .. ", error1, error2)
+            point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
 
-        c1.pts_3D = point_3D
+            error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
+            error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
+            print("make 3D error  .. ", point_3D, error1, error2)
+            c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
+
 
     def reproject_3D(self, c0, c1) :
         print("reproject_3D ..", c1.view.name)
         print("pts_3D : ", c0.pts_3D)
-        moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
-        moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
-        c1.pts = np.vstack([moved, 1])
-        c1.pts = c1.pts.reshape((3, 1))
-        #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
-        print("reproject fianl : ", moved, c1.pts)
-        temp = np.vstack([c0.pts_3D, 1])
-        temp = temp.reshape((4, 1))
-        print("compare function .. :  ", c1.project(temp))
+
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts_3D)[:, 0, :]
+
+        for i in range(c0.pts.shape[0]) :
+            cv_pts = c0.pts_3D[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c1.project(cv_pts)
+            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+        
+            # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
+            # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
+            # c1.pts = np.vstack([moved, 1])
+            # c1.pts = c1.pts.reshape((3, 1))
+            # #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
+            # print("reproject fianl : ", moved, c1.pts)
+            # temp = np.vstack([c0.pts_3D, 1])
+            # temp = temp.reshape((4, 1))
+            # print("compare function .. :  ", c1.project(temp))
