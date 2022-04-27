@@ -52,7 +52,7 @@ class SFM:
             print("view -- 1 : 2 ", pair.camera1.view.name, pair.camera2.view.name)
             pair.camera1.R = np.eye(3, 3)  # identity rotation since the first view is said to be at the origin            
             match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
-            pair.camera2.R, pair.camera2.t = self.get_pose(pair)
+            pair.camera2.R, pair.camera2.t = self.compute_pose_base(pair)
             #pair.camera2.t = pair.camera2.t * -1
             print("baseline -- R : ", pair.camera2.R)
             print("baseline -- T : ", pair.camera2.t)
@@ -85,7 +85,7 @@ class SFM:
                 print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                    _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    _, pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
@@ -95,15 +95,13 @@ class SFM:
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
 
-    def get_pose(self, pair):
+    def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , pair.inliers1, pair.inliers2 = remove_outliers_using_F(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
+        F , pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
         pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
-        # logging.info("Computed essential matrix")
-        # logging.info("Choosing correct pose out of 4 solutions")
 
         # print("get_pose.. F: ", F)
         # print("get_pose.. normal E: ", E)        
@@ -220,7 +218,6 @@ class SFM:
         old_descriptors = []
         for old_view in self.done:
             old_descriptors.append(old_view.descriptors)
-            print(" old view name : ", old_view.name)            
 
         # match old descriptors against the descriptors in the new view
         matcher.add(old_descriptors)
@@ -243,7 +240,6 @@ class SFM:
 
         # compute new pose using solvePnPRansac
         # print("PNP .. point 3D", np.shape(points_3D))
-        # print(points_3D)
         _, Rvec, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
         # Rvec2, t2 = cv2.solvePnPRefineLM(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None, Rvec, t, criteria=(cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_COUNT, 20, 0.1))

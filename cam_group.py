@@ -12,7 +12,7 @@ from view import *
 from visualize import *
 from adjust import *
 from world import *
-
+from extn_util import * 
 
 class Group(object):
 
@@ -25,9 +25,10 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 0
 
         self.root_path = None
+        self.answer = []
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -177,6 +178,11 @@ class Group(object):
 
 
     def calculate_real_error(self) :
+
+        filename = os.path.join(self.root_path, 'images', 'answer.pts')
+        import_answer(filename)
+
+        '''
         answer = np.array([[1208.0, 1550.0], #3085
                          [1162.0, 1579.0], #3086
                          [1150.0, 1538.0], #3087
@@ -213,7 +219,7 @@ class Group(object):
 
 
         print("total real error : {} max {} min {} ".format(error, max, min))
-
+        '''
 
     def visualize(self) :
         print("visualize camera in  group")        

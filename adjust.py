@@ -211,23 +211,3 @@ class Adjust(object):
         temp = np.vstack([c0.pts_3D, 1])
         temp = temp.reshape((4, 1))
         print("compare function .. :  ", c1.project(temp))
-
-
-    def write_file(self):
-        json_data = {
-                "RecordName" : None,
-                "PreSetNumber" : 0,
-                "worlds" : [
-                    {
-                            
-                        "group":None,
-                        "stadium":None,
-                        "world_coords":None
-                    }
-                ]
-                    ,
-                "points" : None
-            }
-        json_data['worlds'][0]['group'] = "Group1"
-        json_data['worlds'][0]['stadium'] = self.world.stadium
-            

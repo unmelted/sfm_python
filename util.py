@@ -96,7 +96,7 @@ def get_3D_point(u1, P1, u2, P2):
     return X[1]
 
 
-def remove_outliers_using_F(view1, view2, indices1, indices2):
+def compute_fundamenta_remove_outliers(view1, view2, indices1, indices2):
     """Removes outlier keypoints using the fundamental matrix"""
 
     pixel_points1, pixel_points2 = get_keypoints_from_indices(keypoints1=view1.keypoints,

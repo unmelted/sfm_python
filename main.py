@@ -18,12 +18,15 @@ def run(args):
     if args.mode == 'sfm' : 
         preset1.run_sfm()
         preset1.generate_points()    
-        preset1.calculate_real_error()
+        #preset1.calculate_real_error()
         preset1.visualize()    
 
-    elif args.mode == 'visualize' :
+    elif args.mode == 'vis' :
         preset1.read_cameras()
         preset1.visualize() 
+
+    elif args.mode == 'test' :
+        preset1.calculate_real_error()
 
 
 def set_args(parser):
