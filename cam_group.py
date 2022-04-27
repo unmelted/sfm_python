@@ -194,17 +194,21 @@ class Group(object):
 
         max = 0
         min = 10000
-        error = 0
+        t_error = 0
+
         for i in range(len(self.cameras)) :
             if i < 2 : 
                 continue
-            gt = self.answer[self.cameras[i].view.name]            
-            for j in range(self.cameras[i].pts.shape[0]) :            
-                pts = self.cameras[i].pts[j, :]
-                gt_pt = gt[j, :]
-                print("i {} j {} -- pts {} : answer {}".format(i, j, pts, gt_pt))
+            s_error = 0
+            print("name : ", self.cameras[i].view.name)
+            gt = self.answer[self.cameras[i].view.name]
 
-                terr = np.linalg.norm(pts - gt_pt)
+            for j in range(self.cameras[i].pts.shape[0]) :
+                pt_3d = self.cameras[i].pts_3D[j, :]
+                pt_2d = self.cameras[i].pts[j, :]
+                gt_pt = gt[j, :]
+                terr = np.linalg.norm(pt_2d - gt_pt)
+                print("3d {} pts {} : answer {} : err {} ".format(pt_3d, pt_2d, gt_pt, terr))
 
                 if terr > max : 
                     max = terr
@@ -212,16 +216,21 @@ class Group(object):
                 if terr < min : 
                     min = terr
 
-                error += terr
+                s_error += terr
+                t_error += terr
 
+            print('scene err : ', s_error)
             if self.limit != 0 and i == self.limit :
                 break
 
 
-        print("total real error : {} max {} min {} ".format(error, max, min))
+        print("total real error : {} max {} min {} ".format(t_error, max, min))
 
 
     def visualize(self) :
         print("visualize camera in  group")        
         plot_cameras(self.cameras, self.limit)
         #plot_pointmap(self.sfm)
+
+    def export(self) :
+        export_points(self)
