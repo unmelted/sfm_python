@@ -4,7 +4,6 @@ import logging
 import argparse
 import visualize
 
-
 def run(args):
 
     logging.basicConfig(level=logging.INFO)
@@ -29,6 +28,7 @@ def run(args):
         preset1.read_cameras()
         preset1.generate_points()            
         preset1.calculate_real_error()
+        preset1.export()
 
     elif args.mode == 'test' :
         preset1.calculate_real_error()
