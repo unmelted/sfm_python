@@ -52,10 +52,16 @@ class SFM:
             print("view -- 1 : 2 ", pair.camera1.view.name, pair.camera2.view.name)
             pair.camera1.R = np.eye(3, 3)  # identity rotation since the first view is said to be at the origin            
             match_object = self.matches[(pair.camera1.view.name, pair.camera2.view.name)]
-            pair.camera2.R, pair.camera2.t = self.get_pose(pair)
+            pair.camera2.R, pair.camera2.t = self.compute_pose_base(pair)
+            #pair.camera2.t = pair.camera2.t * -1
             print("baseline -- R : ", pair.camera2.R)
             print("baseline -- T : ", pair.camera2.t)
+            pair.camera1.Rvec, _ = cv2.Rodrigues(pair.camera1.R)
+            pair.camera2.Rvec, _ = cv2.Rodrigues(pair.camera2.R)
+            print("baseline -- Rvec : ", pair.camera1.Rvec, pair.camera2.Rvec)
 
+            pair.camera1.calculate_p()
+            pair.camera2.calculate_p()            
             rpe1, rpe2 = self.triangulate_with(pair)
             self.errors.append(np.mean(rpe1))
             self.errors.append(np.mean(rpe2))
@@ -67,6 +73,7 @@ class SFM:
         else:
 
             pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
+            #pair.camera2.t = pair.camera2.t * -1
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
             print("view -- Rvec ", pair.camera2.Rvec)
@@ -78,23 +85,23 @@ class SFM:
                 print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                    _, pair.inliers1, pair.inliers2 = remove_outliers_using_F(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    _, pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
 
+
+            pair.camera2.calculate_p()            
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
 
-    def get_pose(self, pair):
+    def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , pair.inliers1, pair.inliers2 = remove_outliers_using_F(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
+        F , pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
         pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
-        # logging.info("Computed essential matrix")
-        # logging.info("Choosing correct pose out of 4 solutions")
 
         # print("get_pose.. F: ", F)
         # print("get_pose.. normal E: ", E)        
@@ -162,8 +169,9 @@ class SFM:
         pixel_points2 = cv2.convertPointsToHomogeneous(pixel_points2)[:, 0, :]
         reprojection_error1 = []
         reprojection_error2 = []
-        
-        print("triangulate_with len  : ", len(pixel_points1))
+        #print(pixel_points1.shape)
+        #print(pixel_points1)
+        #print("triangulate_with len  : ", len(pixel_points1))
 
         for i in range(len(pixel_points1)):
 
@@ -174,7 +182,7 @@ class SFM:
             u2_normalized = K_inv.dot(u2)
 
             point_3D = get_3D_point(u1_normalized, P1, u2_normalized, P2)
-            #print("pix {} {} - 3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], point_3D.T))
+            #print("pix {} {} - normal {} {} ,  3D {} ".format(pixel_points1[i, :], pixel_points2[i, :], u1_normalized, u2_normalized, point_3D.T))
             px1x = pixel_points1[i, 0:].reshape((1,3))
             px2x = pixel_points2[i, 0:].reshape((1,3))            
             # print(point_3D.T.shape, pixel_points1[i, :].shape, px1x, px1x.shape)
@@ -195,7 +203,7 @@ class SFM:
             self.point_map[(self.get_index_of_view(pair.camera2.view), pair.inliers2[i])] = self.point_counter
             self.point_counter += 1
 
-        print("triangulate_with2 len  : ", len(pair.points_3D))
+        #print("triangulate_with2 len  : ", len(pair.points_3D))
         return reprojection_error1, reprojection_error2
 
     def compute_pose_pnp(self, view, K):
@@ -210,7 +218,6 @@ class SFM:
         old_descriptors = []
         for old_view in self.done:
             old_descriptors.append(old_view.descriptors)
-            print(" old view name : ", old_view.name)            
 
         # match old descriptors against the descriptors in the new view
         matcher.add(old_descriptors)
@@ -233,10 +240,11 @@ class SFM:
 
         # compute new pose using solvePnPRansac
         # print("PNP .. point 3D", np.shape(points_3D))
-        # print(points_3D)
         _, Rvec, t, _ = cv2.solvePnPRansac(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None,
                                         confidence=0.99, reprojectionError=8.0, flags=cv2.SOLVEPNP_DLS)
-
+        # Rvec2, t2 = cv2.solvePnPRefineLM(points_3D[:, np.newaxis], points_2D[:, np.newaxis], K, None, Rvec, t, criteria=(cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_COUNT, 20, 0.1))
+        # print(" LM .. ", Rvec, Rvec2)
+        # print(" LM .. ", t, t2)        
         R, _ = cv2.Rodrigues(Rvec)
         return R, t, Rvec
 

@@ -39,8 +39,6 @@ class View(object):
             sys.exit(0)
 
         self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
-        logging.info("Computed features for image %s", self.name)
-
         self.write_features()
 
     def read_features(self):

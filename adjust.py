@@ -50,17 +50,17 @@ class Adjust(object):
         print(roll, roll * 180/math.pi)
     
     def get_camera_relative(self, ref, target) :
-        newR = np.dot(target.R, ref.R.T)
+        newR = np.dot(target.R.T, ref.R)
         print("camera_releative.. ", newR)
 
-        temp = np.dot(newR, ref.t)
-        newT = target.t - temp
-        print("new T " , np.dot(target.K, newT))
+        temp = -1* np.dot(newR, ref.t)
+        newT = temp + target.t
         K_inv = np.linalg.inv(target.K)
+        print("new T " , newT)
         # pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
         # self.convert_pts_relative(target, newR, newT, pts)
 
-        temp = np.hstack([newR, target.t])
+        temp = np.hstack([newR, newT])
         P = np.dot(target.K, temp) 
 
         ppts = ref.pts.reshape((3, 1))        
@@ -70,15 +70,26 @@ class Adjust(object):
         # target.pts[0][1] = 0            
         print("camera_relative.. " , target.pts)
 
+    #cam1 -> cam2 relative
+    def get_camera_relative2(self, ref, target) :
+        newR = np.dot(ref.R.T, target.R)
+        print("camera_releative.. ", newR)
 
-    def convert_pts_relative(self, target, newR, newT, pts) : 
-        reproject = target.K.dot(newR.dot(pts) + newT)
-        #reproject = cv2.convertPointsFromHomogeneous(reproject.T)[:, 0, :].T
-        print("convert_pts_releative.. ", reproject)
-        K_inv = np.linalg.inv(target.K)      
-        print(".. " , K_inv.dot(reproject).T)          
+        temp = -1* np.dot(newR, ref.t)
+        newT = temp + target.t
+        K_inv = np.linalg.inv(target.K)
+        print("new T " , newT)
 
-        return reproject
+        temp = np.hstack([newR, newT])
+        P = np.dot(target.K, temp) 
+
+        ppts = ref.pts.reshape((3, 1))        
+        ppts = np.vstack([ppts, 1])
+        reproject = np.dot(P, ppts)
+        target.pts =  K_inv.dot(reproject).T    
+        # target.pts[0][1] = 0            
+        print("camera_relative.. " , target.pts)
+
 
     def convert_pts(self, ppts, target):
         ppts2 = ppts.reshape((3,1))
@@ -104,32 +115,37 @@ class Adjust(object):
         #     target.pts.append(reproject)
     
     def convert_pts2(self, ppts, target):
-        # ppts[0][1] = -1 * ppts[0][2]
-        # ppts[0][2] = 0.0
-        print("convert_pts2 .. ", ppts)        
-        ppts = ppts.reshape((3,1))         
+        print("convert_pts2 .. ", target.view.name, ppts)
+        pts = np.zeros((3), dtype=np.float)
+        pts[0] = ppts[0][0]
+        pts[1] = ppts[0][1]
+        pts[2] = ppts[0][2]
+        pts = np.array([pts])
+        ppts = pts.reshape((3,1))         
         K_inv = np.linalg.inv(target.K)
-
+        #ppts = np.vstack([ppts, 1])        
+        ppts = K_inv.dot(ppts)
         distcoeff = np.array([[0., 0., 0., 0.]])
         projectvector, _ = cv2.projectPoints(ppts, target.Rvec, target.t, target.K, distcoeff)
-        projectvector = projectvector[0][0]
-        print("convert_pts2 .. " , projectvector)
-
-        projectvector = np.hstack([projectvector, 0])
-        projectvector = projectvector.reshape((3,1))
-        print(projectvector)
-        print("convert_pts2 .. " , K_inv.dot(projectvector))
+        ppts = K_inv.dot(np.vstack([projectvector[0][0].reshape((2,1)), 1]))
+        print("convert_pts2 .. " ,  ppts)
 
     def convert_pts3(self, ppts, target) :
-        print("convert_pt3  ", ppts)
-        ppts = ppts.reshape((3, 1))        
+        print("convert_pt3  ", target.view.name, ppts)
+        ppts = ppts.reshape((3, 1))    
+        ppts = np.vstack([ppts, 1])            
         K_inv = np.linalg.inv(target.K)
-        ppts = np.vstack([ppts, 1])
         reproject = np.dot(target.P, ppts)
         target.pts =  K_inv.dot(reproject).T
-        # target.pts[0][1] = 0        
-
+        # target.pts =  reproject
         print("convert_pt3 1.. " , target.pts)
+        self.convert_pts2(target.pts, target)
+        # temp = target.pts.reshape((3, 1))        
+        # temp = K_inv.dot(temp)
+        # distcoeff = np.array([[0., 0., 0., 0.]])
+        # projectvector, _ = cv2.projectPoints(temp, target.Rvec, target.t, target.K, distcoeff)
+        # temp = np.vstack([projectvector[0][0].reshape((2,1)), 1])
+        # print("convert_pt3 2.. " , (temp))
 
     def convert_pts4(self, ppts, target) :
         pts = np.zeros((2), dtype=float)
@@ -145,22 +161,53 @@ class Adjust(object):
         z = reprojected_points[0, :, -1]        
         print("convert_pts4 .. ", z)
 
+    def convert_pts5(self, ppts, target):
+        print("convert_pt5..  ", target.view.name, ppts)
+        K_inv = np.linalg.inv(target.K)                 
+        ppts = ppts.reshape((3, 1))        
+        ppts = K_inv.dot(ppts)        
+        ppts = np.vstack([ppts, 1])
+        R_inv = np.linalg.inv(target.R)                 
+        temp = np.dot(R_inv, target.t)
+        print("convert_pt5.. campos : ", temp)
+        temp = np.dot(target.K, temp)
+        # back_proj = np.dot(temp, ppts)
+        # back_proj = np.vstack([back_proj, 1])        
+        # print("convert_pt5 .. ", back_proj)
+        # move_pt = np.dot(target.P, back_proj)        
+        # print("convert_pt5.. " , move_pt, np.dot(K_inv, move_pt))
 
-    def write_file(self):
-        json_data = {
-                "RecordName" : None,
-                "PreSetNumber" : 0,
-                "worlds" : [
-                    {
-                            
-                        "group":None,
-                        "stadium":None,
-                        "world_coords":None
-                    }
-                ]
-                    ,
-                "points" : None
-            }
-        json_data['worlds'][0]['group'] = "Group1"
-        json_data['worlds'][0]['stadium'] = self.world.stadium
-            
+
+    def make_3D(self, c0, c1) :
+        print("check_pts .. ", c0.view.name, c1.view.name)
+
+        cam0 = c0.pts
+        cam1 = c1.pts
+        c0.pts = c0.pts.reshape((3, 1))
+        c1.pts = c1.pts.reshape((3, 1))        
+        print(cam0, cam1)
+        K_inv = np.linalg.inv(c1.K)                         
+        u1_normalized = K_inv.dot(cam0)
+        u2_normalized = K_inv.dot(cam1)
+
+        point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+
+        print("make 3D  .. point_3d : ", point_3D)
+        error1 = calculate_reprojection_error(point_3D, cam0[0:2], c0.K, c0.R, c0.t)
+        error2 = calculate_reprojection_error(point_3D, cam1[0:2], c1.K, c1.R, c1.t)
+        print("make 3D error  .. ", error1, error2)
+
+        c1.pts_3D = point_3D
+
+    def reproject_3D(self, c0, c1) :
+        print("reproject_3D ..", c1.view.name)
+        print("pts_3D : ", c0.pts_3D)
+        moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
+        moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
+        c1.pts = np.vstack([moved, 1])
+        c1.pts = c1.pts.reshape((3, 1))
+        #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
+        print("reproject fianl : ", moved, c1.pts)
+        temp = np.vstack([c0.pts_3D, 1])
+        temp = temp.reshape((4, 1))
+        print("compare function .. :  ", c1.project(temp))

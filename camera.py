@@ -10,7 +10,7 @@ class Camera(object):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
-        self.extrinsic = None
+        self.EX = None
         self.K = K        # intrinsic matrix
         self.R = np.zeros((3,3), dtype=float)     # rotation
         self.t = np.zeros((3,1), dtype=float)     # translation
@@ -21,7 +21,8 @@ class Camera(object):
         self.view = View(image_name, root_path, feature_path=feature_path)        
 
         ''' related adjust value '''
-        self.pts = None    # 4points
+        self.pts = np.zeros((3,1), dtype=float)    # 4points
+        self.pts_3D = np.zeros((3,1), dtype=float)
         self.normal = [] # 2 vectocs
         self.center = [] # tracking center
         self.norm = None
@@ -33,8 +34,9 @@ class Camera(object):
          Must either supply P or K, R, t """
         if self.P is None:
             try:
-                self.extrinsic = np.hstack([self.R, self.t])
-                self.P = np.dot(self.K, self.extrinsic)
+                self.EX =  np.hstack([self.R, self.t])
+                self.P = np.dot(self.K, self.EX)
+                print('calculate P of camera ', self.view.name)
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
