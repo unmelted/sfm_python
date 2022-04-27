@@ -25,10 +25,10 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 0
+        self.limit = 5
 
         self.root_path = None
-        self.answer = []
+        self.answer = {}
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
@@ -99,7 +99,6 @@ class Group(object):
                 cam.t = tcon[4]
                 cam.F = tcon[5]
                 cam.Rvec = tcon[6]
-                logging.info("Read cameras from file for view %s ", cam.view.name)
 
                 if self.limit != 0 and i == self.limit :
                     break
@@ -145,22 +144,23 @@ class Group(object):
         self.adjust = Adjust(self.world)
         first_index = 0
         #self.cameras[first_index].pts = self.adjust.get_initial_cp()
-
         #self.check_pair()
 
+        filename = os.path.join(self.root_path, 'images', 'answer.pts')
+        self.answer = import_answer(filename)
 
         for i, cam in enumerate(self.cameras):
-            #self.adjust.get_camera_pos(cam)
-            if i == 0 :
-                cam.pts = np.array([1208.0, 1550.0, 1.0])
-            elif i == 1 : 
-                cam.pts = np.array([1162.0, 1579.0, 1.0])
-                print("check shape : ", cam.pts.shape)
+
+            if i == 0 or i == 1 :
+                print(" .. ", self.cameras[i].view.name)
+                pts = self.answer[self.cameras[i].view.name]
+                print(" generate_points name {} : {} ".format(self.cameras[i].view.name, pts))
+                cam.pts = pts
+
             if i > 1 : 
                 self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
-
             if i > 0 :
-                self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])                
 
 
             if self.limit != 0 and i == self.limit :
@@ -179,47 +179,47 @@ class Group(object):
 
     def calculate_real_error(self) :
 
-        filename = os.path.join(self.root_path, 'images', 'answer.pts')
-        import_answer(filename)
+        #answer = np.array([[1208.0, 1550.0], #3085
+                        #  [1162.0, 1579.0], #3086
+                        #  [1150.0, 1538.0], #3087
+                        #  [1115.0, 1527.0], #3088
+                        #  [1080.0, 1520.0], #3089
+                        #  [1052.0, 1488.0], #3090
+                        #  [1039.0, 1446.0], #3091
+                        #  [1001.0, 1427.0], #3092
+                        #  [953.0, 1392.0], #3093
+                        #  [933.0, 1397.0], #3094
+                        #  [901.0, 1373.0], #3095
+        # ])
 
-        '''
-        answer = np.array([[1208.0, 1550.0], #3085
-                         [1162.0, 1579.0], #3086
-                         [1150.0, 1538.0], #3087
-                         [1115.0, 1527.0], #3088
-                         [1080.0, 1520.0], #3089
-                         [1052.0, 1488.0], #3090
-                         [1039.0, 1446.0], #3091
-                         [1001.0, 1427.0], #3092
-                         [953.0, 1392.0], #3093
-                         [933.0, 1397.0], #3094
-                         [901.0, 1373.0], #3095
-        ])
         max = 0
         min = 10000
         error = 0
         for i in range(len(self.cameras)) :
             if i < 2 : 
                 continue
-            tg = self.cameras[i].pts[:-1].reshape((2))
-            #print(" .. ", tg, tg.shape)
-            print("i {} pts {} - answer {}".format(i, tg, answer[i, :]))
-            terr = np.linalg.norm(tg - answer[i, :])
-            print("terr : ", terr)
-            if terr > max : 
-                max = terr
+            gt = self.answer[self.cameras[i].view.name]            
+            for j in range(self.cameras[i].pts.shape[0]) :            
+                pts = self.cameras[i].pts[j, :]
+                gt_pt = gt[j, :]
+                print("i {} j {} -- pts {} : answer {}".format(i, j, pts, gt_pt))
 
-            if terr < min : 
-                min = terr
+                terr = np.linalg.norm(pts - gt_pt)
 
-            error += terr
+                if terr > max : 
+                    max = terr
+
+                if terr < min : 
+                    min = terr
+
+                error += terr
 
             if self.limit != 0 and i == self.limit :
                 break
 
 
         print("total real error : {} max {} min {} ".format(error, max, min))
-        '''
+
 
     def visualize(self) :
         print("visualize camera in  group")        
