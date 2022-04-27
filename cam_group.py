@@ -66,12 +66,10 @@ class Group(object):
 
         temp_array = []
         for i, cam in enumerate(self.cameras):
-            temp = (cam.id, cam.P, cam.EX, cam.K, cam.R, cam.t, cam.F, cam.Rvec)
-            temp_array.append(temp)
-
-            matches_file = open(os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'), 'wb')
-            pickle.dump(temp_array, matches_file)
-            matches_file.close()
+            temp = (cam.P, cam.EX, cam.K, cam.R, cam.t, cam.F, cam.Rvec)
+            cam_file = open(os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'), 'wb')
+            pickle.dump(temp, cam_file)
+            cam_file.close()
 
             if self.limit != 0 and i == self.limit :
                 break
@@ -79,7 +77,7 @@ class Group(object):
 
 
     def read_cameras(self):
-            for i, cam in enumerate(self.cameras):            
+            for i, cam in enumerate(self.cameras):
                 try:                
                     tcon = pickle.load(
                         open(
@@ -91,14 +89,15 @@ class Group(object):
                     logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
                     break
 
-                cam.id = tcon[0]
-                cam.P = tcon[1]
-                cam.EX = tcon[2]
-                cam.K = tcon[3]
-                cam.R = tcon[4]
-                cam.T = tcon[5]
-                cam.F = tcon[6]
-                cam.Rvec = tcon[7]
+                print("read from camera file : ", cam.view.name)
+                print(tcon)
+                cam.P = tcon[0]
+                cam.EX = tcon[1]
+                cam.K = tcon[2]
+                cam.R = tcon[3]
+                cam.t = tcon[4]
+                cam.F = tcon[5]
+                cam.Rvec = tcon[6]
                 logging.info("Read cameras from file for view %s ", cam.view.name)
 
                 if self.limit != 0 and i == self.limit :
@@ -128,7 +127,7 @@ class Group(object):
 
             self.sfm.plot_points()
 
-            if self.limit != 0 and j == self.limit :
+            if self.limit != 0 and j-1 == self.limit :
                 break
 
         self.write_cameras()
@@ -150,7 +149,6 @@ class Group(object):
 
 
         for i, cam in enumerate(self.cameras):
-            cam.calculate_p()
             #self.adjust.get_camera_pos(cam)
             if i == 0 :
                 cam.pts = np.array([1208.0, 1550.0, 1.0])

@@ -15,16 +15,23 @@ def run(args):
         logging.error("terminated. ")
         return 0
 
-    preset1.run_sfm()
-    preset1.generate_points()    
-    preset1.calculate_real_error()
-    preset1.visualize()    
+    if args.mode == 'sfm' : 
+        preset1.run_sfm()
+        preset1.generate_points()    
+        preset1.calculate_real_error()
+        preset1.visualize()    
+
+    elif args.mode == 'visualize' :
+        preset1.read_cameras()
+        preset1.visualize() 
+
 
 def set_args(parser):
 
     parser.add_argument('--root_dir', action='store', type=str, dest='root_dir',
                         help='root directory containing the images/ folder')
-
+    parser.add_argument('--mode', action='store', type=str, dest='mode', default='sfm',
+                    help='select mode sfm , visualize')
 
 if __name__ == '__main__':
 

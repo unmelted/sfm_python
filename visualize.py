@@ -17,12 +17,14 @@ def plot_cameras(cameras, limit):
     j  = 0   
     sensor_size = np.array([1920, 1080])
 
-    for camera in cameras :
+    for i, camera in enumerate(cameras):                    
         cam2world = transform_from(camera.R, camera.t.T)
+        print("-- plot camera -- ")
+        print(camera.R)
+        print(camera.t.T)        
         plot_camera(ax, M=camera.K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=1)
-        j += 1
 
-        if limit != 0 and j == limit : 
+        if limit != 0 and i == limit : 
             break
 
     plt.rcParams['figure.figsize'] = [1, 1]

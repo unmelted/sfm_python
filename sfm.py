@@ -59,6 +59,9 @@ class SFM:
             pair.camera1.Rvec, _ = cv2.Rodrigues(pair.camera1.R)
             pair.camera2.Rvec, _ = cv2.Rodrigues(pair.camera2.R)
             print("baseline -- Rvec : ", pair.camera1.Rvec, pair.camera2.Rvec)
+
+            pair.camera1.calculate_p()
+            pair.camera2.calculate_p()            
             rpe1, rpe2 = self.triangulate_with(pair)
             self.errors.append(np.mean(rpe1))
             self.errors.append(np.mean(rpe2))
@@ -87,6 +90,8 @@ class SFM:
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
 
+
+            pair.camera2.calculate_p()            
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
 

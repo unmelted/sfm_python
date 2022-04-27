@@ -104,7 +104,7 @@ class Pair:
             self.distances.append(self.match[i].distance)
 
 
-        logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
+        #logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
         self.write_matches()
 
     def write_matches(self):
@@ -132,7 +132,7 @@ class Pair:
                     "rb"
                 )
             )
-            logging.info("Read matches from file for view pair %s %s", self.image_name1, self.image_name2)
+            #logging.info("Read matches from file for view pair %s %s", self.image_name1, self.image_name2)
 
             for point in self.match:
                 self.distances.append(point[0])

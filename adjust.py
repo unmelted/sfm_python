@@ -206,9 +206,11 @@ class Adjust(object):
         moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
         c1.pts = np.vstack([moved, 1])
         c1.pts = c1.pts.reshape((3, 1))
-        print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
+        #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
         print("reproject fianl : ", moved, c1.pts)
-
+        temp = np.vstack([c0.pts_3D, 1])
+        temp = temp.reshape((4, 1))
+        print("compare function .. :  ", c1.project(temp))
 
 
     def write_file(self):

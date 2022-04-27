@@ -36,6 +36,7 @@ class Camera(object):
             try:
                 self.EX =  np.hstack([self.R, self.t])
                 self.P = np.dot(self.K, self.EX)
+                print('calculate P of camera ', self.view.name)
             except TypeError as e:
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
