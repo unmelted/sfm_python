@@ -160,8 +160,8 @@ class Group(object):
             if i > 1 : 
                 self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
             if i > 0 :
-                self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])                
-
+                self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                self.adjust.check_normal(self.cameras[i])
 
             if self.limit != 0 and i == self.limit :
                 break                

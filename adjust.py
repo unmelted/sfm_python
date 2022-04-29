@@ -13,7 +13,7 @@ class Adjust(object):
     def __init__(self, world):
         self.calib_type = None  # 2d, 3d
         self.world = world
-        scale = 1
+        scale = 100
         self.normal = np.array([[50/scale, 50/scale, 0], [50/scale, 50/scale, -50/scale]])
     
     def get_initial_cp(self):
@@ -178,6 +178,22 @@ class Adjust(object):
         # print("convert_pt5.. " , move_pt, np.dot(K_inv, move_pt))
 
 
+    def check_normal(self, c1) :
+
+        cv_pts = self.normal[0, :]
+        cv_pts = np.hstack([cv_pts, 1])
+        cv_pts = cv_pts.reshape((4,1))
+        reproject = c1.project(cv_pts)
+        print("normal 1 ")
+        print(reproject)
+    
+        cv_pts = self.normal[1, :]
+        cv_pts = np.hstack([cv_pts, 1])
+        cv_pts = cv_pts.reshape((4,1))
+        reproject = c1.project(cv_pts)
+        print("normal 2 ")
+        print(reproject)        
+
     def make_3D(self, c0, c1) :
         print("check_pts .. ", c0.view.name, c1.view.name)
 
@@ -201,8 +217,6 @@ class Adjust(object):
         print("reproject_3D ..", c1.view.name)
         print("pts_3D : ", c0.pts_3D)
 
-        cam0 = cv2.convertPointsToHomogeneous(c0.pts_3D)[:, 0, :]
-
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
             cv_pts = np.hstack([cv_pts, 1])
@@ -211,7 +225,7 @@ class Adjust(object):
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
         print(c1.pts)            
-        
+
             # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
             # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
             # c1.pts = np.vstack([moved, 1])
