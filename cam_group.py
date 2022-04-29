@@ -234,3 +234,4 @@ class Group(object):
 
     def export(self) :
         export_points(self)
+        save_point_image(self)        
