@@ -129,12 +129,34 @@ def import_answer(filepath):
         pt = np.array([json_data['points'][i]['pts_3d']['X4'], json_data['points'][i]['pts_3d']['Y4']])
         pt = pt.reshape((1, 2))        
         answer_pt = np.append(answer_pt, pt, axis=0)
-        pt = np.array([json_data['points'][i]['pts_3d']['Center']['X'], json_data['points'][i]['pts_3d']['Center']['Y']])
-        pt = pt.reshape((1, 2))        
-        answer_pt = np.append(answer_pt, pt, axis=0)
+        # pt = np.array([json_data['points'][i]['pts_3d']['Center']['X'], json_data['points'][i]['pts_3d']['Center']['Y']])
+        # pt = pt.reshape((1, 2))        
+        # answer_pt = np.append(answer_pt, pt, axis=0)
 
 
         answer[name] = answer_pt
         # print(answer[name])
     
     return answer
+
+def save_point_image(preset) :
+
+    output_path = os.path.join(preset.root_path, 'output')
+    if not os.path.exists(output_path):    
+        os.makedirs(output_path)
+
+    for i in range(len(preset.cameras)) :
+        file_name = os.path.join(output_path, preset.cameras[i].view.name +"_pt.png")        
+        pt_int = preset.cameras[i].pts.astype(np.int32)            
+
+        for j in range(preset.cameras[i].pts.shape[0]) :
+            pt_2d = preset.cameras[i].pts[j, :]
+            cv2.circle(preset.cameras[i].view.image, (int(pt_2d[0]), int(pt_2d[1])), 5, (0, 255, 0), -1)
+
+            if j > 0 :
+                cv2.line(preset.cameras[i].view.image, pt_int[j-1], pt_int[j], (255,0,0), 3)
+            if j == (preset.cameras[i].pts.shape[0] - 1):
+                cv2.line(preset.cameras[i].view.image, pt_int[j], pt_int[0], (255,255,0), 3)
+
+        print(file_name)
+        cv2.imwrite(file_name, preset.cameras[i].view.image)

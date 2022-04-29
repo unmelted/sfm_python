@@ -85,7 +85,7 @@ class SFM:
                 print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                    _, pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
@@ -98,7 +98,7 @@ class SFM:
     def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , pair.inliers1, pair.inliers2 = compute_fundamenta_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
+        F , pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
         pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
