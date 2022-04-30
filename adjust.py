@@ -82,6 +82,7 @@ class Adjust(object):
 
         temp = np.hstack([newR, newT])
         P = np.dot(target.K, temp) 
+        return P
 
         ppts = ref.pts.reshape((3, 1))        
         ppts = np.vstack([ppts, 1])
@@ -192,7 +193,26 @@ class Adjust(object):
         cv_pts = cv_pts.reshape((4,1))
         reproject = c1.project(cv_pts)
         print("normal 2 ")
-        print(reproject)        
+        print(reproject)    
+
+    def backprojection(self, c0, c1):
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
+        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
+        K_inv = np.linalg.inv(c1.K)
+        P = self.get_camera_relative2(c0, c1)        
+        for i in range(c0.pts.shape[0]) :        
+            u1_normalized = K_inv.dot(cam0[i, :])
+            cv_pts = u1_normalized
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            
+            pts_r = np.dot(P, cv_pts)
+            pts_r[0, :] /= pts_r[2, :]
+            pts_r[1, :] /= pts_r[2, :]
+            print(pts_r)
+            n =  np.array(pts_r[:2]).T
+            print(n)
+            c1.pts = np.append(c1.pts, n, axis=0)
 
     def make_3D(self, c0, c1) :
         print("check_pts .. ", c0.view.name, c1.view.name)
