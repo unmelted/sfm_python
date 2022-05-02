@@ -14,16 +14,8 @@ class Adjust(object):
         self.calib_type = None  # 2d, 3d
         self.world = world
         scale = 100
-        self.normal = np.array([[50/scale, 50/scale, 0], [50/scale, 50/scale, -50/scale]])
+        self.normal = np.array([[1920, 1080, 0], [1920, 1080, -500]])
     
-    def get_initial_cp(self):
-        if self.calib_type == '3D' : 
-            pts = [[708, 183], [120, 1614], [2766, 1485], [2091, 144]] # ncaa 
-        else :
-            pts = [[2749, 785], [884, 1170]] # 2D는 2point?
-
-        return pts
-
     def cart2hom(self, arr):
         """ Convert catesian to homogenous points by appending a row of 1s
         :param arr: array of shape (num_dimension x num_points)
@@ -180,8 +172,9 @@ class Adjust(object):
 
 
     def check_normal(self, c1) :
-
+        K_inv = np.linalg.inv(c1.K)
         cv_pts = self.normal[0, :]
+        #cv_pts = K_inv.dot(cv_pts)
         cv_pts = np.hstack([cv_pts, 1])
         cv_pts = cv_pts.reshape((4,1))
         reproject = c1.project(cv_pts)
@@ -202,11 +195,12 @@ class Adjust(object):
         P = self.get_camera_relative2(c0, c1)        
         for i in range(c0.pts.shape[0]) :        
             u1_normalized = K_inv.dot(cam0[i, :])
-            cv_pts = u1_normalized
+            cv_pts = cam0[i, :] #u1_normalized
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
             
             pts_r = np.dot(P, cv_pts)
+            pts_r = K_inv.dot(pts_r)
             pts_r[0, :] /= pts_r[2, :]
             pts_r[1, :] /= pts_r[2, :]
             print(pts_r)

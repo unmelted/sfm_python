@@ -25,6 +25,11 @@ class Pair:
         self.match = None
         self.points_3D = np.array([0, 0, 0, 0, 0, 0, 0])
 
+        self.H = None
+        self.indices1_mask = []  # indices of the matched keypoints in the first view
+        self.indices2_mask = []  # indices of the matched keypoints in the second view
+        self.distances_mask = []  # distance between the matched keypoints in the first view
+
         if camera1.view.feature_type in ['sift', 'surf']:
             self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
         else:
@@ -103,6 +108,17 @@ class Pair:
             self.indices1.append(self.match[i].queryIdx)
             self.distances.append(self.match[i].distance)
 
+        if(view1.bMask > 0 and view2.bMask > 0) :
+            print("get matches .. with mask !! ")
+            self.match_mask = self.matcher.match(view1.descriptors_mask, view2.descriptors_mask)
+            self.match_mask = sorted(self.match_mask, key=lambda x: x.distance)
+
+            # store match components in their respective lists
+            for i in range(len(self.match_mask)):
+                self.indices2_mask.append(self.match_mask[i].trainIdx)            
+                self.indices1_mask.append(self.match_mask[i].queryIdx)
+                self.distances_mask.append(self.match_mask[i].distance)
+
 
         #logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
         self.write_matches()
@@ -121,6 +137,17 @@ class Pair:
         matches_file = open(os.path.join(self.root_path, 'matches', self.image_name1 + '_' + self.image_name2 + '.pkl'), 'wb')
         pickle.dump(temp_array, matches_file)
         matches_file.close()
+
+        if(self.camera1.view.bMask > 0 and self.camera2.view.bMask > 0) :
+            temp_array = []
+            for i in range(len(self.indices1_mask)):
+                temp = (self.distances_mask[i], self.indices1_mask[i], self.indices2_mask[i])
+                temp_array.append(temp)
+
+            matches_file2 = open(os.path.join(self.root_path, 'matches', self.image_name1 + '_' + self.image_name2 + '_mask.pkl'), 'wb')
+            pickle.dump(temp_array, matches_file2)
+            matches_file2.close()
+
 
     def read_matches(self):
         """Reads matches from file"""
@@ -142,6 +169,53 @@ class Pair:
         except FileNotFoundError:
             logging.error("Pkl file not found for match %s_%s. Computing from scratch", self.image_name1, self.image_name2)
             self.get_matches(self.view1, self.view2)
+
+        if(self.camera1.view.bMask == 0 or self.camera2.view.bMask == 0) :
+            return
+
+        try:
+            self.match_mask = pickle.load(open(os.path.join(self.root_path, 'matches', self.image_name1 + '_' + self.image_name2 + '_mask.pkl'),"rb"))
+            #logging.info("Read matches from file for view pair %s %s", self.image_name1, self.image_name2)
+
+            for point in self.match_mask:
+                self.distances_mask.append(point[0])
+                self.indices1_mask.append(point[1])
+                self.indices2_mask.append(point[2])
+
+        except FileNotFoundError:
+            logging.error("Pkl mask file not found for match %s_%s. Computing from scratch", self.image_name1, self.image_name2)
+
+
+    def find_homography(self):
+        print("find homography start.. ")
+        method = cv2.RANSAC
+        ransacReprojThreshold = 3
+
+        srcpts = np.float32(self.indices1_mask).reshape(-1, 1, 2)
+        dstpts = np.float32(self.indices2_mask).reshape(-1, 1, 2)
+        print(srcpts.shape, dstpts.shape)       
+        H, mask = cv2.findHomography(dstpts, srcpts, method, ransacReprojThreshold)
+        print(H)
+
+        pt1 = [[708, 183], [120, 1614], [2766, 1485], [2091, 144]] # ncaa 
+        pt2 = [[798, 218], [97, 1617], [2715, 1510], [2163, 179]] # ncaa
+        np_pt1 = np.array(pt1)
+        np_pt2 = np.array(pt2)
+        print("validate homography.. ")
+        H2, mask = cv2.findHomography(np_pt2, np_pt1)
+        print(H2)
+
+        dst = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
+        dst = cv2.warpPerspective(self.camera2.view.image, H, (self.camera2.view.image_width, self.camera2.view.image_height))
+        dst2 = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
+        dst2 = cv2.warpPerspective(self.camera2.view.image, H2, (self.camera2.view.image_width, self.camera2.view.image_height))
+        print(self.camera2.EX)
+        # dst3 = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
+        # dst3 = cv2.warpPerspective(self.camera2.view.image, self.camera2.EX, (self.camera2.view.image_width, self.camera2.view.image_height))
+        cv2.imwrite("warp_test1.png", dst)
+        cv2.imwrite("warp_test2.png", dst2)
+
+        return H, mask
 
 
     def create_pair(cameras):
