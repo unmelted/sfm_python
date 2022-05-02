@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 5
+        self.limit = 3
 
         self.root_path = None
         self.answer = {}
@@ -50,11 +50,18 @@ class Group(object):
         logging.info("Computing features")
         print(image_names)
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
+        index = 0
 
         for image_name in image_names:
-            tcam = Camera(image_name, root_path, self.K, feature_path=feature_path)
+            if(index == 0): 
+                tcam = Camera(image_name, root_path, self.K, 1, feature_path=feature_path)
+            elif (index == 1) :
+                tcam = Camera(image_name, root_path, self.K, 2, feature_path=feature_path)
+            else:                 
+                tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
+            index += 1
 
         self.pairs = Pair.create_pair(self.cameras)
         self.sfm = SFM(self.views, self.pairs)
@@ -115,6 +122,7 @@ class Group(object):
 
             if baseline == True:
                 self.sfm.compute_pose(pair_obj, baseline)
+                pair_obj.find_homography()                    
                 baseline = False
                 logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
@@ -143,7 +151,6 @@ class Group(object):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         first_index = 0
-        #self.cameras[first_index].pts = self.adjust.get_initial_cp()
         #self.check_pair()
 
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
@@ -161,7 +168,8 @@ class Group(object):
                 self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
-                self.adjust.check_normal(self.cameras[i])
+                # self.adjust.check_normal(self.cameras[i])
+                #self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 
             if self.limit != 0 and i == self.limit :
                 break                
