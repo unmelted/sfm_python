@@ -25,7 +25,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 5
 
         self.root_path = None
         self.answer = {}
@@ -122,7 +122,8 @@ class Group(object):
 
             if baseline == True:
                 self.sfm.compute_pose(pair_obj, baseline)
-                pair_obj.find_homography()                    
+                pair_obj.find_homography_from_points()
+                pair_obj.find_homography_from_disp()                
                 baseline = False
                 logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])

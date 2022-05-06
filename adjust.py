@@ -41,27 +41,6 @@ class Adjust(object):
 
         print(roll, roll * 180/math.pi)
     
-    def get_camera_relative(self, ref, target) :
-        newR = np.dot(target.R.T, ref.R)
-        print("camera_releative.. ", newR)
-
-        temp = -1* np.dot(newR, ref.t)
-        newT = temp + target.t
-        K_inv = np.linalg.inv(target.K)
-        print("new T " , newT)
-        # pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
-        # self.convert_pts_relative(target, newR, newT, pts)
-
-        temp = np.hstack([newR, newT])
-        P = np.dot(target.K, temp) 
-
-        ppts = ref.pts.reshape((3, 1))        
-        ppts = np.vstack([ppts, 1])
-        reproject = np.dot(P, ppts)
-        target.pts =  K_inv.dot(reproject).T    
-        # target.pts[0][1] = 0            
-        print("camera_relative.. " , target.pts)
-
     #cam1 -> cam2 relative
     def get_camera_relative2(self, ref, target) :
         newR = np.dot(ref.R.T, target.R)
