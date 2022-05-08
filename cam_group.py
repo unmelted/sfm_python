@@ -22,16 +22,21 @@ class Group(object):
         self.pairs = None
         self.matches = {}        
         self.K = None
+        # self.llambda = np.zeros((3,3), dtype=float)
+        self.x_lambda = 0
+        self.y_lambda = 0
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 5
+        self.limit = 4
 
         self.root_path = None
         self.answer = {}
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
 
         feature_path = False
         self.root_path = root_path
@@ -122,8 +127,8 @@ class Group(object):
 
             if baseline == True:
                 self.sfm.compute_pose(pair_obj, baseline)
-                pair_obj.find_homography_from_points()
-                pair_obj.find_homography_from_disp()                
+                homo_points = pair_obj.find_homography_from_points()
+                homo_pose = pair_obj.find_homography_from_disp()
                 baseline = False
                 logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
@@ -148,9 +153,25 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
+    def calculate_scale(self, c0, c1) :
+        print("calculate_scale..")
+
+        x_lambda = 0
+        y_lambda = 0
+        gt = self.answer[c1.view.name]        
+
+        a = np.array([ [c1.pts_3D[0, 2], c1.pts[0, 0]], [c1.pts_3D[2, 2], c1.pts[2, 0]] ], dtype=np.float64)
+        b = np.array([gt[0, 0], gt[2, 0]], dtype=np.float64)
+        print(a)
+        print(b)
+
+        x = np.linalg.solve(a, b)
+        print(x)
+
+
+        return x_lambda, y_lambda
+
     def generate_points(self) :
-        self.world.get_world()
-        self.adjust = Adjust(self.world)
         first_index = 0
         #self.check_pair()
 
@@ -160,46 +181,25 @@ class Group(object):
         for i, cam in enumerate(self.cameras):
 
             if i == 0 or i == 1 :
-                print(" .. ", self.cameras[i].view.name)
                 pts = self.answer[self.cameras[i].view.name]
-                print(" generate_points name {} : {} ".format(self.cameras[i].view.name, pts))
+                print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                 cam.pts = pts
 
             if i > 1 : 
-                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
+
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                if i == 1 :
+                    self.calculate_scale(self.cameras[i - 1], self.cameras[i])
                 # self.adjust.check_normal(self.cameras[i])
-                #self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
+                # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 
             if self.limit != 0 and i == self.limit :
                 break                
 
-            continue
-            if i == 0 :
-                cam.pts = np.array([[-1208, -1550, 0]])
-                self.adjust.convert_pts3(cam.pts, cam)                
-                # self.adjust.convert_pts5(cam.pts, cam)                                
-            elif i > 0 :
-                self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
-                # self.adjust.convert_pts5(cam.pts, cam)                                
-                self.adjust.get_camera_relative2(self.cameras[i -1], cam)
-
 
     def calculate_real_error(self) :
-
-        #answer = np.array([[1208.0, 1550.0], #3085
-                        #  [1162.0, 1579.0], #3086
-                        #  [1150.0, 1538.0], #3087
-                        #  [1115.0, 1527.0], #3088
-                        #  [1080.0, 1520.0], #3089
-                        #  [1052.0, 1488.0], #3090
-                        #  [1039.0, 1446.0], #3091
-                        #  [1001.0, 1427.0], #3092
-                        #  [953.0, 1392.0], #3093
-                        #  [933.0, 1397.0], #3094
-                        #  [901.0, 1373.0], #3095
-        # ])
 
         max = 0
         min = 10000

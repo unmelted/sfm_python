@@ -167,6 +167,7 @@ class Adjust(object):
         print("normal 2 ")
         print(reproject)    
 
+
     def backprojection(self, c0, c1):
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -188,7 +189,7 @@ class Adjust(object):
             c1.pts = np.append(c1.pts, n, axis=0)
 
     def make_3D(self, c0, c1) :
-        print("check_pts .. ", c0.view.name, c1.view.name)
+        # print("check_pts .. ", c0.view.name, c1.view.name)
 
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -202,19 +203,17 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            print("make 3D error  .. ", point_3D, error1, error2)
+            # print("make 3D error  .. ", point_3D, error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
 
-    def reproject_3D(self, c0, c1) :
-        print("reproject_3D ..", c1.view.name)
-        print("pts_3D : ", c0.pts_3D)
+    def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
+            reproject = c1.project(cv_pts, x_lambda, y_lambda)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
         print(c1.pts)            

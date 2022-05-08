@@ -239,8 +239,8 @@ class Pair:
         else :
             temp = np.dot(d_inv1, rT)            
 
-        print("check .. 4", temp.shape, temp)
-        print("check .. 5", normal1)
+        # print("check .. 4", temp.shape, temp)
+        # print("check .. 5", normal1)
         euc_H = rR + np.dot(temp , normal1)
         H = np.dot(np.dot(self.camera2.K, euc_H), K_inv)
         euc_H = euc_H / euc_H[2][2]

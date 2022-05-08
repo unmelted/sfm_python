@@ -42,13 +42,20 @@ class Camera(object):
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
 
-    def project(self, X):
+    def project(self, X, x_lambda, y_lambda):
         """ Project 3D homogenous points X (4 * n) and normalize coordinates.
             Return projected 2D points (2 x n coordinates) """
-        x = np.dot(self.P, X)
+
+        x = np.dot(self.P, X) 
+
         x[0, :] /= x[2, :]
         x[1, :] /= x[2, :]
 
+        if(x_lambda != 0 and y_lambda != 0):
+            x[0, :] /= x_lambda
+            x[1, :] /= y_lambda
+            print("apply lambda : ", x[0, :], x[1, :])
+            
         return x[:2, :]
 
     def qr_to_rq_decomposition(self):
