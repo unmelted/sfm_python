@@ -9,7 +9,7 @@ def run(args):
     logging.basicConfig(level=logging.INFO)
 
     preset1 = Group()
-    ret = preset1.create_group(args.root_dir, 'png')
+    ret = preset1.create_group(args.root_dir, 'tiff')
     if( ret < 0 ):
         logging.error("terminated. ")
         return 0
@@ -18,7 +18,7 @@ def run(args):
         preset1.run_sfm()
         preset1.generate_points()    
         preset1.calculate_real_error()
-        # preset1.visualize()    
+        preset1.visualize()    
 
     elif args.mode == 'vis' :
         preset1.read_cameras()

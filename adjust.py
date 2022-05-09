@@ -189,7 +189,7 @@ class Adjust(object):
             c1.pts = np.append(c1.pts, n, axis=0)
 
     def make_3D(self, c0, c1) :
-        # print("check_pts .. ", c0.view.name, c1.view.name)
+        print(" make_3D .... ", c0.view.name, c1.view.name)
 
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -203,7 +203,7 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            # print("make 3D error  .. ", point_3D, error1, error2)
+            print("make 3D error  .. ", point_3D, error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
 
