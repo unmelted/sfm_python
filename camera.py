@@ -12,18 +12,18 @@ class Camera(object):
         self.P = None     # camera matrix
         self.EX = None
         self.K = K        # intrinsic matrix
-        self.R = np.zeros((3,3), dtype=float)     # rotation
-        self.t = np.zeros((3,1), dtype=float)     # translation
-        self.F = np.zeros((3,3), dtype=float)
-        self.Rvec = np.zeros((3,1), dtype=float)
+        self.R = np.zeros((3,3), dtype=np.float64)     # rotation
+        self.t = np.zeros((3,1), dtype=np.float64)     # translation
+        self.F = np.zeros((3,3), dtype=np.float64)
+        self.Rvec = np.zeros((3,1), dtype=np.float64)
         self.c = None  # camera center
         self.focal = K[0][0]        
         self.bMask = bMask
         self.view = View(image_name, root_path, bMask, feature_path=feature_path)
 
         ''' related adjust value '''
-        self.pts = np.empty((0 ,2), dtype=float)    # 4points
-        self.pts_3D = np.empty((0,3), dtype=float)
+        self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points
+        self.pts_3D = np.empty((0,3), dtype=np.float64)
         self.normal = [] # 2 vectocs
         self.center = [] # tracking center
         self.norm = None
@@ -51,10 +51,17 @@ class Camera(object):
         x[0, :] /= x[2, :]
         x[1, :] /= x[2, :]
 
-        if(x_lambda != 0 and y_lambda != 0):
-            x[0, :] /= x_lambda
-            x[1, :] /= y_lambda
-            print("apply lambda : ", x[0, :], x[1, :])
+        # z : X
+        # if np.all(x_lambda == 0) == False and np.all(y_lambda == 0) == False :
+        #     x[0, :] = X[2] * x_lambda[0] + x[0, :] * x_lambda[1]
+        #     x[1, :] = X[2] * y_lambda[0] + x[1, :] * y_lambda[1]
+        #     print("apply lambda : ", x[0, :], x[1, :])
+
+        # x : z : X
+        # if np.all(x_lambda == 0) == False and np.all(y_lambda == 0) == False :
+        #     x[0, :] = X[2] * x_lambda[0] + x[0, :] * x_lambda[1]
+        #     x[1, :] = X[2] * y_lambda[0] + x[1, :] * y_lambda[1]
+        #     print("apply lambda : ", x[0, :], x[1, :])
             
         return x[:2, :]
 

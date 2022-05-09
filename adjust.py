@@ -216,7 +216,7 @@ class Adjust(object):
             reproject = c1.project(cv_pts, x_lambda, y_lambda)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        print(c1.pts)            
+        # print(c1.pts)            
 
             # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
             # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
