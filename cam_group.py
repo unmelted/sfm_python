@@ -230,11 +230,12 @@ class Group(object):
             
             if i > 1 : 
                 self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
-                if i == 2 : 
-                    self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
+                # if i == 2 : 
+                #     self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
 
-            if i >= 1 :
-                self.adjust.backprojection(self.cameras[i - 1])
+            if i > 0 :
+                self.adjust.backprojection(self.cameras[i])
+                self.adjust.reproject_3D_only(self.cameras[i])
 
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])

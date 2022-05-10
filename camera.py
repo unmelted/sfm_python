@@ -24,6 +24,9 @@ class Camera(object):
         ''' related adjust value '''
         self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points
         self.pts_3D = np.empty((0,3), dtype=np.float64)
+        self.pts_back = np.empty((0,3), dtype=np.float64)
+        self.pts_repr = np.empty((0,3), dtype=np.float64)
+
         self.normal = [] # 2 vectocs
         self.center = [] # tracking center
         self.norm = None

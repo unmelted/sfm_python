@@ -179,6 +179,7 @@ class Adjust(object):
             u1_normalized = K_inv.dot(cam[i, :])
             u1_normalized = u1_normalized.T - c.t.reshape((1,3))
             c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
 
             print(c_wrld.reshape((1,3)))
 
@@ -197,10 +198,10 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            print("make 3D error  .. ", point_3D.T)
-            print(error1, error2)
+            print("error " , error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
+        print(c1.pts_3D)
 
     def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
 
@@ -211,7 +212,7 @@ class Adjust(object):
             reproject = c1.project(cv_pts, x_lambda, y_lambda)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        # print(c1.pts)            
+        print(c1.pts)            
 
             # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
             # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
@@ -222,3 +223,16 @@ class Adjust(object):
             # temp = np.vstack([c0.pts_3D, 1])
             # temp = temp.reshape((4, 1))
             # print("compare function .. :  ", c1.project(temp))
+
+    def reproject_3D_only(self, c) :
+        print("reproject_3D_only.. :  ", c.view.name)
+
+        for i in range(c.pts_back.shape[0]) :
+            cv_pts = c.pts_back[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c.project(cv_pts, 0 , 0)
+            c.pts_repr = np.append(c.pts_repr, np.array(reproject).T, axis=0)             
+
+        print(c.pts_repr)            
+
