@@ -116,7 +116,6 @@ class SFM:
         if not check_determinant(R1):
             R1, R2, t1, t2 = get_camera_from_E(-E)  # change sign of E if R1 fails the determinant test
 
-
         # solution 1
         reprojection_error, points_3D = self.triangulate(pair, K, R1, t1)
         # check if reprojection is not faulty and if the points are correctly triangulated in the front of the camera
@@ -247,6 +246,7 @@ class SFM:
         # print(" LM .. ", Rvec, Rvec2)
         # print(" LM .. ", t, t2)        
         R, _ = cv2.Rodrigues(Rvec)
+        
         return R, t, Rvec
 
     def plot_points(self):

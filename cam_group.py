@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 7
+        self.limit = 3
 
         self.root_path = None
         self.answer = {}
@@ -227,11 +227,14 @@ class Group(object):
                 pts = self.answer[self.cameras[i].view.name]
                 print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                 cam.pts = pts
-
+            
             if i > 1 : 
                 self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
                 if i == 2 : 
                     self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
+
+            if i >= 1 :
+                self.adjust.backprojection(self.cameras[i - 1])
 
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])

@@ -18,7 +18,7 @@ def run(args):
         preset1.run_sfm()
         preset1.generate_points()    
         preset1.calculate_real_error()
-        preset1.visualize()    
+        #preset1.visualize()    
 
     elif args.mode == 'vis' :
         preset1.read_cameras()

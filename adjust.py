@@ -168,25 +168,19 @@ class Adjust(object):
         print(reproject)    
 
 
-    def backprojection(self, c0, c1):
-        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
-        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
-        K_inv = np.linalg.inv(c1.K)
-        P = self.get_camera_relative2(c0, c1)        
-        for i in range(c0.pts.shape[0]) :        
-            u1_normalized = K_inv.dot(cam0[i, :])
-            cv_pts = cam0[i, :] #u1_normalized
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            
-            pts_r = np.dot(P, cv_pts)
-            pts_r = K_inv.dot(pts_r)
-            pts_r[0, :] /= pts_r[2, :]
-            pts_r[1, :] /= pts_r[2, :]
-            print(pts_r)
-            n =  np.array(pts_r[:2]).T
-            print(n)
-            c1.pts = np.append(c1.pts, n, axis=0)
+    def backprojection(self, c):
+        cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
+
+        print(" Back projection .. : ", c.view.name)
+
+        for i in range(c.pts.shape[0]) :        
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+
+            print(c_wrld.reshape((1,3)))
 
     def make_3D(self, c0, c1) :
         print(" make_3D .... ", c0.view.name, c1.view.name)
@@ -203,7 +197,8 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            print("make 3D error  .. ", point_3D, error1, error2)
+            print("make 3D error  .. ", point_3D.T)
+            print(error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
 
