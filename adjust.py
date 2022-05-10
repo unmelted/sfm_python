@@ -229,6 +229,8 @@ class Adjust(object):
 
         for i in range(c.pts_back.shape[0]) :
             cv_pts = c.pts_back[i, :]
+            cv_pts[2] = 1
+            print(cv_pts)
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
             reproject = c.project(cv_pts, 0 , 0)
