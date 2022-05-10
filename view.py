@@ -11,7 +11,7 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
+        self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = []  # list of descriptors obtained from feature extraction
@@ -50,6 +50,7 @@ class View(object):
             print("name : {} Extract features no mask {} mask {} ".format(self.name, len(self.keypoints), len(self.keypoints_mask)))
         else :
             self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
+            print("Key points count : ", self.name, len(self.keypoints))
 
         self.write_features()
 

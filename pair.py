@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import cv2
 import logging
 import pickle
-
+from adjust import *
 
 class Pair:
     """Represents a feature matches between two views"""
@@ -186,7 +186,7 @@ class Pair:
             logging.error("Pkl mask file not found for match %s_%s. Computing from scratch", self.image_name1, self.image_name2)
 
 
-    def find_homography(self):
+    def find_homography_from_points(self):
         print("find homography start.. ")
         method = cv2.RANSAC
         ransacReprojThreshold = 3
@@ -196,6 +196,9 @@ class Pair:
         print(srcpts.shape, dstpts.shape)       
         H, mask = cv2.findHomography(dstpts, srcpts, method, ransacReprojThreshold)
         print(H)
+        # Af = cv2.estimateAffine2D(dstpts, srcpts, method)
+        # print("Affine .. ")
+        # print(Af)
 
         pt1 = [[708, 183], [120, 1614], [2766, 1485], [2091, 144]] # ncaa 
         pt2 = [[798, 218], [97, 1617], [2715, 1510], [2163, 179]] # ncaa
@@ -208,15 +211,48 @@ class Pair:
         dst = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
         dst = cv2.warpPerspective(self.camera2.view.image, H, (self.camera2.view.image_width, self.camera2.view.image_height))
         dst2 = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
-        dst2 = cv2.warpPerspective(self.camera2.view.image, H2, (self.camera2.view.image_width, self.camera2.view.image_height))
-        print(self.camera2.EX)
-        # dst3 = np.full((self.camera2.view.image_height, self.camera2.view.image_width, 3), 255, np.uint8)
-        # dst3 = cv2.warpPerspective(self.camera2.view.image, self.camera2.EX, (self.camera2.view.image_width, self.camera2.view.image_height))
+        dst2 = cv2.warpPerspective(self.camera2.view.image, H2, (self.camera2.view.image_width, self.camera2.view.image_height))      
+
         cv2.imwrite("warp_test1.png", dst)
         cv2.imwrite("warp_test2.png", dst2)
 
         return H, mask
 
+    def compute_camera_relative(self, ref, target) :
+        newR = np.dot(target.R, ref.R.T)
+        temp = -1* np.dot(ref.R.T, ref.t)
+        newT = np.dot(target.R, temp) + target.t
+        return newR, newT
+
+    def find_homography_from_disp(self):
+        print("find_homography_from_disp .. ")
+        K_inv = np.linalg.inv(self.camera2.K)        
+        rR, rT = self.compute_camera_relative(self.camera1, self.camera2)
+        normal = np.array([0, 0, 1], dtype=float)
+        normal1 = np.dot(self.camera1.R, normal)
+        origin = np.array([0, 0, 0], dtype=float)
+        origin1 = np.dot(self.camera1.R, origin) + self.camera1.t
+        d_inv1 = 1.0/ normal1.dot(origin1)
+        temp = []
+        if(np. all(origin1 == 0)) :
+            temp = np.array([0, 0, 0])            
+        else :
+            temp = np.dot(d_inv1, rT)            
+
+        # print("check .. 4", temp.shape, temp)
+        # print("check .. 5", normal1)
+        euc_H = rR + np.dot(temp , normal1)
+        H = np.dot(np.dot(self.camera2.K, euc_H), K_inv)
+        euc_H = euc_H / euc_H[2][2]
+        H = H/ H[2][2]
+        #print(euc_H)        
+        print(H)
+
+        dst = np.full((self.camera1.view.image_height, self.camera1.view.image_width, 3), 255, np.uint8)
+        dst = cv2.warpPerspective(self.camera1.view.image, H, (self.camera1.view.image_width, self.camera1.view.image_height))
+        cv2.imwrite("warp_dist_test1.png", dst)
+
+        return H
 
     def create_pair(cameras):
         """Computes matches between every possible pair of views and stores in a dictionary"""

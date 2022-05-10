@@ -22,16 +22,21 @@ class Group(object):
         self.pairs = None
         self.matches = {}        
         self.K = None
+        # self.llambda = np.zeros((3,3), dtype=float)
+        self.x_lambda = np.zeros((2), dtype=np.float64)
+        self.y_lambda = np.zeros((2), dtype=np.float64)
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 7
 
         self.root_path = None
         self.answer = {}
 
     def create_group(self, root_path, image_format='jpg'):
         """Loops through the images and creates an array of views"""
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
 
         feature_path = False
         self.root_path = root_path
@@ -53,12 +58,12 @@ class Group(object):
         index = 0
 
         for image_name in image_names:
-            if(index == 0): 
-                tcam = Camera(image_name, root_path, self.K, 1, feature_path=feature_path)
-            elif (index == 1) :
-                tcam = Camera(image_name, root_path, self.K, 2, feature_path=feature_path)
-            else:                 
-                tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
+            # if(index == 0): 
+            #     tcam = Camera(image_name, root_path, self.K, 1, feature_path=feature_path)
+            # elif (index == 1) :
+            #     tcam = Camera(image_name, root_path, self.K, 2, feature_path=feature_path)
+            # else:                 
+            tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
             index += 1
@@ -122,7 +127,8 @@ class Group(object):
 
             if baseline == True:
                 self.sfm.compute_pose(pair_obj, baseline)
-                pair_obj.find_homography()                    
+                # homo_points = pair_obj.find_homography_from_points()
+                # homo_pose = pair_obj.find_homography_from_disp()
                 baseline = False
                 logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
                 logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
@@ -147,9 +153,68 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
+    def calculate_lambda(self, c0, c1) :
+        print("calculate_scale..")
+
+        gt = self.answer[c1.view.name]        
+        ''' self reproject
+        input_pt1 = c1.pts_3D[0, :]
+        input_pt1 = np.hstack([input_pt1, 1]).reshape((4,1))
+        result_pt1 = c1.project(input_pt1, 0, 0)
+        input_pt2 = c1.pts_3D[2, :]
+        input_pt2 = np.hstack([input_pt2, 1]).reshape((4,1))
+        result_pt2 = c1.project(input_pt2, 0, 0)
+        '''
+
+        # x : X 
+        a = np.array([ [c0.pts_3D[0, 2], c1.pts[0, 0]], 
+                    [c0.pts_3D[2, 2], c1.pts[2, 0]]
+                    ], dtype=np.float64)
+        b = np.array([gt[0, 0], gt[2, 0]], dtype=np.float64)
+        print("solve.. x --- ")        
+        # print(a)
+        # print(b)
+
+        self.x_lambda = np.linalg.solve(a, b)
+        print(self.x_lambda)
+        
+        a = np.array([ [c0.pts_3D[0, 2], c1.pts[0, 1]], 
+                    [c0.pts_3D[2, 2], c1.pts[2, 1]  ]], dtype=np.float64)
+        b = np.array([gt[0, 1], gt[2, 1]], dtype=np.float64)
+        print("solve.. y --- ")
+        # print(a)
+        # print(b)
+
+        self.y_lambda = np.linalg.solve(a, b)
+        print(self.y_lambda)
+
+
+        ''' x : z : X 
+        a = np.array([ [c0.pts_3D[0, 0], c0.pts_3D[0, 2], c1.pts[0, 0]], 
+                    [c0.pts_3D[2, 0], c0.pts_3D[2, 2], c1.pts[2, 0]], 
+                    [c0.pts_3D[3, 0], c0.pts_3D[3, 2], c1.pts[3, 0]] ], dtype=np.float64)
+        b = np.array([gt[0, 0], gt[2, 0], gt[3, 0]], dtype=np.float64)
+        print("solve.. x --- ")        
+        # print(a)
+        # print(b)
+
+        self.x_lambda = np.linalg.solve(a, b)
+        print(self.x_lambda)
+        
+        a = np.array([ [c0.pts_3D[0, 1], c0.pts_3D[0, 2], c1.pts[0, 1]], 
+                    [c0.pts_3D[2, 1], c0.pts_3D[2, 2], c1.pts[2, 1]],
+                    [c0.pts_3D[3, 1], c0.pts_3D[3, 2], c1.pts[3, 1]] ], dtype=np.float64)
+        b = np.array([gt[0, 1], gt[2, 1], gt[3, 1]], dtype=np.float64)
+        print("solve.. y --- ")
+        # print(a)
+        # print(b)
+
+        self.y_lambda = np.linalg.solve(a, b)
+        print(self.y_lambda)
+        '''
+
+
     def generate_points(self) :
-        self.world.get_world()
-        self.adjust = Adjust(self.world)
         first_index = 0
         #self.check_pair()
 
@@ -159,46 +224,25 @@ class Group(object):
         for i, cam in enumerate(self.cameras):
 
             if i == 0 or i == 1 :
-                print(" .. ", self.cameras[i].view.name)
                 pts = self.answer[self.cameras[i].view.name]
-                print(" generate_points name {} : {} ".format(self.cameras[i].view.name, pts))
+                print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                 cam.pts = pts
 
             if i > 1 : 
-                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
+                if i == 2 : 
+                    self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
+
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
                 # self.adjust.check_normal(self.cameras[i])
-                #self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
+                # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 
             if self.limit != 0 and i == self.limit :
                 break                
 
-            continue
-            if i == 0 :
-                cam.pts = np.array([[-1208, -1550, 0]])
-                self.adjust.convert_pts3(cam.pts, cam)                
-                # self.adjust.convert_pts5(cam.pts, cam)                                
-            elif i > 0 :
-                self.adjust.convert_pts3(self.cameras[i -1].pts, cam)
-                # self.adjust.convert_pts5(cam.pts, cam)                                
-                self.adjust.get_camera_relative2(self.cameras[i -1], cam)
-
 
     def calculate_real_error(self) :
-
-        #answer = np.array([[1208.0, 1550.0], #3085
-                        #  [1162.0, 1579.0], #3086
-                        #  [1150.0, 1538.0], #3087
-                        #  [1115.0, 1527.0], #3088
-                        #  [1080.0, 1520.0], #3089
-                        #  [1052.0, 1488.0], #3090
-                        #  [1039.0, 1446.0], #3091
-                        #  [1001.0, 1427.0], #3092
-                        #  [953.0, 1392.0], #3093
-                        #  [933.0, 1397.0], #3094
-                        #  [901.0, 1373.0], #3095
-        # ])
 
         max = 0
         min = 10000

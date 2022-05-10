@@ -72,7 +72,7 @@ class SFM:
         # procedure for estimating the pose of all other views
         else:
 
-            pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K)
+            pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K, pair.camera1.view)
             #pair.camera2.t = pair.camera2.t * -1
             print("view -- R ", pair.camera2.R)
             print("view -- T ", pair.camera2.t)
@@ -82,7 +82,6 @@ class SFM:
             
             # reconstruct unreconstructed points from all of the previous views
             for i, old_view in enumerate(self.done):
-                print(" -- oldview name : camera2 name  -- ", old_view.name, pair.camera2.view.name)
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
                     _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
@@ -206,7 +205,7 @@ class SFM:
         #print("triangulate_with2 len  : ", len(pair.points_3D))
         return reprojection_error1, reprojection_error2
 
-    def compute_pose_pnp(self, view, K):
+    def compute_pose_pnp(self, view, K, preview):
         """Computes pose of new view using perspective n-point"""
         Rvec = np.zeros((3,1), dtype=float)
         if view.feature_type in ['sift', 'surf']:
@@ -217,6 +216,8 @@ class SFM:
         # collects all the descriptors of the reconstructed views
         old_descriptors = []
         for old_view in self.done:
+            # if old_view == preview : 
+            #     print("old view : ", old_view.name) //test 0506 but fail..
             old_descriptors.append(old_view.descriptors)
 
         # match old descriptors against the descriptors in the new view

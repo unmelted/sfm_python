@@ -41,27 +41,6 @@ class Adjust(object):
 
         print(roll, roll * 180/math.pi)
     
-    def get_camera_relative(self, ref, target) :
-        newR = np.dot(target.R.T, ref.R)
-        print("camera_releative.. ", newR)
-
-        temp = -1* np.dot(newR, ref.t)
-        newT = temp + target.t
-        K_inv = np.linalg.inv(target.K)
-        print("new T " , newT)
-        # pts = K_inv.dot(np.array([[1162, 0, -1579]]).T)
-        # self.convert_pts_relative(target, newR, newT, pts)
-
-        temp = np.hstack([newR, newT])
-        P = np.dot(target.K, temp) 
-
-        ppts = ref.pts.reshape((3, 1))        
-        ppts = np.vstack([ppts, 1])
-        reproject = np.dot(P, ppts)
-        target.pts =  K_inv.dot(reproject).T    
-        # target.pts[0][1] = 0            
-        print("camera_relative.. " , target.pts)
-
     #cam1 -> cam2 relative
     def get_camera_relative2(self, ref, target) :
         newR = np.dot(ref.R.T, target.R)
@@ -188,6 +167,7 @@ class Adjust(object):
         print("normal 2 ")
         print(reproject)    
 
+
     def backprojection(self, c0, c1):
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -209,7 +189,7 @@ class Adjust(object):
             c1.pts = np.append(c1.pts, n, axis=0)
 
     def make_3D(self, c0, c1) :
-        print("check_pts .. ", c0.view.name, c1.view.name)
+        print(" make_3D .... ", c0.view.name, c1.view.name)
 
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -227,18 +207,16 @@ class Adjust(object):
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
 
-    def reproject_3D(self, c0, c1) :
-        print("reproject_3D ..", c1.view.name)
-        print("pts_3D : ", c0.pts_3D)
+    def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
+            reproject = c1.project(cv_pts, x_lambda, y_lambda)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        print(c1.pts)            
+        # print(c1.pts)            
 
             # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
             # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
