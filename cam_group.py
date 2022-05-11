@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 3
+        self.limit = 6
 
         self.root_path = None
         self.answer = {}
@@ -219,7 +219,7 @@ class Group(object):
         #self.check_pair()
 
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
-        self.answer = import_answer(filename)
+        self.answer = import_answer(filename, self.limit)
 
         for i, cam in enumerate(self.cameras):
 
@@ -233,12 +233,11 @@ class Group(object):
                 # if i == 2 : 
                 #     self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
 
-            if i > 0 :
-                self.adjust.backprojection(self.cameras[i])
-                self.adjust.reproject_3D_only(self.cameras[i])
+            self.adjust.backprojection(self.cameras[i])
 
             if i > 0 :
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                 # self.adjust.check_normal(self.cameras[i])
                 # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 

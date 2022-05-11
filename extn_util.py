@@ -100,7 +100,7 @@ def export_points(preset):
     ofile.write(bn_json)
     ofile.close()
 
-def import_answer(filepath):
+def import_answer(filepath, limit):
 
     with open(filepath, 'r') as json_file :
         json_data = json.load(json_file)
@@ -129,6 +129,15 @@ def import_answer(filepath):
         pt = np.array([json_data['points'][i]['pts_3d']['X4'], json_data['points'][i]['pts_3d']['Y4']])
         pt = pt.reshape((1, 2))        
         answer_pt = np.append(answer_pt, pt, axis=0)
+        
+        pt = np.array([json_data['points'][i]['pts_3d']['X5'], json_data['points'][i]['pts_3d']['Y5']])
+        pt = pt.reshape((1, 2))
+        answer_pt = np.append(answer_pt, np.array(pt), axis=0)        
+        pt = np.array([json_data['points'][i]['pts_3d']['X6'], json_data['points'][i]['pts_3d']['Y6']])
+        pt = pt.reshape((1, 2))        
+        answer_pt = np.append(answer_pt, pt, axis=0)
+        
+        
         # pt = np.array([json_data['points'][i]['pts_3d']['Center']['X'], json_data['points'][i]['pts_3d']['Center']['Y']])
         # pt = pt.reshape((1, 2))        
         # answer_pt = np.append(answer_pt, pt, axis=0)
@@ -136,6 +145,8 @@ def import_answer(filepath):
 
         answer[name] = answer_pt
         # print(answer[name])
+        if limit != 0 and i == limit :
+            break           
     
     return answer
 

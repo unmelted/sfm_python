@@ -79,6 +79,18 @@ def get_keypoints_from_indices(keypoints1, index_list1, keypoints2, index_list2)
     return points1, points2
 
 
+def skew(x):
+    """ Create a skew symmetric matrix *A* from a 3d vector *x*.
+        Property: np.cross(A, v) == np.dot(x, v)
+    :param x: 3d vector
+    :returns: 3 x 3 skew symmetric matrix from *x*
+    """
+    return np.array([
+        [0, -x[2], x[1]],
+        [x[2], 0, -x[0]],
+        [-x[1], x[0], 0]
+    ])
+    
 def get_3D_point(u1, P1, u2, P2):
     """Solves for 3D point using homogeneous 2D points and the respective camera matrices"""
 
@@ -93,7 +105,18 @@ def get_3D_point(u1, P1, u2, P2):
                   -(u2[1] * P2[2, 3] - P2[1, 3])])
 
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
+
     return X[1]
+
+    C = np.vstack([
+        np.dot(skew(u1), P1),
+        np.dot(skew(u2), P2)
+    ])
+    U, S, V = np.linalg.svd(C)
+    P = np.ravel(V[-1, :4])
+    P = P / P[3]
+    P1 = P[:-1]
+    return P1.reshape((3, 1))
 
 
 def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):

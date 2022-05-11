@@ -167,22 +167,6 @@ class Adjust(object):
         print("normal 2 ")
         print(reproject)    
 
-
-    def backprojection(self, c):
-        cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
-        K_inv = np.linalg.inv(c.K)
-        R0_inv = np.linalg.inv(c.R)
-
-        print(" Back projection .. : ", c.view.name)
-
-        for i in range(c.pts.shape[0]) :        
-            u1_normalized = K_inv.dot(cam[i, :])
-            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
-            c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
-            c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
-
-            print(c_wrld.reshape((1,3)))
-
     def make_3D(self, c0, c1) :
         print(" make_3D .... ", c0.view.name, c1.view.name)
 
@@ -204,6 +188,7 @@ class Adjust(object):
         print(c1.pts_3D)
 
     def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
+        print("reproject_3D .. : ", c1.view.name)
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
@@ -214,27 +199,30 @@ class Adjust(object):
 
         print(c1.pts)            
 
-            # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
-            # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
-            # c1.pts = np.vstack([moved, 1])
-            # c1.pts = c1.pts.reshape((3, 1))
-            # #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
-            # print("reproject fianl : ", moved, c1.pts)
-            # temp = np.vstack([c0.pts_3D, 1])
-            # temp = temp.reshape((4, 1))
-            # print("compare function .. :  ", c1.project(temp))
+    def backprojection(self, c):
+        cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
 
-    def reproject_3D_only(self, c) :
-        print("reproject_3D_only.. :  ", c.view.name)
+        print(" Back projection .. : ", c.view.name)
 
-        for i in range(c.pts_back.shape[0]) :
-            cv_pts = c.pts_back[i, :]
-            cv_pts[2] = 1
-            print(cv_pts)
+        for i in range(c.pts.shape[0]) :        
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
+
+            print(c_wrld.reshape((1,3)))
+
+    def reproject_3D_only(self, c0, c1) :
+        print("reproject_3D_only.. :  ", c1.view.name)
+
+        for i in range(c0.pts_back.shape[0]) :
+            cv_pts = c0.pts_back[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
-            reproject = c.project(cv_pts, 0 , 0)
-            c.pts_repr = np.append(c.pts_repr, np.array(reproject).T, axis=0)             
+            reproject = c1.project(cv_pts, 0 , 0)
+            c1.pts_repr = np.append(c1.pts_repr, np.array(reproject).T, axis=0)             
 
-        print(c.pts_repr)            
+        print(c1.pts_repr)            
 
