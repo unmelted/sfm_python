@@ -132,6 +132,12 @@ def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
     mask = mask.astype(bool).flatten()
     inliers1 = np.array(indices1)[mask]
     inliers2 = np.array(indices2)[mask]
+
+    # U, S, V = np.linalg.svd(F)
+    # S[-1] = 0
+    # S = [1, 1, 0] # Force rank 2 and equal eigenvalues
+    # E = np.dot(U, np.dot(np.diag(S), V))
+
     return F, inliers1, inliers2
 
 

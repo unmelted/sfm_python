@@ -84,7 +84,7 @@ class SFM:
             for i, old_view in enumerate(self.done):
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                    _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    _, _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
@@ -97,14 +97,11 @@ class SFM:
     def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
+        F, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
         pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
-
-        # print("get_pose.. F: ", F)
-        # print("get_pose.. normal E: ", E)        
-        # print('Computed essential matrix:', (-E / E[0][1]))
+        pair.camera2.E = E
 
         return self.check_pose(pair, E)
 
@@ -249,7 +246,7 @@ class SFM:
         
         return R, t, Rvec
 
-    def plot_points(self):
+    def save_3d_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""
 
         number = len(self.done)

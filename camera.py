@@ -15,6 +15,7 @@ class Camera(object):
         self.R = np.zeros((3,3), dtype=np.float64)     # rotation
         self.t = np.zeros((3,1), dtype=np.float64)     # translation
         self.F = np.zeros((3,3), dtype=np.float64)
+        self.E = np.zeros((3,3), dtype=np.float64)        
         self.Rvec = np.zeros((3,1), dtype=np.float64)
         self.c = None  # camera center
         self.focal = K[0][0]        

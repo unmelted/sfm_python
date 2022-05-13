@@ -139,7 +139,7 @@ class Group(object):
                 logging.info("Mean reprojection error for images is %f ", self.sfm.errors[j])
                 j += 1
 
-            self.sfm.plot_points()
+            self.sfm.save_3d_points()
 
             if self.limit != 0 and j-1 == self.limit :
                 break
@@ -285,7 +285,8 @@ class Group(object):
     def visualize(self) :
         print("visualize camera in  group")        
         plot_cameras(self.cameras, self.limit)
-        #plot_pointmap(self.sfm)
+        plot_pointmap(self.sfm)    
+
 
     def export(self) :
         export_points(self)
