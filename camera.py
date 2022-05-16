@@ -1,5 +1,5 @@
 import numpy as np
-import util
+import mathutil
 from view import *
 
 
@@ -46,11 +46,16 @@ class Camera(object):
                 print('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
 
-    def project(self, X, x_lambda, y_lambda):
+    def project(self, X, H = None):
         """ Project 3D homogenous points X (4 * n) and normalize coordinates.
             Return projected 2D points (2 x n coordinates) """
 
         x = np.dot(self.P, X) 
+
+        # if len(H) > 1:
+        #     print("cross .. ", H)
+        #     H_inv = np.linalg.inv(H)
+        #     x  = np.dot(H, x)
 
         x[0, :] /= x[2, :]
         x[1, :] /= x[2, :]

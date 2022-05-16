@@ -129,13 +129,15 @@ def import_answer(filepath, limit):
         pt = np.array([json_data['points'][i]['pts_3d']['X4'], json_data['points'][i]['pts_3d']['Y4']])
         pt = pt.reshape((1, 2))        
         answer_pt = np.append(answer_pt, pt, axis=0)
-        
-        pt = np.array([json_data['points'][i]['pts_3d']['X5'], json_data['points'][i]['pts_3d']['Y5']])
-        pt = pt.reshape((1, 2))
-        answer_pt = np.append(answer_pt, np.array(pt), axis=0)        
-        pt = np.array([json_data['points'][i]['pts_3d']['X6'], json_data['points'][i]['pts_3d']['Y6']])
-        pt = pt.reshape((1, 2))        
-        answer_pt = np.append(answer_pt, pt, axis=0)
+
+        pt_6 = False
+        if pt_6 : 
+            pt = np.array([json_data['points'][i]['pts_3d']['X5'], json_data['points'][i]['pts_3d']['Y5']])
+            pt = pt.reshape((1, 2))
+            answer_pt = np.append(answer_pt, np.array(pt), axis=0)        
+            pt = np.array([json_data['points'][i]['pts_3d']['X6'], json_data['points'][i]['pts_3d']['Y6']])
+            pt = pt.reshape((1, 2))        
+            answer_pt = np.append(answer_pt, pt, axis=0)
         
         
         # pt = np.array([json_data['points'][i]['pts_3d']['Center']['X'], json_data['points'][i]['pts_3d']['Center']['Y']])

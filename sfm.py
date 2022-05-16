@@ -1,5 +1,5 @@
 import os
-from util import *
+from mathutil import *
 import open3d as o3d
 
 class SFM:
@@ -69,7 +69,6 @@ class SFM:
             self.done.append(pair.camera1.view)
             self.done.append(pair.camera2.view)
 
-        # procedure for estimating the pose of all other views
         else:
 
             pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K, pair.camera1.view)
@@ -84,7 +83,7 @@ class SFM:
             for i, old_view in enumerate(self.done):
                 if(old_view.name, pair.camera2.view.name) in self.matches : 
                     match_object = self.matches[(old_view.name, pair.camera2.view.name)]
-                    _, _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
+                    _, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(old_view, pair.camera2.view, pair.indices1, pair.indices2)
                     self.remove_mapped_points(match_object, i)
                     _, rpe = self.triangulate_with(pair, old_view, pair.camera2.view)
                     errors += rpe
@@ -94,6 +93,8 @@ class SFM:
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
 
+        pair.draw_matches()            
+        
     def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 

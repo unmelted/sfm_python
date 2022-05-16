@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 6
+        self.limit = 8
 
         self.root_path = None
         self.answer = {}
@@ -103,7 +103,7 @@ class Group(object):
                     break
 
                 print("read from camera file : ", cam.view.name)
-                print(tcon)
+                # print(tcon)
                 cam.P = tcon[0]
                 cam.EX = tcon[1]
                 cam.K = tcon[2]
@@ -222,6 +222,9 @@ class Group(object):
         self.answer = import_answer(filename, self.limit)
 
         for i, cam in enumerate(self.cameras):
+            # if i == 5 :
+            #     self.cameras[i].K = self.cameras[i].K - 20
+            #     self.cameras[i].calculate_p()
 
             if i == 0 or i == 1 :
                 pts = self.answer[self.cameras[i].view.name]
@@ -229,15 +232,18 @@ class Group(object):
                 cam.pts = pts
             
             if i > 1 : 
-                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
+                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
                 # if i == 2 : 
-                #     self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
-
+                #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
             self.adjust.backprojection(self.cameras[i])
 
             if i > 0 :
+                # if i == 1 : 
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
-                self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
+                # else :
+                #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+                # 
+                # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                 # self.adjust.check_normal(self.cameras[i])
                 # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 

@@ -6,7 +6,7 @@ import cv2
 import logging
 import json
 from world import *
-from util import *
+from mathutil import *
 
 class Adjust(object):
 
@@ -182,19 +182,19 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            print("error " , error1, error2)
+            # print("error " , error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
         print(c1.pts_3D)
 
-    def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
+    def reproject_3D(self, c0, c1) :
         print("reproject_3D .. : ", c1.view.name)
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts, x_lambda, y_lambda)
+            reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
         print(c1.pts)            
@@ -225,4 +225,8 @@ class Adjust(object):
             c1.pts_repr = np.append(c1.pts_repr, np.array(reproject).T, axis=0)             
 
         print(c1.pts_repr)            
+
+    def find_homography(self, answer, c0) :
+       H, mask = cv2.findHomography(c0.pts, answer, 1)
+       return H
 
