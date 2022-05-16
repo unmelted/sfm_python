@@ -71,15 +71,6 @@ def rotation_3d_from_angles(x_angle, y_angle=0, z_angle=0):
     return np.dot(np.dot(rx, ry), rz)
 
 
-
-def get_keypoints_from_indices(keypoints1, keypoints2, index_list1, index_list2):
-    """Filters a list of keypoints based on the indices given"""
-
-    points1 = np.array([kp.pt for kp in keypoints1])[index_list1]
-    points2 = np.array([kp.pt for kp in keypoints2])[index_list2]
-    return points1, points2
-
-
 def skew(x):
     """ Create a skew symmetric matrix *A* from a 3d vector *x*.
         Property: np.cross(A, v) == np.dot(x, v)
@@ -119,6 +110,13 @@ def get_3D_point(u1, P1, u2, P2):
     P1 = P[:-1]
     return P1.reshape((3, 1))
 
+def get_keypoints_from_indices(keypoints1, keypoints2, index_list1, index_list2):
+    """Filters a list of keypoints based on the indices given"""
+
+    points1 = np.array([kp.pt for kp in keypoints1])[index_list1]
+    points2 = np.array([kp.pt for kp in keypoints2])[index_list2]
+    return points1, points2
+
 
 def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
     """Removes outlier keypoints using the fundamental matrix"""
@@ -135,10 +133,20 @@ def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
     mask = mask.astype(bool).flatten()
     inliers1 = np.array(indices1)[mask]
     inliers2 = np.array(indices2)[mask]
-
-    refine_outliers(view1, view2, inliers1, inliers2)
-
     print("compute_fundamental_remove_outliers after mask  : ", len(inliers1))
+
+    '''refine match outliers '''
+    
+    pixel_points1, pixel_points2, inliers1, inliers2 = refine_outliers(view1, view2, inliers1, inliers2)
+
+    F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
+                                     ransacReprojThreshold=0.9, confidence=0.99)
+    # print("FindFundamental : ", F)    
+    mask = mask.astype(bool).flatten()
+    inliers1 = np.array(inliers1)[mask]
+    inliers2 = np.array(inliers2)[mask]
+
+    print("compute_fundamental_remove_outliers after refine  : ", len(inliers1))
 
     # U, S, V = np.linalg.svd(F)
     # S[-1] = 0
@@ -209,13 +217,21 @@ def check_triangulation(points, P):
 
 def calculate_mahalanobis(data):
     d_var = np.var(data)
-    print(d_var)
-    
+    d_mean = data.mean()
+    mahal = data - d_mean / d_var
+    mahal = np.absolute(mahal)
+    threshold = 0
+    if max(mahal) > 2 :
+       threshold = max(mahal) * 0.9
+
+    print(mahal)
+    print(threshold)
+
+    return mahal, threshold
 
 def refine_outliers(view1, view2, inliers1, inliers2) :
     del_x = np.empty( (0), dtype=np.float64)
     del_y = np.empty( (0), dtype=np.float64)
-    print(len(view1.keypoints), len(view2.keypoints))
     print(len(inliers1), len(inliers2))
 
     for i in range(0, len(inliers1)) :
@@ -228,5 +244,31 @@ def refine_outliers(view1, view2, inliers1, inliers2) :
         del_y = np.append(del_y, np.array(y2 - y1).reshape((1)), axis = 0)
 
     d_atan = np.arctan2(del_x, del_y)
-    d_ma = calculate_mahalanobis(d_atan)
+    d_ma, d_threshold  = calculate_mahalanobis(d_atan)
 
+    if d_threshold == 0 :
+        points1 = np.array([kp.pt for kp in view1.keypoints])[inliers1]
+        points2 = np.array([kp.pt for kp in view2.keypoints])[inliers2]
+        return points1, points2, inliers1, inliers2    
+
+    print("refine ouliers .. before ")
+    print(inliers1)
+
+    cnt = 0
+    new_inliers1 = []
+    new_inliers2 = []
+    for i in range(0, len(inliers1)) :
+        if( d_ma[i] < d_threshold ) :
+            new_inliers1.append(inliers1[i])
+            new_inliers2.append(inliers2[i])
+            cnt += 1
+
+    print("remove ouliers : ", cnt)
+    print(new_inliers1)
+    print(len(new_inliers1), len(new_inliers2))
+    inliers1 = new_inliers1
+    inliers2 = new_inliers2
+    points1 = np.array([kp.pt for kp in view1.keypoints])[inliers1]
+    points2 = np.array([kp.pt for kp in view2.keypoints])[inliers2]
+
+    return points1, points2, inliers1, inliers2    

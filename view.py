@@ -34,7 +34,7 @@ class View(object):
         """Extracts features from the image"""
 
         if self.feature_type == 'sift':
-            detector = cv2.xfeatures2d.SIFT_create(1800)
+            detector = cv2.xfeatures2d.SIFT_create(2400)
         elif self.feature_type == 'surf':
             detector = cv2.xfeatures2d.SURF_create()
         elif self.feature_type == 'orb':
