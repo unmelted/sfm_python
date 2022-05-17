@@ -118,7 +118,11 @@ class Pair:
 
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
-
+        print("get_mates .. ")
+        print(len(view1.descriptors))
+        print(len(view2.descriptors))
+        print(view1.descriptors)
+        
         self.match = self.matcher.match(view1.descriptors, view2.descriptors)
         self.match = sorted(self.match, key=lambda x: x.distance)
 

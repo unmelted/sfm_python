@@ -57,7 +57,7 @@ class View(object):
 
 
         if self.extraction_mode == 'half' : 
-            half_image = cv2.resize(self.image, (self.proc_width, self.proc.height))
+            half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
             half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
             t_keypoints = []
@@ -72,23 +72,28 @@ class View(object):
             half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
             t_keypoints = []            
+            t_descriptors = []
             for i in range(0, 4) :
-                detector = cv2.xfeatures2d.SIFT_create(400)                
+                detector = cv2.xfeatures2d.SIFT_create(1200)
                 mask = self.make_mask(self.proc_height, self.proc_width, i+1)
-                keypoints, self.descriptors = detector.detectAndCompute(half_image, mask)
+                keypoints, descriptors = detector.detectAndCompute(half_image, mask)
                 t_keypoints.append(keypoints)
-                print("keypoint len : ", i, len(keypoints), len(t_keypoints))
-
+                t_descriptors.append(descriptors)
+                print("keypoint len : ", i, len(keypoints), len(t_descriptors), len(t_descriptors[i]))
 
             for i in range(0, 4) :
                 for point in t_keypoints[i]:
                     pt = cv2.KeyPoint(x=point.pt[0]*2, y=point.pt[1]*2, size=point.size, angle=point.angle, response=point.response, octave=point.octave, class_id=point.class_id)
                     self.keypoints.append(pt)
 
+                for desc in t_descriptors[i]:
+                    self.descriptors.append((desc)
+                
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
 
-        print("Key points count : ", self.name, len(self.keypoints))
+        print("Key points count : ", self.name, len(self.keypoints), len(self.descriptors))
+
         self.write_features()
 
     def make_mask(self, rows, cols, position) :

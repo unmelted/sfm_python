@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 0
+        self.limit = 2
 
         self.root_path = None
         self.answer = {}
