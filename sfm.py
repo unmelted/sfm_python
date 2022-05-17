@@ -1,5 +1,5 @@
 import os
-from util import *
+from mathutil import *
 import open3d as o3d
 
 class SFM:
@@ -69,7 +69,6 @@ class SFM:
             self.done.append(pair.camera1.view)
             self.done.append(pair.camera2.view)
 
-        # procedure for estimating the pose of all other views
         else:
 
             pair.camera2.R, pair.camera2.t, pair.camera2.Rvec = self.compute_pose_pnp(pair.camera2.view, pair.camera2.K, pair.camera1.view)
@@ -94,17 +93,16 @@ class SFM:
             self.done.append(pair.camera2.view)
             self.errors.append(np.mean(errors))
 
+        pair.draw_matches()            
+        
     def compute_pose_base(self, pair):
         """Computes and returns the rotation and translation components for the second view"""
 
-        F , pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
+        F, pair.inliers1, pair.inliers2 = compute_fundamental_remove_outliers(pair.camera1.view, pair.camera2.view, pair.indices1, pair.indices2)
         pair.camera2.F = F
         K = pair.camera2.K
         E = K.T @ F @ K  # compute the essential matrix from the fundamental matrix
-
-        # print("get_pose.. F: ", F)
-        # print("get_pose.. normal E: ", E)        
-        # print('Computed essential matrix:', (-E / E[0][1]))
+        pair.camera2.E = E
 
         return self.check_pose(pair, E)
 
@@ -115,7 +113,6 @@ class SFM:
 
         if not check_determinant(R1):
             R1, R2, t1, t2 = get_camera_from_E(-E)  # change sign of E if R1 fails the determinant test
-
 
         # solution 1
         reprojection_error, points_3D = self.triangulate(pair, K, R1, t1)
@@ -247,9 +244,10 @@ class SFM:
         # print(" LM .. ", Rvec, Rvec2)
         # print(" LM .. ", t, t2)        
         R, _ = cv2.Rodrigues(Rvec)
+        
         return R, t, Rvec
 
-    def plot_points(self):
+    def save_3d_points(self):
         """Saves the reconstructed 3D points to ply files using Open3D"""
 
         number = len(self.done)

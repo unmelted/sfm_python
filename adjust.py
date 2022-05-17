@@ -6,7 +6,7 @@ import cv2
 import logging
 import json
 from world import *
-from util import *
+from mathutil import *
 
 class Adjust(object):
 
@@ -167,27 +167,6 @@ class Adjust(object):
         print("normal 2 ")
         print(reproject)    
 
-
-    def backprojection(self, c0, c1):
-        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
-        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
-        K_inv = np.linalg.inv(c1.K)
-        P = self.get_camera_relative2(c0, c1)        
-        for i in range(c0.pts.shape[0]) :        
-            u1_normalized = K_inv.dot(cam0[i, :])
-            cv_pts = cam0[i, :] #u1_normalized
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            
-            pts_r = np.dot(P, cv_pts)
-            pts_r = K_inv.dot(pts_r)
-            pts_r[0, :] /= pts_r[2, :]
-            pts_r[1, :] /= pts_r[2, :]
-            print(pts_r)
-            n =  np.array(pts_r[:2]).T
-            print(n)
-            c1.pts = np.append(c1.pts, n, axis=0)
-
     def make_3D(self, c0, c1) :
         print(" make_3D .... ", c0.view.name, c1.view.name)
 
@@ -203,27 +182,51 @@ class Adjust(object):
 
             error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
             error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            print("make 3D error  .. ", point_3D, error1, error2)
+            # print("error " , error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
+        print(c1.pts_3D)
 
-    def reproject_3D(self, c0, c1, x_lambda, y_lambda) :
+    def reproject_3D(self, c0, c1) :
+        print("reproject_3D .. : ", c1.view.name)
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts, x_lambda, y_lambda)
+            reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        # print(c1.pts)            
+        print(c1.pts)            
 
-            # moved = c1.K.dot(c1.R.dot(c0.pts_3D) + c1.t)
-            # moved =  cv2.convertPointsFromHomogeneous(moved.T)[:, 0, :].T
-            # c1.pts = np.vstack([moved, 1])
-            # c1.pts = c1.pts.reshape((3, 1))
-            # #print("moved .. ", moved.shape, c0.pts.shape, c1.pts.shape)
-            # print("reproject fianl : ", moved, c1.pts)
-            # temp = np.vstack([c0.pts_3D, 1])
-            # temp = temp.reshape((4, 1))
-            # print("compare function .. :  ", c1.project(temp))
+    def backprojection(self, c):
+        cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
+
+        print(" Back projection .. : ", c.view.name)
+
+        for i in range(c.pts.shape[0]) :        
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
+
+            print(c_wrld.reshape((1,3)))
+
+    def reproject_3D_only(self, c0, c1) :
+        print("reproject_3D_only.. :  ", c1.view.name)
+
+        for i in range(c0.pts_back.shape[0]) :
+            cv_pts = c0.pts_back[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c1.project(cv_pts, 0 , 0)
+            c1.pts_repr = np.append(c1.pts_repr, np.array(reproject).T, axis=0)             
+
+        print(c1.pts_repr)            
+
+    def find_homography(self, answer, c0) :
+       H, mask = cv2.findHomography(c0.pts, answer, 1)
+       return H
+

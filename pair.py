@@ -1,5 +1,6 @@
 import enum
 import os
+from cv2 import CV_32FC3
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -40,6 +41,25 @@ class Pair:
         else :
             self.read_matches()
         
+
+    def draw_matches(self, ):
+        if not os.path.exists(os.path.join(self.camera1.view.root_path, 'draw')):
+            os.makedirs(os.path.join(self.camera1.view.root_path, 'draw'))
+
+        filename = os.path.join(self.camera1.view.root_path +'/draw' , self.image_name1 + '_' + self.image_name2 + '_match.png')
+        drw_match = np.concatenate((self.camera1.view.image, self.camera2.view.image), axis=1)
+        print("draw_matches.. name : ", self.image_name1, len(self.inliers1))
+
+        for i in range(0, len(self.inliers1)) :
+            x1 = self.camera1.view.keypoints[self.indices1[i]].pt[0]
+            x2 = self.camera2.view.keypoints[self.indices2[i]].pt[0]
+            y1 = self.camera1.view.keypoints[self.indices1[i]].pt[1]
+            y2 = self.camera2.view.keypoints[self.indices2[i]].pt[1]            
+            cv2.line(drw_match, (int(x1), int(y1)), (int(x2 + 3840), int(y2)), (255, 100, 200), 2)
+
+        cv2.imwrite(filename, drw_match)
+
+
     def check_points_3d(self):
         print("check_points_3d ", len(self.points_3D), self.points_3D.shape)
         #sorted_3d = sorted(self.points_3D, key=lambda x: x[2])

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import cv2
 import logging
 
@@ -70,15 +71,18 @@ def rotation_3d_from_angles(x_angle, y_angle=0, z_angle=0):
     return np.dot(np.dot(rx, ry), rz)
 
 
-
-def get_keypoints_from_indices(keypoints1, index_list1, keypoints2, index_list2):
-    """Filters a list of keypoints based on the indices given"""
-
-    points1 = np.array([kp.pt for kp in keypoints1])[index_list1]
-    points2 = np.array([kp.pt for kp in keypoints2])[index_list2]
-    return points1, points2
-
-
+def skew(x):
+    """ Create a skew symmetric matrix *A* from a 3d vector *x*.
+        Property: np.cross(A, v) == np.dot(x, v)
+    :param x: 3d vector
+    :returns: 3 x 3 skew symmetric matrix from *x*
+    """
+    return np.array([
+        [0, -x[2], x[1]],
+        [x[2], 0, -x[0]],
+        [-x[1], x[0], 0]
+    ])
+    
 def get_3D_point(u1, P1, u2, P2):
     """Solves for 3D point using homogeneous 2D points and the respective camera matrices"""
 
@@ -93,7 +97,25 @@ def get_3D_point(u1, P1, u2, P2):
                   -(u2[1] * P2[2, 3] - P2[1, 3])])
 
     X = cv2.solve(A, B, flags=cv2.DECOMP_SVD)
+
     return X[1]
+
+    C = np.vstack([
+        np.dot(skew(u1), P1),
+        np.dot(skew(u2), P2)
+    ])
+    U, S, V = np.linalg.svd(C)
+    P = np.ravel(V[-1, :4])
+    P = P / P[3]
+    P1 = P[:-1]
+    return P1.reshape((3, 1))
+
+def get_keypoints_from_indices(keypoints1, keypoints2, index_list1, index_list2):
+    """Filters a list of keypoints based on the indices given"""
+
+    points1 = np.array([kp.pt for kp in keypoints1])[index_list1]
+    points2 = np.array([kp.pt for kp in keypoints2])[index_list2]
+    return points1, points2
 
 
 def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
@@ -103,14 +125,51 @@ def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
                                                               keypoints2=view2.keypoints,
                                                               index_list1=indices1,
                                                               index_list2=indices2)
+    print("compute_fundamental_remove_outliers before mask  : ", len(pixel_points1), len(indices1))
+
     F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
                                      ransacReprojThreshold=0.9, confidence=0.99)
-    # print("FindFundamental : ", F)
+    # print("FindFundamental : ", F)    
     mask = mask.astype(bool).flatten()
     inliers1 = np.array(indices1)[mask]
     inliers2 = np.array(indices2)[mask]
+    print("compute_fundamental_remove_outliers after mask  : ", len(inliers1))
+
+    '''refine match outliers '''
+    refine = False
+    if refine == True : 
+        pixel_points1, pixel_points2, inliers1, inliers2 = refine_outliers(view1, view2, inliers1, inliers2)
+
+        F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
+                                        ransacReprojThreshold=0.7, confidence=0.99)
+        # print("FindFundamental : ", F)    
+        mask = mask.astype(bool).flatten()
+        inliers1 = np.array(inliers1)[mask]
+        inliers2 = np.array(inliers2)[mask]
+
+        print("compute_fundamental_remove_outliers after refine  : ", len(inliers1))
+
+    # U, S, V = np.linalg.svd(F)
+    # S[-1] = 0
+    # S = [1, 1, 0] # Force rank 2 and equal eigenvalues
+    # E = np.dot(U, np.dot(np.diag(S), V))
+
     return F, inliers1, inliers2
 
+
+def calculate_reprojection_error2(point_3D, point_2D, K, R, t):
+    """Calculates the reprojection error for a 3D point by projecting it back into the image plane"""
+    #print("error input point : ", point_3D, point_2D)    
+    reprojected_point = K.dot(R.dot(point_3D) + t)
+    reprojected_point = cv2.convertPointsFromHomogeneous(reprojected_point.T)[:, 0, :].T
+    #print("error output reproject : ", reprojected_point)    
+    # print(point_2D.reshape((2, 1)))
+    error = np.linalg.norm(point_2D.reshape((2, 1)) - reprojected_point)
+    err_x = point_2D[0] - reprojected_point[0]
+    err_y = point_2D[1] - reprojected_point[1]
+    print("calculate_reprojecitopn_err : ", err_x, err_y)
+    print("  ", point_2D.T)
+    return error
 
 def calculate_reprojection_error(point_3D, point_2D, K, R, t):
     """Calculates the reprojection error for a 3D point by projecting it back into the image plane"""
@@ -156,3 +215,60 @@ def check_triangulation(points, P):
         return False
     else:
         return True
+
+def calculate_mahalanobis(data):
+    d_var = np.var(data)
+    d_mean = data.mean()
+    mahal = data - d_mean / d_var
+    mahal = np.absolute(mahal)
+    threshold = 0
+    if max(mahal) > 2 :
+       threshold = max(mahal) * 0.9
+
+    # print(mahal)
+    # print(threshold)
+
+    return mahal, threshold
+
+def refine_outliers(view1, view2, inliers1, inliers2) :
+    del_x = np.empty( (0), dtype=np.float64)
+    del_y = np.empty( (0), dtype=np.float64)
+    # print(len(inliers1), len(inliers2))
+
+    for i in range(0, len(inliers1)) :
+        x1 = view1.keypoints[inliers1[i]].pt[0]
+        x2 = view2.keypoints[inliers2[i]].pt[0]
+        y1 = view1.keypoints[inliers1[i]].pt[1]
+        y2 = view2.keypoints[inliers2[i]].pt[1]            
+
+        del_x = np.append(del_x, np.array(x2 - x1).reshape((1)), axis = 0)
+        del_y = np.append(del_y, np.array(y2 - y1).reshape((1)), axis = 0)
+
+    d_atan = np.arctan2(del_x, del_y)
+    d_ma, d_threshold  = calculate_mahalanobis(d_atan)
+
+    if d_threshold == 0 :
+        points1 = np.array([kp.pt for kp in view1.keypoints])[inliers1]
+        points2 = np.array([kp.pt for kp in view2.keypoints])[inliers2]
+        return points1, points2, inliers1, inliers2    
+
+    print("refine ouliers .. before ")
+
+    cnt = 0
+    new_inliers1 = []
+    new_inliers2 = []
+    for i in range(0, len(inliers1)) :
+        if( d_ma[i] < d_threshold ) :
+            new_inliers1.append(inliers1[i])
+            new_inliers2.append(inliers2[i])
+        else :
+            cnt += 1
+
+    print("remove ouliers : ", cnt)
+    print(len(new_inliers1), len(new_inliers2))
+    inliers1 = new_inliers1
+    inliers2 = new_inliers2
+    points1 = np.array([kp.pt for kp in view1.keypoints])[inliers1]
+    points2 = np.array([kp.pt for kp in view2.keypoints])[inliers2]
+
+    return points1, points2, inliers1, inliers2    

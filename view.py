@@ -11,7 +11,7 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
+        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = []  # list of descriptors obtained from feature extraction
@@ -20,10 +20,17 @@ class View(object):
         self.image_width = self.image.shape[1]
         self.image_height = self.image.shape[0]
         self.bMask = bMask
-        self.initial_pt1 = [[708, 183], [120, 1614], [2766, 1485], [2091, 144]] # ncaa 
-        self.initial_pt2 = [[798, 218], [97, 1617], [2715, 1510], [2163, 179]] # ncaa         
         self.keypoints_mask = []
         self.descriptors_mask = []
+
+        self.extraction_mode = 'quad'
+        if(self.extraction_mode == 'None') :
+            self.proc_width = self.image_width
+            self.proc_height = self.image_width
+        else :
+            self.proc_width = int(self.image_width / 2)
+            self.proc_height = int(self.image_width / 2)
+
 
         if not feature_path:
             self.extract_features()
@@ -34,7 +41,12 @@ class View(object):
         """Extracts features from the image"""
 
         if self.feature_type == 'sift':
-            detector = cv2.xfeatures2d.SIFT_create()
+            if self.extraction_mode == 'None' or self.extraction_mode == 'half':
+                detector = cv2.xfeatures2d.SIFT_create(1200)
+            elif self.extraction_mode == 'quad':
+                # detector = cv2.xfeatures2d.SIFT_create(400)
+                pass
+
         elif self.feature_type == 'surf':
             detector = cv2.xfeatures2d.SURF_create()
         elif self.feature_type == 'orb':
@@ -43,29 +55,70 @@ class View(object):
             logging.error("Admitted feature types are SIFT, SURF or ORB")
             sys.exit(0)
 
-        if(self.bMask > 0) :
-            mask = self.make_mask_image(self.bMask)
-            self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
-            self.keypoints_mask, self.descriptors_mask = detector.detectAndCompute(self.image, mask)
-            print("name : {} Extract features no mask {} mask {} ".format(self.name, len(self.keypoints), len(self.keypoints_mask)))
-        else :
-            self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
-            print("Key points count : ", self.name, len(self.keypoints))
 
+        if self.extraction_mode == 'half' : 
+            half_image = cv2.resize(self.image, (self.proc_width, self.proc.height))
+            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+
+            t_keypoints = []
+            t_keypoints, self.descriptors = detector.detectAndCompute(half_image, None)
+
+            for point in t_keypoints:
+                keypoint = cv2.KeyPoint(x=point.pt[0]*2, y=point.pt[1]*2, size=point.size, angle=point.angle, response=point.response, octave=point.octave, class_id=point.class_id)
+                self.keypoints.append(keypoint)
+
+        elif self.extraction_mode == 'quad':
+            half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
+            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+
+            t_keypoints = []            
+            for i in range(0, 4) :
+                detector = cv2.xfeatures2d.SIFT_create(400)                
+                mask = self.make_mask(self.proc_height, self.proc_width, i+1)
+                keypoints, self.descriptors = detector.detectAndCompute(half_image, mask)
+                t_keypoints.append(keypoints)
+                print("keypoint len : ", i, len(keypoints), len(t_keypoints))
+
+
+            for i in range(0, 4) :
+                for point in t_keypoints[i]:
+                    pt = cv2.KeyPoint(x=point.pt[0]*2, y=point.pt[1]*2, size=point.size, angle=point.angle, response=point.response, octave=point.octave, class_id=point.class_id)
+                    self.keypoints.append(pt)
+
+        else : 
+                self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
+
+        print("Key points count : ", self.name, len(self.keypoints))
         self.write_features()
 
-    def make_mask_image(self, bmask) :
-        mask = np.full((self.image_height, self.image_width, 1), 0, np.uint8)
-        if(bmask == 1):
-            pts = np.array([self.initial_pt1])
-        elif (bmask == 2):
-            pts = np.array([self.initial_pt2])
+    def make_mask(self, rows, cols, position) :
+        '''
+        1 | 2 
+        ------
+        3 | 4
+        '''
+
+        quad1 = [[0, 0], [cols/2, 0], [cols/2, rows/2], [0, rows/2]] 
+        quad2 = [[cols/2, 0], [cols, 0], [cols, rows/2], [cols/2, rows/2]] 
+        quad3 = [[0, rows/2], [cols/2, rows/2], [cols/2, rows], [0, rows]] 
+        quad4 = [[cols/2, rows/2], [cols, rows/2], [cols, rows], [cols/2, rows]]        
+        mask = np.full((rows, cols, 1), 0, np.uint8)
+        pts = None
+        if(position == 1):
+            pts = np.array([quad1], dtype=np.int64)
+        elif (position == 2):
+            pts = np.array([quad2], dtype=np.int64)
+        elif (position == 3):
+            pts = np.array([quad3], dtype=np.int64)
+        elif (position == 4):
+            pts = np.array([quad4], dtype=np.int64)
 
         # cv2.polylines(mask, pts, True, (255), 3)
         # cv2.imwrite("test_mask1.png", mask)
+        print(pts)
         cv2.fillPoly(mask, pts, 255)
-        filename = "test_mask_" + str(bmask) + ".png"
-        cv2.imwrite(filename, mask)
+        testname = 'test_mask_' + str(position) + '.png'
+        cv2.imwrite(testname, mask)
 
         return mask
 

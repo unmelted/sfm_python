@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 7
+        self.limit = 0
 
         self.root_path = None
         self.answer = {}
@@ -42,7 +42,6 @@ class Group(object):
         self.root_path = root_path
 
         # if features directory exists, the feature files are read from there
-        logging.info("Created features directory")
         if os.path.exists(os.path.join(root_path, 'features')):
             feature_path = True
 
@@ -52,7 +51,6 @@ class Group(object):
             logging.error("can't read images . ")
             return -1
 
-        logging.info("Computing features")
         print(image_names)
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
         index = 0
@@ -103,7 +101,7 @@ class Group(object):
                     break
 
                 print("read from camera file : ", cam.view.name)
-                print(tcon)
+                # print(tcon)
                 cam.P = tcon[0]
                 cam.EX = tcon[1]
                 cam.K = tcon[2]
@@ -139,7 +137,7 @@ class Group(object):
                 logging.info("Mean reprojection error for images is %f ", self.sfm.errors[j])
                 j += 1
 
-            self.sfm.plot_points()
+            self.sfm.save_3d_points()
 
             if self.limit != 0 and j-1 == self.limit :
                 break
@@ -219,22 +217,31 @@ class Group(object):
         #self.check_pair()
 
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
-        self.answer = import_answer(filename)
+        self.answer = import_answer(filename, self.limit)
 
         for i, cam in enumerate(self.cameras):
+            # if i == 5 :
+            #     self.cameras[i].K = self.cameras[i].K - 20
+            #     self.cameras[i].calculate_p()
 
             if i == 0 or i == 1 :
                 pts = self.answer[self.cameras[i].view.name]
                 print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                 cam.pts = pts
-
+            
             if i > 1 : 
-                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i], self.x_lambda, self.y_lambda)
-                if i == 2 : 
-                    self.calculate_lambda(self.cameras[i - 1], self.cameras[i])                
+                self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                # if i == 2 : 
+                #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
+            self.adjust.backprojection(self.cameras[i])
 
             if i > 0 :
+                # if i == 1 : 
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                # else :
+                #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+                # 
+                # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                 # self.adjust.check_normal(self.cameras[i])
                 # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
 
@@ -282,7 +289,8 @@ class Group(object):
     def visualize(self) :
         print("visualize camera in  group")        
         plot_cameras(self.cameras, self.limit)
-        #plot_pointmap(self.sfm)
+        # plot_pointmap(self.sfm)    
+
 
     def export(self) :
         export_points(self)
