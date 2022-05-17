@@ -136,17 +136,18 @@ def compute_fundamental_remove_outliers(view1, view2, indices1, indices2):
     print("compute_fundamental_remove_outliers after mask  : ", len(inliers1))
 
     '''refine match outliers '''
-    
-    pixel_points1, pixel_points2, inliers1, inliers2 = refine_outliers(view1, view2, inliers1, inliers2)
+    refine = False
+    if refine == True : 
+        pixel_points1, pixel_points2, inliers1, inliers2 = refine_outliers(view1, view2, inliers1, inliers2)
 
-    F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
-                                     ransacReprojThreshold=0.9, confidence=0.99)
-    # print("FindFundamental : ", F)    
-    mask = mask.astype(bool).flatten()
-    inliers1 = np.array(inliers1)[mask]
-    inliers2 = np.array(inliers2)[mask]
+        F, mask = cv2.findFundamentalMat(pixel_points1, pixel_points2, method=cv2.FM_RANSAC,
+                                        ransacReprojThreshold=0.7, confidence=0.99)
+        # print("FindFundamental : ", F)    
+        mask = mask.astype(bool).flatten()
+        inliers1 = np.array(inliers1)[mask]
+        inliers2 = np.array(inliers2)[mask]
 
-    print("compute_fundamental_remove_outliers after refine  : ", len(inliers1))
+        print("compute_fundamental_remove_outliers after refine  : ", len(inliers1))
 
     # U, S, V = np.linalg.svd(F)
     # S[-1] = 0
@@ -224,15 +225,15 @@ def calculate_mahalanobis(data):
     if max(mahal) > 2 :
        threshold = max(mahal) * 0.9
 
-    print(mahal)
-    print(threshold)
+    # print(mahal)
+    # print(threshold)
 
     return mahal, threshold
 
 def refine_outliers(view1, view2, inliers1, inliers2) :
     del_x = np.empty( (0), dtype=np.float64)
     del_y = np.empty( (0), dtype=np.float64)
-    print(len(inliers1), len(inliers2))
+    # print(len(inliers1), len(inliers2))
 
     for i in range(0, len(inliers1)) :
         x1 = view1.keypoints[inliers1[i]].pt[0]
@@ -252,7 +253,6 @@ def refine_outliers(view1, view2, inliers1, inliers2) :
         return points1, points2, inliers1, inliers2    
 
     print("refine ouliers .. before ")
-    print(inliers1)
 
     cnt = 0
     new_inliers1 = []
@@ -261,10 +261,10 @@ def refine_outliers(view1, view2, inliers1, inliers2) :
         if( d_ma[i] < d_threshold ) :
             new_inliers1.append(inliers1[i])
             new_inliers2.append(inliers2[i])
+        else :
             cnt += 1
 
     print("remove ouliers : ", cnt)
-    print(new_inliers1)
     print(len(new_inliers1), len(new_inliers2))
     inliers1 = new_inliers1
     inliers2 = new_inliers2

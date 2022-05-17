@@ -28,7 +28,7 @@ class Group(object):
         self.sfm = None
         self.world = World()
         self.adjust = None
-        self.limit = 8
+        self.limit = 0
 
         self.root_path = None
         self.answer = {}
@@ -42,7 +42,6 @@ class Group(object):
         self.root_path = root_path
 
         # if features directory exists, the feature files are read from there
-        logging.info("Created features directory")
         if os.path.exists(os.path.join(root_path, 'features')):
             feature_path = True
 
@@ -52,7 +51,6 @@ class Group(object):
             logging.error("can't read images . ")
             return -1
 
-        logging.info("Computing features")
         print(image_names)
         self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
         index = 0
@@ -291,7 +289,7 @@ class Group(object):
     def visualize(self) :
         print("visualize camera in  group")        
         plot_cameras(self.cameras, self.limit)
-        plot_pointmap(self.sfm)    
+        # plot_pointmap(self.sfm)    
 
 
     def export(self) :
