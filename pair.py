@@ -7,6 +7,7 @@ import cv2
 import logging
 import pickle
 from adjust import *
+from mathutil import *
 
 class Pair:
     """Represents a feature matches between two views"""
@@ -42,7 +43,7 @@ class Pair:
             self.read_matches()
         
 
-    def draw_matches(self, ):
+    def draw_matches(self):
         if not os.path.exists(os.path.join(self.camera1.view.root_path, 'draw')):
             os.makedirs(os.path.join(self.camera1.view.root_path, 'draw'))
 
@@ -118,9 +119,27 @@ class Pair:
 
     def get_matches(self, view1, view2):
         """Extracts feature matches between two views"""
-
         self.match = self.matcher.match(view1.descriptors, view2.descriptors)
         self.match = sorted(self.match, key=lambda x: x.distance)
+
+        refine = True
+        if refine == True :
+            del_x = np.empty( (0), dtype=np.float64)
+            del_y = np.empty( (0), dtype=np.float64)
+
+            for i in range(0, len(self.match)) :
+                x2 = self.camera2.view.keypoints[self.match[i].trainIdx].pt[0]
+                y2 = self.camera2.view.keypoints[self.match[i].trainIdx].pt[1]                
+                x1 = self.camera1.view.keypoints[self.match[i].queryIdx].pt[0]
+                y1 = self.camera1.view.keypoints[self.match[i].queryIdx].pt[1]
+
+                del_x = np.append(del_x, np.array(x2 - x1).reshape((1)), axis = 0)
+                del_y = np.append(del_y, np.array(y2 - y1).reshape((1)), axis = 0)
+
+            d_atan = np.arctan2(del_x, del_y)
+            d_ma, d_threshold  = calculate_mahalanobis(d_atan)
+
+
 
         # store match components in their respective lists
         for i in range(len(self.match)):
@@ -128,16 +147,17 @@ class Pair:
             self.indices1.append(self.match[i].queryIdx)
             self.distances.append(self.match[i].distance)
 
-        if(view1.bMask > 0 and view2.bMask > 0) :
-            print("get matches .. with mask !! ")
-            self.match_mask = self.matcher.match(view1.descriptors_mask, view2.descriptors_mask)
-            self.match_mask = sorted(self.match_mask, key=lambda x: x.distance)
 
-            # store match components in their respective lists
-            for i in range(len(self.match_mask)):
-                self.indices2_mask.append(self.match_mask[i].trainIdx)            
-                self.indices1_mask.append(self.match_mask[i].queryIdx)
-                self.distances_mask.append(self.match_mask[i].distance)
+        # if(view1.bMask > 0 and view2.bMask > 0) :
+        #     print("get matches .. with mask !! ")
+        #     self.match_mask = self.matcher.match(view1.descriptors_mask, view2.descriptors_mask)
+        #     self.match_mask = sorted(self.match_mask, key=lambda x: x.distance)
+
+        #     # store match components in their respective lists
+        #     for i in range(len(self.match_mask)):
+        #         self.indices2_mask.append(self.match_mask[i].trainIdx)            
+        #         self.indices1_mask.append(self.match_mask[i].queryIdx)
+        #         self.distances_mask.append(self.match_mask[i].distance)
 
 
         #logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
@@ -278,8 +298,6 @@ class Pair:
         """Computes matches between every possible pair of views and stores in a dictionary"""
 
         match_path = False
-        print(cameras)
-
         if os.path.exists(os.path.join(cameras[0].view.root_path, 'matches')):
             match_path = True
 

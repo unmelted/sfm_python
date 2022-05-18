@@ -14,7 +14,7 @@ class View(object):
         self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
-        self.descriptors = []  # list of descriptors obtained from feature extraction
+        self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
         self.image_width = self.image.shape[1]
@@ -23,13 +23,14 @@ class View(object):
         self.keypoints_mask = []
         self.descriptors_mask = []
 
-        self.extraction_mode = 'quad'
+        self.extraction_mode = 'half'
+
         if(self.extraction_mode == 'None') :
             self.proc_width = self.image_width
-            self.proc_height = self.image_width
+            self.proc_height = self.image_height
         else :
             self.proc_width = int(self.image_width / 2)
-            self.proc_height = int(self.image_width / 2)
+            self.proc_height = int(self.image_height / 2)
 
 
         if not feature_path:
@@ -42,13 +43,12 @@ class View(object):
 
         if self.feature_type == 'sift':
             if self.extraction_mode == 'None' or self.extraction_mode == 'half':
-                detector = cv2.xfeatures2d.SIFT_create(1200)
+                detector = cv2.SIFT.create(2000)
             elif self.extraction_mode == 'quad':
-                # detector = cv2.xfeatures2d.SIFT_create(400)
-                pass
+                detector = cv2.SIFT.create(2000)
 
         elif self.feature_type == 'surf':
-            detector = cv2.xfeatures2d.SURF_create()
+            detector = cv2.SURF.create()
         elif self.feature_type == 'orb':
             detector = cv2.ORB_create(nfeatures=1500)
         else:
@@ -57,10 +57,13 @@ class View(object):
 
 
         if self.extraction_mode == 'half' : 
-            half_image = cv2.resize(self.image, (self.proc_width, self.proc.height))
-            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+            half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
+            half_image = cv2.cvtColor(half_image, cv2.COLOR_BGR2GRAY)
+            # image_norm = cv2.normalize(half_image, None, 0, 255, cv2.NORM_MINMAX)
+            # testname = 'proc_' + self.name + '.png'            
+            # cv2.imwrite(testname, image_norm)
+            # half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
-            t_keypoints = []
             t_keypoints, self.descriptors = detector.detectAndCompute(half_image, None)
 
             for point in t_keypoints:
@@ -69,21 +72,30 @@ class View(object):
 
         elif self.extraction_mode == 'quad':
             half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
-            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+            # half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
             t_keypoints = []            
+            t_descriptors = []
             for i in range(0, 4) :
-                detector = cv2.xfeatures2d.SIFT_create(400)                
                 mask = self.make_mask(self.proc_height, self.proc_width, i+1)
-                keypoints, self.descriptors = detector.detectAndCompute(half_image, mask)
+                keypoints, descriptors = detector.detectAndCompute(half_image, mask)
                 t_keypoints.append(keypoints)
-                print("keypoint len : ", i, len(keypoints), len(t_keypoints))
-
+                t_descriptors.append(descriptors)
+                print("quad keypoints : ", i , len(keypoints))
 
             for i in range(0, 4) :
                 for point in t_keypoints[i]:
                     pt = cv2.KeyPoint(x=point.pt[0]*2, y=point.pt[1]*2, size=point.size, angle=point.angle, response=point.response, octave=point.octave, class_id=point.class_id)
                     self.keypoints.append(pt)
+
+                for desc in t_descriptors[i]:                     
+                    self.descriptors = np.append(self.descriptors, desc)
+                self.descriptors = self.descriptors.reshape(int(len(self.descriptors)/128), 128)
+
+
+            outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
+            testname = 'key_' + self.name + '.png'            
+            cv2.imwrite(testname, outkey)
 
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
@@ -114,8 +126,7 @@ class View(object):
             pts = np.array([quad4], dtype=np.int64)
 
         # cv2.polylines(mask, pts, True, (255), 3)
-        # cv2.imwrite("test_mask1.png", mask)
-        print(pts)
+        # cv2.imwrite("test_mask1.png", mas20
         cv2.fillPoly(mask, pts, 255)
         testname = 'test_mask_' + str(position) + '.png'
         cv2.imwrite(testname, mask)

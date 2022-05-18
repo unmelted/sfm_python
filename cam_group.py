@@ -64,11 +64,13 @@ class Group(object):
             tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
-            index += 1
+            if self.limit != 0 and index == self.limit :
+                break 
+
+            index += 1            
 
         self.pairs = Pair.create_pair(self.cameras)
         self.sfm = SFM(self.views, self.pairs)
-
         return 0
 
     def write_cameras(self):
