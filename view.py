@@ -11,10 +11,10 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
+        self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
-        self.descriptors = []  # list of descriptors obtained from feature extraction
+        self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
         self.feature_type = feature_type  # feature extraction method
         self.root_path = root_path  # root directory containing the image folder
         self.image_width = self.image.shape[1]
@@ -23,13 +23,14 @@ class View(object):
         self.keypoints_mask = []
         self.descriptors_mask = []
 
-        self.extraction_mode = 'quad'
+        self.extraction_mode = 'half'
+
         if(self.extraction_mode == 'None') :
             self.proc_width = self.image_width
-            self.proc_height = self.image_width
+            self.proc_height = self.image_height
         else :
             self.proc_width = int(self.image_width / 2)
-            self.proc_height = int(self.image_width / 2)
+            self.proc_height = int(self.image_height / 2)
 
 
         if not feature_path:
@@ -42,10 +43,9 @@ class View(object):
 
         if self.feature_type == 'sift':
             if self.extraction_mode == 'None' or self.extraction_mode == 'half':
-                detector = cv2.xfeatures2d.SIFT_create(1200)
+                detector = cv2.xfeatures2d.SIFT_create(1600)
             elif self.extraction_mode == 'quad':
-                # detector = cv2.xfeatures2d.SIFT_create(400)
-                pass
+                detector = cv2.xfeatures2d.SIFT_create(1600)
 
         elif self.feature_type == 'surf':
             detector = cv2.xfeatures2d.SURF_create()
@@ -74,26 +74,24 @@ class View(object):
             t_keypoints = []            
             t_descriptors = []
             for i in range(0, 4) :
-                detector = cv2.xfeatures2d.SIFT_create(1200)
                 mask = self.make_mask(self.proc_height, self.proc_width, i+1)
                 keypoints, descriptors = detector.detectAndCompute(half_image, mask)
                 t_keypoints.append(keypoints)
                 t_descriptors.append(descriptors)
-                print("keypoint len : ", i, len(keypoints), len(t_descriptors), len(t_descriptors[i]))
 
             for i in range(0, 4) :
                 for point in t_keypoints[i]:
                     pt = cv2.KeyPoint(x=point.pt[0]*2, y=point.pt[1]*2, size=point.size, angle=point.angle, response=point.response, octave=point.octave, class_id=point.class_id)
                     self.keypoints.append(pt)
 
-                for desc in t_descriptors[i]:
-                    self.descriptors.append((desc)
+                for desc in t_descriptors[i]:                     
+                    self.descriptors = np.append(self.descriptors, desc)
+                self.descriptors = self.descriptors.reshape(int(len(self.descriptors)/128), 128)
                 
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
 
-        print("Key points count : ", self.name, len(self.keypoints), len(self.descriptors))
-
+        print("Key points count : ", self.name, len(self.keypoints))
         self.write_features()
 
     def make_mask(self, rows, cols, position) :
@@ -120,10 +118,9 @@ class View(object):
 
         # cv2.polylines(mask, pts, True, (255), 3)
         # cv2.imwrite("test_mask1.png", mask)
-        print(pts)
         cv2.fillPoly(mask, pts, 255)
-        testname = 'test_mask_' + str(position) + '.png'
-        cv2.imwrite(testname, mask)
+        # testname = 'test_mask_' + str(position) + '.png'
+        # cv2.imwrite(testname, mask)
 
         return mask
 
