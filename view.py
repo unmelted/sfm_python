@@ -11,7 +11,7 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
+        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
@@ -43,12 +43,12 @@ class View(object):
 
         if self.feature_type == 'sift':
             if self.extraction_mode == 'None' or self.extraction_mode == 'half':
-                detector = cv2.xfeatures2d.SIFT_create(1600)
+                detector = cv2.SIFT.create(2000)
             elif self.extraction_mode == 'quad':
-                detector = cv2.xfeatures2d.SIFT_create(1600)
+                detector = cv2.SIFT.create(2000)
 
         elif self.feature_type == 'surf':
-            detector = cv2.xfeatures2d.SURF_create()
+            detector = cv2.SURF.create()
         elif self.feature_type == 'orb':
             detector = cv2.ORB_create(nfeatures=1500)
         else:
@@ -58,9 +58,12 @@ class View(object):
 
         if self.extraction_mode == 'half' : 
             half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
-            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+            half_image = cv2.cvtColor(half_image, cv2.COLOR_BGR2GRAY)
+            # image_norm = cv2.normalize(half_image, None, 0, 255, cv2.NORM_MINMAX)
+            # testname = 'proc_' + self.name + '.png'            
+            # cv2.imwrite(testname, image_norm)
+            # half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
-            t_keypoints = []
             t_keypoints, self.descriptors = detector.detectAndCompute(half_image, None)
 
             for point in t_keypoints:
@@ -69,7 +72,7 @@ class View(object):
 
         elif self.extraction_mode == 'quad':
             half_image = cv2.resize(self.image, (self.proc_width, self.proc_height))
-            half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
+            # half_image = cv2.GaussianBlur(half_image, (3, 3), 0)
 
             t_keypoints = []            
             t_descriptors = []
@@ -78,6 +81,7 @@ class View(object):
                 keypoints, descriptors = detector.detectAndCompute(half_image, mask)
                 t_keypoints.append(keypoints)
                 t_descriptors.append(descriptors)
+                print("quad keypoints : ", i , len(keypoints))
 
             for i in range(0, 4) :
                 for point in t_keypoints[i]:
@@ -87,7 +91,12 @@ class View(object):
                 for desc in t_descriptors[i]:                     
                     self.descriptors = np.append(self.descriptors, desc)
                 self.descriptors = self.descriptors.reshape(int(len(self.descriptors)/128), 128)
-                
+
+
+            outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
+            testname = 'key_' + self.name + '.png'            
+            cv2.imwrite(testname, outkey)
+
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
 
@@ -117,10 +126,10 @@ class View(object):
             pts = np.array([quad4], dtype=np.int64)
 
         # cv2.polylines(mask, pts, True, (255), 3)
-        # cv2.imwrite("test_mask1.png", mask)
+        # cv2.imwrite("test_mask1.png", mas20
         cv2.fillPoly(mask, pts, 255)
-        # testname = 'test_mask_' + str(position) + '.png'
-        # cv2.imwrite(testname, mask)
+        testname = 'test_mask_' + str(position) + '.png'
+        cv2.imwrite(testname, mask)
 
         return mask
 
