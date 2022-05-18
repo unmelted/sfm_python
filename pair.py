@@ -139,7 +139,20 @@ class Pair:
             d_atan = np.arctan2(del_x, del_y)
             d_ma, d_threshold  = calculate_mahalanobis(d_atan)
 
+            if d_threshold == 0 :
+                pass
+            else : 
+                print("refine ouliers .. before ", len(self.match))
+                cnt = 0
+                new_mat = []
+                for i in range(0, len(self.match)) :
+                    if( d_ma[i] < d_threshold ) :
+                        new_mat.append(self.match[i])
+                    else :
+                        cnt += 1
 
+                self.match = new_mat
+                print("refine ouliers .. after ", cnt, len(self.match))                
 
         # store match components in their respective lists
         for i in range(len(self.match)):
