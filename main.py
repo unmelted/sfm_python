@@ -9,7 +9,7 @@ def run(args):
     logging.basicConfig(level=logging.INFO)
 
     preset1 = Group()
-    ret = preset1.create_group(args.root_dir, 'png')
+    ret = preset1.create_group(args.root_dir, 'tiff')
     if( ret < 0 ):
         logging.error("terminated. ")
         return 0

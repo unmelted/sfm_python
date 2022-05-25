@@ -11,7 +11,7 @@ class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
+        self.name = image_path[image_path.rfind('/') + 1:-5]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
@@ -42,7 +42,9 @@ class View(object):
         """Extracts features from the image"""
 
         if self.feature_type == 'sift':
-            if self.extraction_mode == 'None' or self.extraction_mode == 'half':
+            if self.extraction_mode == 'None':
+                detector = cv2.SIFT.create()
+            elif  self.extraction_mode == 'half':
                 detector = cv2.SIFT.create(2000)
             elif self.extraction_mode == 'quad':
                 detector = cv2.SIFT.create(2000)

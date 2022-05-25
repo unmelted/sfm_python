@@ -47,8 +47,10 @@ class Pair:
         if not os.path.exists(os.path.join(self.camera1.view.root_path, 'draw')):
             os.makedirs(os.path.join(self.camera1.view.root_path, 'draw'))
 
+        view1_pt = cv2.drawKeypoints(self.camera1.view.image, self.camera1.view.keypoints, 1, (255, 0, 0))
+        view2_pt = cv2.drawKeypoints(self.camera2.view.image, self.camera2.view.keypoints, 1, (255, 255, 0))        
         filename = os.path.join(self.camera1.view.root_path +'/draw' , self.image_name1 + '_' + self.image_name2 + '_match.png')
-        drw_match = np.concatenate((self.camera1.view.image, self.camera2.view.image), axis=1)
+        drw_match = np.concatenate((view1_pt, view2_pt), axis=1)
         print("draw_matches.. name : ", self.image_name1, len(self.inliers1))
 
         for i in range(0, len(self.inliers1)) :
@@ -122,10 +124,11 @@ class Pair:
         self.match = self.matcher.match(view1.descriptors, view2.descriptors)
         self.match = sorted(self.match, key=lambda x: x.distance)
 
-        refine = True
+        refine = False
         if refine == True :
             del_x = np.empty( (0), dtype=np.float64)
             del_y = np.empty( (0), dtype=np.float64)
+            dist = np.empty( (0), dtype=np.float64)            
 
             for i in range(0, len(self.match)) :
                 x2 = self.camera2.view.keypoints[self.match[i].trainIdx].pt[0]
@@ -135,9 +138,14 @@ class Pair:
 
                 del_x = np.append(del_x, np.array(x2 - x1).reshape((1)), axis = 0)
                 del_y = np.append(del_y, np.array(y2 - y1).reshape((1)), axis = 0)
+                pt1 = np.float32([x1, y1])
+                pt2 = np.float32([x2, y2])
+                dist = np.append(dist, np.linalg.norm(pt1 - pt2).reshape((1)), axis = 0)
 
             d_atan = np.arctan2(del_x, del_y)
             d_ma, d_threshold  = calculate_mahalanobis(d_atan)
+            dist_ma, dist_threshold = calculate_mahalanobis(dist)
+
 
             if d_threshold == 0 :
                 pass
@@ -146,6 +154,7 @@ class Pair:
                 cnt = 0
                 new_mat = []
                 for i in range(0, len(self.match)) :
+#                    if( d_ma[i] < d_threshold ) and ( dist_ma[i] < dist_threshold ) :
                     if( d_ma[i] < d_threshold ) :
                         new_mat.append(self.match[i])
                     else :

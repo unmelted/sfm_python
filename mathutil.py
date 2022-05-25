@@ -223,7 +223,7 @@ def calculate_mahalanobis(data):
     mahal = np.absolute(mahal)
     threshold = 0
     if max(mahal) > 2 :
-       threshold = max(mahal) * 0.9
+       threshold = max(mahal) * 0.92
 
     # print(mahal)
     # print(threshold)
