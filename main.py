@@ -3,6 +3,7 @@ import numpy as np
 import logging
 import argparse
 import visualize
+from extn_util import * 
 
 def run(args):
 
@@ -22,11 +23,13 @@ def run(args):
         preset1.export()
 
     elif args.mode == 'vis' :
-        preset1.read_cameras()
+        #preset1.read_cameras()
+        import_camera_pose(preset1)        
         preset1.visualize() 
 
     elif args.mode == 'eval':
-        preset1.read_cameras()
+        #preset1.read_cameras()
+        import_camera_pose(preset1)
         preset1.generate_points()            
         preset1.calculate_real_error()
         preset1.export()

@@ -152,6 +152,35 @@ def import_answer(filepath, limit):
     
     return answer
 
+def import_camera_pose(preset) :
+    filename = os.path.join(preset.root_path, 'cameras', 'pose.json')    
+    print("import_camera pose " , filename)
+
+    with open(filename, 'r') as json_file :
+        json_data = json.load(json_file)
+
+    #for i in range(len(json_data["pose"])) :
+    for i in range(11) :
+        poseR = np.empty((0))
+        poseT = np.empty((0))
+        print("import camera i : ", i)
+
+        for r in json_data["pose"][i]["R"] :
+            poseR = np.append(poseR, np.array(r).reshape((1)), axis = 0)
+        for t in json_data["pose"][i]["T"] :
+            poseT = np.append(poseT, np.array(t).reshape((1)), axis = 0)
+
+        poseR = poseR.reshape((3,3))
+        poseT = poseT.reshape((3,1))        
+        print(poseR)
+        print(poseT)
+        cam = preset.cameras[i]
+        cam.R = poseR
+        cam.t = poseT
+        cam.K = preset.K
+        cam.calculate_p()
+
+
 def save_point_image(preset) :
 
     output_path = os.path.join(preset.root_path, 'output')

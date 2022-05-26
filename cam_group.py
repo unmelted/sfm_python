@@ -90,32 +90,31 @@ class Group(object):
 
 
     def read_cameras(self):
-            for i, cam in enumerate(self.cameras):
-                try:                
-                    tcon = pickle.load(
-                        open(
-                            os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'),
-                            "rb"
-                        )
+
+        for i, cam in enumerate(self.cameras):
+            try:                
+                tcon = pickle.load(
+                    open(
+                        os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'),
+                        "rb"
                     )
-                except FileNotFoundError:
-                    logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
-                    break
+                )
+            except FileNotFoundError:
+                logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
+                break
 
-                print("read from camera file : ", cam.view.name)
-                # print(tcon)
-                cam.P = tcon[0]
-                cam.EX = tcon[1]
-                cam.K = tcon[2]
-                cam.R = tcon[3]
-                cam.t = tcon[4]
-                cam.F = tcon[5]
-                cam.Rvec = tcon[6]
+            print("read from camera file : ", cam.view.name)
+            # print(tcon)
+            cam.P = tcon[0]
+            cam.EX = tcon[1]
+            cam.K = tcon[2]
+            cam.R = tcon[3]
+            cam.t = tcon[4]
+            cam.F = tcon[5]
+            cam.Rvec = tcon[6]
 
-                if self.limit != 0 and i == self.limit :
-                    break
-
-
+            if self.limit != 0 and i == self.limit :
+                break
     
     def run_sfm(self) :
         baseline = True
