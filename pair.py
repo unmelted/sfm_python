@@ -144,7 +144,7 @@ class Pair:
 
             d_atan = np.arctan2(del_x, del_y)
             d_ma, d_threshold  = calculate_mahalanobis(d_atan)
-            dist_ma, dist_threshold = calculate_mahalanobis(dist)
+            #dist_ma, dist_threshold = calculate_mahalanobis(dist)
 
 
             if d_threshold == 0 :

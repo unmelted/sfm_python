@@ -4,6 +4,8 @@ import cv2
 import logging
 import json
 
+from mathutil import quaternion_rotation_matrix
+
 
 def export_points(preset):
 
@@ -153,7 +155,7 @@ def import_answer(filepath, limit):
     return answer
 
 def import_camera_pose(preset) :
-    filename = os.path.join(preset.root_path, 'cameras', 'pose.json')    
+    filename = os.path.join(preset.root_path, 'cameras', 'pose_colmap.json')    
     print("import_camera pose " , filename)
 
     with open(filename, 'r') as json_file :
@@ -167,10 +169,12 @@ def import_camera_pose(preset) :
 
         for r in json_data["pose"][i]["R"] :
             poseR = np.append(poseR, np.array(r).reshape((1)), axis = 0)
+
         for t in json_data["pose"][i]["T"] :
             poseT = np.append(poseT, np.array(t).reshape((1)), axis = 0)
 
-        poseR = poseR.reshape((3,3))
+        # poseR = poseR.reshape((3,3))
+        poseR = quaternion_rotation_matrix(poseR)
         poseT = poseT.reshape((3,1))        
         print(poseR)
         print(poseT)

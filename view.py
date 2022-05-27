@@ -23,7 +23,7 @@ class View(object):
         self.keypoints_mask = []
         self.descriptors_mask = []
 
-        self.extraction_mode = 'half'
+        self.extraction_mode = 'None'
 
         if(self.extraction_mode == 'None') :
             self.proc_width = self.image_width
@@ -43,11 +43,13 @@ class View(object):
 
         if self.feature_type == 'sift':
             if self.extraction_mode == 'None':
-                detector = cv2.SIFT.create()
+                detector = cv2.SIFT.create(1600)
             elif  self.extraction_mode == 'half':
-                detector = cv2.SIFT.create(2000)
+                detector = cv2.SIFT.create(1600)
             elif self.extraction_mode == 'quad':
                 detector = cv2.SIFT.create(2000)
+        elif self.feature_type == 'akaze':
+            detector = cv2.AKAZE_create()
 
         elif self.feature_type == 'surf':
             detector = cv2.SURF.create()
