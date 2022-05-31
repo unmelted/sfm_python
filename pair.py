@@ -124,7 +124,7 @@ class Pair:
         self.match = self.matcher.match(view1.descriptors, view2.descriptors)
         self.match = sorted(self.match, key=lambda x: x.distance)
 
-        refine = False
+        refine = True
         if refine == True :
             del_x = np.empty( (0), dtype=np.float64)
             del_y = np.empty( (0), dtype=np.float64)

@@ -87,8 +87,6 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-
-
     def read_cameras(self):
 
         for i, cam in enumerate(self.cameras):
@@ -240,7 +238,7 @@ class Group(object):
                 # if i == 1 : 
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
                 # else :
-                #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+                    # self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
                 # 
                 # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                 # self.adjust.check_normal(self.cameras[i])
@@ -283,9 +281,11 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-
         print("total real error : {} max {} min {} ".format(t_error, max, min))
 
+    def recall_colmap(self) :
+        print("recall_colmap")
+        
 
     def visualize(self) :
         print("visualize camera in  group")        

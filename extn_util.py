@@ -161,7 +161,7 @@ def import_camera_pose(preset) :
     with open(filename, 'r') as json_file :
         json_data = json.load(json_file)
 
-    #for i in range(len(json_data["pose"])) :
+    # for i in range(len(json_data["pose"])) :
     for i in range(11) :
         poseR = np.empty((0))
         poseT = np.empty((0))

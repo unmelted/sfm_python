@@ -23,7 +23,7 @@ class View(object):
         self.keypoints_mask = []
         self.descriptors_mask = []
 
-        self.extraction_mode = 'None'
+        self.extraction_mode = 'half'
 
         if(self.extraction_mode == 'None') :
             self.proc_width = self.image_width
@@ -45,9 +45,10 @@ class View(object):
             if self.extraction_mode == 'None':
                 detector = cv2.SIFT.create(1600)
             elif  self.extraction_mode == 'half':
-                detector = cv2.SIFT.create(1600)
+                detector = cv2.SIFT.create(2000)
             elif self.extraction_mode == 'quad':
                 detector = cv2.SIFT.create(2000)
+                
         elif self.feature_type == 'akaze':
             detector = cv2.AKAZE_create()
 
@@ -96,13 +97,12 @@ class View(object):
                     self.descriptors = np.append(self.descriptors, desc)
                 self.descriptors = self.descriptors.reshape(int(len(self.descriptors)/128), 128)
 
-
-            outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
-            testname = 'key_' + self.name + '.png'            
-            cv2.imwrite(testname, outkey)
-
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
+
+        # outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
+        # testname = 'key_' + self.name + '.png'            
+        # cv2.imwrite(testname, outkey)
 
         print("Key points count : ", self.name, len(self.keypoints))
         self.write_features()
