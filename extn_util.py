@@ -206,3 +206,9 @@ def save_point_image(preset) :
 
         print(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
+
+
+def import_sql_json(path) :
+    json_file = open(path, 'r')
+    json_data = json.load(json_file)
+    return json_data
