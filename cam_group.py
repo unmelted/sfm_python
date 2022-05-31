@@ -22,7 +22,6 @@ class Group(object):
         self.pairs = None
         self.matches = {}        
         self.K = None
-        # self.llambda = np.zeros((3,3), dtype=float)
         self.x_lambda = np.zeros((2), dtype=np.float64)
         self.y_lambda = np.zeros((2), dtype=np.float64)
         self.sfm = None
@@ -33,7 +32,13 @@ class Group(object):
         self.root_path = None
         self.answer = {}
 
-    def create_group(self, root_path, image_format='jpg'):
+    def recall_colmap(self, root_path) :
+        print("recall_colmap")
+        colmap_cmd = import_colmap_cmd_json()
+
+
+
+    def create_group(self, root_path, image_format='png'):
         """Loops through the images and creates an array of views"""
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -282,10 +287,6 @@ class Group(object):
                 break
 
         print("total real error : {} max {} min {} ".format(t_error, max, min))
-
-    def recall_colmap(self) :
-        print("recall_colmap")
-        
 
     def visualize(self) :
         print("visualize camera in  group")        

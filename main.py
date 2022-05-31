@@ -10,7 +10,12 @@ def run(args):
     logging.basicConfig(level=logging.INFO)
 
     preset1 = Group()
-    ret = preset1.create_group(args.root_dir, 'tiff')
+
+    if args.mode != 'colmap' :        
+        ret = preset1.create_group(args.root_dir, 'tiff')
+    else :
+        preset1.recall_colmap(args.root_dir)
+
     if( ret < 0 ):
         logging.error("terminated. ")
         return 0
@@ -39,8 +44,7 @@ def run(args):
         preset1.calculate_real_error()
 
     elif args.mode == 'colmap' :
-        preset1.recall_colmap()
-
+        preset1.query_cameras()
 
 def set_args(parser):
 

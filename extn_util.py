@@ -212,3 +212,8 @@ def import_sql_json(path) :
     json_file = open(path, 'r')
     json_data = json.load(json_file)
     return json_data
+
+def import_colmap_cmd_json(path) :
+    json_file = open(path, 'r')
+    json_data = json.load(json_file)
+    return json_data

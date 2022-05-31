@@ -1,0 +1,9 @@
+{
+    "auto_recon_cmd" : "colmap automatic_reconstructor",
+    "auto_recon_param1" : "--workspace_path",
+    "auto_recon_param2" : "--image_path",
+    "model_cvt_cmd" : "colmap model_converter",
+    "model_cvt_param1" : "--input_path",    
+    "model_cvt_param2" : "--output_path", 
+    "model_cvt_param3" : "--output_type"
+}
