@@ -1,12 +1,14 @@
 import os
 import subprocess
 import time
+import sqlite3
 
 from extn_util import * 
 
 class Colmap(object) : 
     def __init__ (self, root_path) :
         self.root_path = root_path
+        self.coldb_path = os.path.join(self.root_path, 'colmap.db')
         self.colmap_cmd = import_colmap_cmd_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
 
     def recon_command(self) :
@@ -19,11 +21,10 @@ class Colmap(object) :
             result = call_colmap.poll()
             print("Exit : ", result)
             '''
-            dbpath = os.path.join(self.root_path, 'colmap.db')
             imgpath = os.path.join(self.root_path, 'images')
             outpath = os.path.join(self.root_path, 'sparse')
 
-            call_colmap = subprocess.Popen([self.colmap_cmd["extract_cmd"] + self.colmap_cmd["extract_param1"] + dbpath + self.colmap_cmd["extract_param2"] + imgpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            call_colmap = subprocess.Popen([self.colmap_cmd["extract_cmd"] + self.colmap_cmd["extract_param1"] + self.coldb_path + self.colmap_cmd["extract_param2"] + imgpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             call_colmap.wait()
             result = call_colmap.poll()
 
@@ -31,7 +32,7 @@ class Colmap(object) :
                 print("Extract Feature Error : ", result)
                 return -1
 
-            call_colmap = subprocess.Popen([self.colmap_cmd["matcher_cmd"] + self.colmap_cmd["matcher_param1"] + dbpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            call_colmap = subprocess.Popen([self.colmap_cmd["matcher_cmd"] + self.colmap_cmd["matcher_param1"] + self.coldb_path], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             call_colmap.wait()
             result = call_colmap.poll()
 
@@ -42,8 +43,8 @@ class Colmap(object) :
             if not os.path.exists(os.path.join(self.root_path, 'sparse')):
                 os.makedirs(os.path.join(self.root_path, 'sparse'))
 
-            print(self.colmap_cmd["mapper_cmd"] + self.colmap_cmd["mapper_param1"] + dbpath + self.colmap_cmd["mapper_param2"] + imgpath + self.colmap_cmd["mapper_param3"] + outpath)
-            call_colmap = subprocess.Popen([self.colmap_cmd["mapper_cmd"] + self.colmap_cmd["mapper_param1"] + dbpath + self.colmap_cmd["mapper_param2"] + imgpath + self.colmap_cmd["mapper_param3"] + outpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            print(self.colmap_cmd["mapper_cmd"] + self.colmap_cmd["mapper_param1"] + self.coldb_path + self.colmap_cmd["mapper_param2"] + imgpath + self.colmap_cmd["mapper_param3"] + outpath)
+            call_colmap = subprocess.Popen([self.colmap_cmd["mapper_cmd"] + self.colmap_cmd["mapper_param1"] + self.coldb_path + self.colmap_cmd["mapper_param2"] + imgpath + self.colmap_cmd["mapper_param3"] + outpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             call_colmap.wait()
             result = call_colmap.poll()
 
@@ -65,4 +66,15 @@ class Colmap(object) :
                 print("Model Convert Error : ", result)
                 return -4
 
+            conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+            cursur = conn.cursor()        
+            colms = ['focal_length INTEGER', 'camera_model TEXT', 'qw REAL', 'qx REAL', 'qy REAL', 'qz REAL', 'skew REAL', 'tx REAL', 'ty REAL', 'tz REAL']
+            for i, col in enumerate(colms) : 
+                cursur.execute("ALTER TABLE cameras ADD COLUMN " + col)
+
+            
+            # self.parsing_model_data(dbcur)
             return result
+
+    def parsing_model_data(self, dbcur) :
+        pass
