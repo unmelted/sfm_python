@@ -22,7 +22,7 @@ def run(args):
 
     if args.mode == 'sfm' : 
         preset1.run_sfm()
-        preset1.generate_points()    
+        preset1.generate_points(args.mode)    
         preset1.calculate_real_error()
         preset1.export()
         preset1.visualize()    
@@ -35,7 +35,7 @@ def run(args):
     elif args.mode == 'eval':
         preset1.read_cameras(args.mode)
         # import_camera_pose(preset1)
-        preset1.generate_points()            
+        preset1.generate_points(args.mode)            
         preset1.calculate_real_error()
         preset1.export()
         preset1.visualize() 
@@ -43,12 +43,12 @@ def run(args):
     elif args.mode == 'test' :
         preset1.calculate_real_error()
 
-    # elif args.mode == 'colmap' :
-    #     preset1.read_cameras(args.mode)        
-    #     preset1.generate_points()    
-    #     preset1.calculate_real_error()
-    #     preset1.export()
-    #     preset1.visualize()    
+    elif args.mode == 'colmap' :
+        preset1.read_cameras(args.mode)        
+        preset1.generate_points(args.mode)    
+        preset1.calculate_real_error()
+        preset1.export()
+        preset1.visualize()    
     
 def set_args(parser):
 
