@@ -12,9 +12,9 @@ def run(args):
     preset1 = Group()
 
     if args.mode == 'colmap' :
-        ret = preset1.create_group_colmap(args.root_dir, 'png')        
+        ret = preset1.create_group_colmap(args.root_dir)        
     else:
-        ret = preset1.create_group(args.root_dir, 'tiff')
+        ret = preset1.create_group(args.root_dir)
 
     if( ret < 0 ):
         logging.error("terminated. ")

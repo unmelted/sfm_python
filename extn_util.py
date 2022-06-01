@@ -1,4 +1,5 @@
 import os
+import glob
 import numpy as np
 import cv2
 import logging
@@ -192,7 +193,11 @@ def save_point_image(preset) :
         os.makedirs(output_path)
 
     for i in range(len(preset.cameras)) :
-        file_name = os.path.join(output_path, preset.cameras[i].view.name[:-4] +"_pt.png")        
+        viewname = preset.cameras[i].view.name[:-7]
+        if preset.ext == 'tiff':
+            viewname = preset.cameras[i].view.name[:-8]
+
+        file_name = os.path.join(output_path, viewname +"_pt.png")
         pt_int = preset.cameras[i].pts.astype(np.int32)            
 
         for j in range(preset.cameras[i].pts.shape[0]) :
@@ -207,6 +212,18 @@ def save_point_image(preset) :
         print(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 
+
+def check_image_format(path) :
+    flist = glob.glob(os.path.join(path, 'images', '*'))
+    for i in flist :
+        print(i)
+        ext = i[i.rfind('.')+1 :]
+        if ext == 'png' :
+            return 'png'
+        elif ext == 'tiff' :
+            return 'tiff'
+
+    return 'png'
 
 def import_sql_json(path) :
     json_file = open(path, 'r')

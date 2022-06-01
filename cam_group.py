@@ -35,8 +35,9 @@ class Group(object):
         self.answer = {}
         self.db = None
         self.colmap = None
+        self. ext = None
 
-    def create_group_colmap(self, root_path, image_format='png') :
+    def create_group_colmap(self, root_path) :
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -44,7 +45,8 @@ class Group(object):
         self.colmap = Colmap(self.root_path)
 
         print(root_path)
-        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
+        self.ext = check_image_format(self.root_path)
+        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
@@ -66,11 +68,11 @@ class Group(object):
             print("recon command error : ", result)
             return result 
 
-        result = self.colmap.cvt_colmap_model(self.db.get_cursur())
+        result = self.colmap.cvt_colmap_model(self.ext)
 
         return result
 
-    def create_group(self, root_path, image_format='png'):
+    def create_group(self, root_path):
         """Loops through the images and creates an array of views"""
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -81,7 +83,8 @@ class Group(object):
             feature_path = True
 
         print(root_path)
-        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + image_format)))
+        self.ext = check_image_format(self.root_path)        
+        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
@@ -196,7 +199,10 @@ class Group(object):
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]                
+                    viewname = self.cameras[i].view.name[:-7]
+                    if self.ext == 'tiff':
+                        viewname = self.cameras[i].view.name[:-8]
+                    
                     pts = self.answer[viewname]
                     print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
@@ -220,7 +226,10 @@ class Group(object):
         else : 
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]                
+                    viewname = self.cameras[i].view.name[:-7]
+                    if self.ext == 'tiff':
+                        viewname = self.cameras[i].view.name[:-8]
+
                     pts = self.answer[viewname]
                     print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
@@ -256,6 +265,9 @@ class Group(object):
                 continue
             s_error = 0
             viewname = self.cameras[i].view.name[:-7]
+            if self.ext == 'tiff':
+                viewname = self.cameras[i].view.name[:-8]
+
             print("name : ", self.cameras[i].view.name, viewname)            
             gt = self.answer[viewname]
 
