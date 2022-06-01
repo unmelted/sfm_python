@@ -170,18 +170,6 @@ class Pair:
             self.distances.append(self.match[i].distance)
 
 
-        # if(view1.bMask > 0 and view2.bMask > 0) :
-        #     print("get matches .. with mask !! ")
-        #     self.match_mask = self.matcher.match(view1.descriptors_mask, view2.descriptors_mask)
-        #     self.match_mask = sorted(self.match_mask, key=lambda x: x.distance)
-
-        #     # store match components in their respective lists
-        #     for i in range(len(self.match_mask)):
-        #         self.indices2_mask.append(self.match_mask[i].trainIdx)            
-        #         self.indices1_mask.append(self.match_mask[i].queryIdx)
-        #         self.distances_mask.append(self.match_mask[i].distance)
-
-
         #logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)
         self.write_matches()
 

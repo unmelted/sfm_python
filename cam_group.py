@@ -1,6 +1,7 @@
 import os
 from re import I
 import sys
+import subprocess
 import glob
 import numpy as np
 import logging
@@ -13,6 +14,7 @@ from visualize import *
 from adjust import *
 from world import *
 from extn_util import * 
+from db_manager import *
 
 class Group(object):
 
@@ -31,11 +33,38 @@ class Group(object):
 
         self.root_path = None
         self.answer = {}
+        self.db = None
 
-    def recall_colmap(self, root_path) :
+    def create_group_colmap(self, root_path, image_format='png') :
+        self.root_path = root_path        
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
+        self.db = DbManager(self.root_path)
+
+        print(root_path)
+        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
+        if len(image_names) < 1 : 
+            logging.error("can't read images . ")
+            return -1
+
+        print(image_names)
+        index = 0
+
+        for image_name in image_names:
+            tcam = Camera(image_name, self.root_path, self.K, feature_path='colmap')
+            self.cameras.append(tcam)
+            self.views.append(tcam.view)
+            if self.limit != 0 and index == self.limit :
+                break 
+
+            index += 1            
+
         print("recall_colmap")
         colmap_cmd = import_colmap_cmd_json()
+        result = subprocess.run([colmap_cmd["auto_recon_cmd"], colmap_cmd["auto_recon_param1"], self.root_path, colmap_cmd["auto_recon_param2"], os.path.join(self.root_path, 'images')], capture_output=True)
+        print(result)
 
+        return 0
 
 
     def create_group(self, root_path, image_format='png'):
@@ -45,8 +74,6 @@ class Group(object):
 
         feature_path = False
         self.root_path = root_path
-
-        # if features directory exists, the feature files are read from there
         if os.path.exists(os.path.join(root_path, 'features')):
             feature_path = True
 
@@ -61,11 +88,6 @@ class Group(object):
         index = 0
 
         for image_name in image_names:
-            # if(index == 0): 
-            #     tcam = Camera(image_name, root_path, self.K, 1, feature_path=feature_path)
-            # elif (index == 1) :
-            #     tcam = Camera(image_name, root_path, self.K, 2, feature_path=feature_path)
-            # else:                 
             tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
@@ -92,32 +114,45 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-    def read_cameras(self):
+    def read_cameras(self, mode):
+        if mode == 'coalmap' :
+            print("read cameras from colmap..")
+            return 0
+            
+            cam_db = self.db.read_cameras()
+            for i, cam in enumerate(self.cameras):
+                cam.P = cam_db[i]
+                cam.EX = cam_db[i]
+                cam.K = cam_db[i]
+                cam.R = cam_db[i]
+                cam.t = cam_db[i]
+                cam.F = cam_db[i]
+                cam.Rvec = cam_db[i]
 
-        for i, cam in enumerate(self.cameras):
-            try:                
-                tcon = pickle.load(
-                    open(
-                        os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'),
-                        "rb"
+        else :             
+            for i, cam in enumerate(self.cameras):
+                try:                
+                    tcon = pickle.load(
+                        open(
+                            os.path.join(self.root_path, 'cameras', cam.view.name + '.pkl'),
+                            "rb"
+                        )
                     )
-                )
-            except FileNotFoundError:
-                logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
-                break
+                except FileNotFoundError:
+                    logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
+                    break
 
-            print("read from camera file : ", cam.view.name)
-            # print(tcon)
-            cam.P = tcon[0]
-            cam.EX = tcon[1]
-            cam.K = tcon[2]
-            cam.R = tcon[3]
-            cam.t = tcon[4]
-            cam.F = tcon[5]
-            cam.Rvec = tcon[6]
+                print("read from camera file : ", cam.view.name)
+                cam.P = tcon[0]
+                cam.EX = tcon[1]
+                cam.K = tcon[2]
+                cam.R = tcon[3]
+                cam.t = tcon[4]
+                cam.F = tcon[5]
+                cam.Rvec = tcon[6]
 
-            if self.limit != 0 and i == self.limit :
-                break
+                if self.limit != 0 and i == self.limit :
+                    break
     
     def run_sfm(self) :
         baseline = True

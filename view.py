@@ -10,7 +10,7 @@ import logging
 class View(object):
     """Represents an image used in the reconstruction"""
 
-    def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
+    def __init__(self, image_path, root_path, feature_path, feature_type='sift'):
         self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
@@ -19,7 +19,7 @@ class View(object):
         self.root_path = root_path  # root directory containing the image folder
         self.image_width = self.image.shape[1]
         self.image_height = self.image.shape[0]
-        self.bMask = bMask
+        self.bMask = None
         self.keypoints_mask = []
         self.descriptors_mask = []
 
@@ -35,6 +35,8 @@ class View(object):
 
         if not feature_path:
             self.extract_features()
+        elif feature_path == 'colmap' :
+            pass
         else:
             self.read_features()
 

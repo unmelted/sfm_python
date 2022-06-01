@@ -11,10 +11,10 @@ def run(args):
 
     preset1 = Group()
 
-    if args.mode != 'colmap' :        
+    if args.mode == 'colmap' :
+        ret = preset1.create_group_colmap(args.root_dir, 'png')        
+    else:
         ret = preset1.create_group(args.root_dir, 'tiff')
-    else :
-        preset1.recall_colmap(args.root_dir)
 
     if( ret < 0 ):
         logging.error("terminated. ")
@@ -28,13 +28,13 @@ def run(args):
         preset1.visualize()    
 
     elif args.mode == 'vis' :
-        #preset1.read_cameras()
-        import_camera_pose(preset1)        
+        preset1.read_cameras(args.mode)
+        # import_camera_pose(preset1)        
         preset1.visualize() 
 
     elif args.mode == 'eval':
-        #preset1.read_cameras()
-        import_camera_pose(preset1)
+        preset1.read_cameras(args.mode)
+        # import_camera_pose(preset1)
         preset1.generate_points()            
         preset1.calculate_real_error()
         preset1.export()
@@ -44,8 +44,12 @@ def run(args):
         preset1.calculate_real_error()
 
     elif args.mode == 'colmap' :
-        preset1.query_cameras()
-
+        preset1.read_cameras(args.mode)        
+        preset1.generate_points()    
+        preset1.calculate_real_error()
+        preset1.export()
+        preset1.visualize()    
+    
 def set_args(parser):
 
     parser.add_argument('--root_dir', action='store', type=str, dest='root_dir',

@@ -11,6 +11,10 @@ class DbManager(object) :
             os.makedirs(os.path.join(root_path, 'db')) 
 
         self.conn = sqlite3.connect(os.path.join(root_path, 'db', self.db_name), isolation_level = None)
-        self.cursur = self.conn.cursror()        
+        self.cursur = self.conn.cursor()        
 
         self.cursur.execute(self.sql_list["create_cameras"])
+
+
+    def read_cameras(self):
+        pass
