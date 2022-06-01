@@ -192,7 +192,7 @@ def save_point_image(preset) :
         os.makedirs(output_path)
 
     for i in range(len(preset.cameras)) :
-        file_name = os.path.join(output_path, preset.cameras[i].view.name +"_pt.png")        
+        file_name = os.path.join(output_path, preset.cameras[i].view.name[:-4] +"_pt.png")        
         pt_int = preset.cameras[i].pts.astype(np.int32)            
 
         for j in range(preset.cameras[i].pts.shape[0]) :

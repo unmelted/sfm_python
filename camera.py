@@ -17,11 +17,14 @@ class Camera(object):
         self.E = np.zeros((3,3), dtype=np.float64)        
         self.Rvec = np.zeros((3,1), dtype=np.float64)
         self.c = None  # camera center
-        if feature_path != 'colmap' :
+        if feature_path == 'colmap' :
+            self.K = None
+            self.focal = None
+        else :
             self.K = K        # intrinsic matrix
             self.focal = K[0][0]        
-        else :
-            self.view = View(image_name, root_path, feature_path=feature_path)
+
+        self.view = View(image_name, root_path, feature_path=feature_path)
 
         ''' related adjust value '''
         self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points

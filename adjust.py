@@ -174,9 +174,10 @@ class Adjust(object):
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
 
         for i in range(c0.pts.shape[0]) :
-            K_inv = np.linalg.inv(c1.K)                         
-            u1_normalized = K_inv.dot(cam0[i, :])
-            u2_normalized = K_inv.dot(cam1[i, :])
+            K0_inv = np.linalg.inv(c0.K)            
+            K1_inv = np.linalg.inv(c1.K)
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
 
             point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
 
@@ -192,6 +193,18 @@ class Adjust(object):
 
         for i in range(c0.pts.shape[0]) :
             cv_pts = c0.pts_3D[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c1.project(cv_pts)
+            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+
+    def reproject(self, c0, c1) :
+        print("reproject .. : ", c1.view.name)
+
+        for i in range(c0.pts.shape[0]) :
+            cv_pts = c0.pts_back[i, :]
             cv_pts = np.hstack([cv_pts, 1])
             cv_pts = cv_pts.reshape((4,1))
             reproject = c1.project(cv_pts)
