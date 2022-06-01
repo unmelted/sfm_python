@@ -34,13 +34,14 @@ class Group(object):
         self.root_path = None
         self.answer = {}
         self.db = None
+        self.colmap = None
 
     def create_group_colmap(self, root_path, image_format='png') :
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
         self.db = DbManager(self.root_path)
-        colmap = Colmap(self.root_path)
+        self.colmap = Colmap(self.root_path)
 
         print(root_path)
         image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
@@ -60,12 +61,12 @@ class Group(object):
 
             index += 1            
 
-        result = colmap.recon_command()
+        result = self.colmap.recon_command()
         if result < 0 :
             print("recon command error : ", result)
             return result 
 
-        result = colmap.cvt_colmap_model(self.db.get_cursur())
+        result = self.colmap.cvt_colmap_model(self.db.get_cursur())
 
         return result
 
@@ -118,10 +119,11 @@ class Group(object):
 
     def read_cameras(self, mode):
         if mode == 'coalmap' :
-            print("read cameras from colmap..")
-            return 0
-            
-            cam_db = self.db.read_cameras()
+            if self.colmap == None :
+                print("there is no colmap data")                
+                return -10
+           
+            cam_db = self.colmap.read_colmal_cameras()
             for i, cam in enumerate(self.cameras):
                 cam.P = cam_db[i]
                 cam.EX = cam_db[i]
