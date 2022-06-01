@@ -6,21 +6,22 @@ from view import *
 class Camera(object):
     """ Class for representing pin-hole camera """
 
-    def __init__(self, image_name, root_path, K, bMask, feature_path):
+    def __init__(self, image_name, root_path, K, feature_path):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
         self.EX = None
-        self.K = K        # intrinsic matrix
         self.R = np.zeros((3,3), dtype=np.float64)     # rotation
         self.t = np.zeros((3,1), dtype=np.float64)     # translation
         self.F = np.zeros((3,3), dtype=np.float64)
         self.E = np.zeros((3,3), dtype=np.float64)        
         self.Rvec = np.zeros((3,1), dtype=np.float64)
         self.c = None  # camera center
-        self.focal = K[0][0]        
-        self.bMask = bMask
-        self.view = View(image_name, root_path, bMask, feature_path=feature_path)
+        if feature_path != 'colmap' :
+            self.K = K        # intrinsic matrix
+            self.focal = K[0][0]        
+        else :
+            self.view = View(image_name, root_path, feature_path=feature_path)
 
         ''' related adjust value '''
         self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points

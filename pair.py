@@ -47,8 +47,10 @@ class Pair:
         if not os.path.exists(os.path.join(self.camera1.view.root_path, 'draw')):
             os.makedirs(os.path.join(self.camera1.view.root_path, 'draw'))
 
+        view1_pt = cv2.drawKeypoints(self.camera1.view.image, self.camera1.view.keypoints, 1, (255, 0, 0))
+        view2_pt = cv2.drawKeypoints(self.camera2.view.image, self.camera2.view.keypoints, 1, (255, 255, 0))        
         filename = os.path.join(self.camera1.view.root_path +'/draw' , self.image_name1 + '_' + self.image_name2 + '_match.png')
-        drw_match = np.concatenate((self.camera1.view.image, self.camera2.view.image), axis=1)
+        drw_match = np.concatenate((view1_pt, view2_pt), axis=1)
         print("draw_matches.. name : ", self.image_name1, len(self.inliers1))
 
         for i in range(0, len(self.inliers1)) :
@@ -126,6 +128,7 @@ class Pair:
         if refine == True :
             del_x = np.empty( (0), dtype=np.float64)
             del_y = np.empty( (0), dtype=np.float64)
+            dist = np.empty( (0), dtype=np.float64)            
 
             for i in range(0, len(self.match)) :
                 x2 = self.camera2.view.keypoints[self.match[i].trainIdx].pt[0]
@@ -135,29 +138,36 @@ class Pair:
 
                 del_x = np.append(del_x, np.array(x2 - x1).reshape((1)), axis = 0)
                 del_y = np.append(del_y, np.array(y2 - y1).reshape((1)), axis = 0)
+                pt1 = np.float32([x1, y1])
+                pt2 = np.float32([x2, y2])
+                dist = np.append(dist, np.linalg.norm(pt1 - pt2).reshape((1)), axis = 0)
 
             d_atan = np.arctan2(del_x, del_y)
             d_ma, d_threshold  = calculate_mahalanobis(d_atan)
+            #dist_ma, dist_threshold = calculate_mahalanobis(dist)
 
 
+            if d_threshold == 0 :
+                pass
+            else : 
+                print("refine ouliers .. before ", len(self.match))
+                cnt = 0
+                new_mat = []
+                for i in range(0, len(self.match)) :
+#                    if( d_ma[i] < d_threshold ) and ( dist_ma[i] < dist_threshold ) :
+                    if( d_ma[i] < d_threshold ) :
+                        new_mat.append(self.match[i])
+                    else :
+                        cnt += 1
+
+                self.match = new_mat
+                print("refine ouliers .. after ", cnt, len(self.match))                
 
         # store match components in their respective lists
         for i in range(len(self.match)):
             self.indices2.append(self.match[i].trainIdx)            
             self.indices1.append(self.match[i].queryIdx)
             self.distances.append(self.match[i].distance)
-
-
-        # if(view1.bMask > 0 and view2.bMask > 0) :
-        #     print("get matches .. with mask !! ")
-        #     self.match_mask = self.matcher.match(view1.descriptors_mask, view2.descriptors_mask)
-        #     self.match_mask = sorted(self.match_mask, key=lambda x: x.distance)
-
-        #     # store match components in their respective lists
-        #     for i in range(len(self.match_mask)):
-        #         self.indices2_mask.append(self.match_mask[i].trainIdx)            
-        #         self.indices1_mask.append(self.match_mask[i].queryIdx)
-        #         self.distances_mask.append(self.match_mask[i].distance)
 
 
         #logging.info("Computed matches between view %s and view %s", self.image_name1, self.image_name2)

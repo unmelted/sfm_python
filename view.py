@@ -10,8 +10,8 @@ import logging
 class View(object):
     """Represents an image used in the reconstruction"""
 
-    def __init__(self, image_path, root_path, bMask, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:-7]  # image name without extension
+    def __init__(self, image_path, root_path, feature_path, feature_type='sift'):
+        self.name = image_path[image_path.rfind('/') + 1:-8]  # image name without extension
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
@@ -19,7 +19,7 @@ class View(object):
         self.root_path = root_path  # root directory containing the image folder
         self.image_width = self.image.shape[1]
         self.image_height = self.image.shape[0]
-        self.bMask = bMask
+        self.bMask = None
         self.keypoints_mask = []
         self.descriptors_mask = []
 
@@ -35,6 +35,8 @@ class View(object):
 
         if not feature_path:
             self.extract_features()
+        elif feature_path == 'colmap' :
+            pass
         else:
             self.read_features()
 
@@ -42,10 +44,15 @@ class View(object):
         """Extracts features from the image"""
 
         if self.feature_type == 'sift':
-            if self.extraction_mode == 'None' or self.extraction_mode == 'half':
+            if self.extraction_mode == 'None':
+                detector = cv2.SIFT.create(1600)
+            elif  self.extraction_mode == 'half':
                 detector = cv2.SIFT.create(2000)
             elif self.extraction_mode == 'quad':
                 detector = cv2.SIFT.create(2000)
+                
+        elif self.feature_type == 'akaze':
+            detector = cv2.AKAZE_create()
 
         elif self.feature_type == 'surf':
             detector = cv2.SURF.create()
@@ -92,13 +99,12 @@ class View(object):
                     self.descriptors = np.append(self.descriptors, desc)
                 self.descriptors = self.descriptors.reshape(int(len(self.descriptors)/128), 128)
 
-
-            outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
-            testname = 'key_' + self.name + '.png'            
-            cv2.imwrite(testname, outkey)
-
         else : 
                 self.keypoints, self.descriptors = detector.detectAndCompute(self.image, None)
+
+        # outkey = cv2.drawKeypoints(self.image, self.keypoints,  2, (255, 255, 0))
+        # testname = 'key_' + self.name + '.png'            
+        # cv2.imwrite(testname, outkey)
 
         print("Key points count : ", self.name, len(self.keypoints))
         self.write_features()

@@ -1,0 +1,5 @@
+{
+    "check_table_camera" : "select count(*) from autocalib.db where name = \"cameras\"",    
+    "create_cameras" : "CREATE TABLE IF NOT EXISTS cameras (camera_id INTEGER PRIMARY KEY NOT NULL, create_data TEXT, cal_id INTEGER, cameraset_id INTEGER, group_id INTEGER, camera_ip TEXT, gymbal_ip TEXT, focal_length INTEGER, is_exclude INTEGER, is_first INTEGER, is_standard INTEGER, width INTEGER, height INTEGER, camera_model TEXT, qw REAL, qx REAL, qy REAL, qz REAL, refine_focal INTEGER, skew REAL, tx REAL, ty REAL, tz REAL)",
+    "select_camera" : ""
+}

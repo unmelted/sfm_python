@@ -4,8 +4,8 @@ import sys
 import glob
 import numpy as np
 import logging
-from sfm import *
 
+from sfm import *
 from camera import *
 from pair import *
 from view import *
@@ -13,6 +13,8 @@ from visualize import *
 from adjust import *
 from world import *
 from extn_util import * 
+from db_manager import *
+from colmap_proc import *
 
 class Group(object):
 
@@ -22,7 +24,6 @@ class Group(object):
         self.pairs = None
         self.matches = {}        
         self.K = None
-        # self.llambda = np.zeros((3,3), dtype=float)
         self.x_lambda = np.zeros((2), dtype=np.float64)
         self.y_lambda = np.zeros((2), dtype=np.float64)
         self.sfm = None
@@ -32,16 +33,49 @@ class Group(object):
 
         self.root_path = None
         self.answer = {}
+        self.db = None
 
-    def create_group(self, root_path, image_format='jpg'):
+    def create_group_colmap(self, root_path, image_format='png') :
+        self.root_path = root_path        
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
+        self.db = DbManager(self.root_path)
+        colmap = Colmap(self.root_path)
+
+        print(root_path)
+        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
+        if len(image_names) < 1 : 
+            logging.error("can't read images . ")
+            return -1
+
+        print(image_names)
+        index = 0
+
+        for image_name in image_names:
+            tcam = Camera(image_name, self.root_path, self.K, feature_path='colmap')
+            self.cameras.append(tcam)
+            self.views.append(tcam.view)
+            if self.limit != 0 and index == self.limit :
+                break 
+
+            index += 1            
+
+        result = colmap.recon_command()
+        if result < 0 :
+            print("recon command error : ", result)
+            return result 
+
+        result = colmap.cvt_colmap_model(self.db.get_cursur())
+
+        return result
+
+    def create_group(self, root_path, image_format='png'):
         """Loops through the images and creates an array of views"""
         self.world.get_world()
         self.adjust = Adjust(self.world)
 
         feature_path = False
         self.root_path = root_path
-
-        # if features directory exists, the feature files are read from there
         if os.path.exists(os.path.join(root_path, 'features')):
             feature_path = True
 
@@ -56,11 +90,6 @@ class Group(object):
         index = 0
 
         for image_name in image_names:
-            # if(index == 0): 
-            #     tcam = Camera(image_name, root_path, self.K, 1, feature_path=feature_path)
-            # elif (index == 1) :
-            #     tcam = Camera(image_name, root_path, self.K, 2, feature_path=feature_path)
-            # else:                 
             tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
@@ -87,9 +116,22 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
+    def read_cameras(self, mode):
+        if mode == 'coalmap' :
+            print("read cameras from colmap..")
+            return 0
+            
+            cam_db = self.db.read_cameras()
+            for i, cam in enumerate(self.cameras):
+                cam.P = cam_db[i]
+                cam.EX = cam_db[i]
+                cam.K = cam_db[i]
+                cam.R = cam_db[i]
+                cam.t = cam_db[i]
+                cam.F = cam_db[i]
+                cam.Rvec = cam_db[i]
 
-
-    def read_cameras(self):
+        else :             
             for i, cam in enumerate(self.cameras):
                 try:                
                     tcon = pickle.load(
@@ -103,7 +145,6 @@ class Group(object):
                     break
 
                 print("read from camera file : ", cam.view.name)
-                # print(tcon)
                 cam.P = tcon[0]
                 cam.EX = tcon[1]
                 cam.K = tcon[2]
@@ -114,8 +155,6 @@ class Group(object):
 
                 if self.limit != 0 and i == self.limit :
                     break
-
-
     
     def run_sfm(self) :
         baseline = True
@@ -241,7 +280,7 @@ class Group(object):
                 # if i == 1 : 
                 self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
                 # else :
-                #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+                    # self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
                 # 
                 # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                 # self.adjust.check_normal(self.cameras[i])
@@ -284,9 +323,7 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-
         print("total real error : {} max {} min {} ".format(t_error, max, min))
-
 
     def visualize(self) :
         print("visualize camera in  group")        
