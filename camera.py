@@ -21,8 +21,7 @@ class Camera(object):
             self.K = K        # intrinsic matrix
             self.focal = K[0][0]        
         else :
-            
-        self.view = View(image_name, root_path, feature_path=feature_path)
+            self.view = View(image_name, root_path, feature_path=feature_path)
 
         ''' related adjust value '''
         self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points

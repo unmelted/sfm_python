@@ -1,12 +1,11 @@
 import os
 from re import I
 import sys
-import subprocess
 import glob
 import numpy as np
 import logging
-from sfm import *
 
+from sfm import *
 from camera import *
 from pair import *
 from view import *
@@ -15,6 +14,7 @@ from adjust import *
 from world import *
 from extn_util import * 
 from db_manager import *
+from colmap_proc import *
 
 class Group(object):
 
@@ -40,6 +40,7 @@ class Group(object):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         self.db = DbManager(self.root_path)
+        colmap = Colmap(self.root_path)
 
         print(root_path)
         image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
@@ -59,13 +60,14 @@ class Group(object):
 
             index += 1            
 
-        print("recall_colmap")
-        colmap_cmd = import_colmap_cmd_json()
-        result = subprocess.run([colmap_cmd["auto_recon_cmd"], colmap_cmd["auto_recon_param1"], self.root_path, colmap_cmd["auto_recon_param2"], os.path.join(self.root_path, 'images')], capture_output=True)
-        print(result)
+        result = colmap.recon_command()
+        if result < 0 :
+            print("recon command error : ", result)
+            return result 
 
-        return 0
+        result = colmap.cvt_colmap_model(self.db.get_cursur())
 
+        return result
 
     def create_group(self, root_path, image_format='png'):
         """Loops through the images and creates an array of views"""
