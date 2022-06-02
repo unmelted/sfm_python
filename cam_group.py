@@ -35,8 +35,9 @@ class Group(object):
         self.answer = {}
         self.db = None
         self.colmap = None
+        self. ext = None
 
-    def create_group_colmap(self, root_path, image_format='png') :
+    def create_group_colmap(self, root_path) :
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -44,7 +45,8 @@ class Group(object):
         self.colmap = Colmap(self.root_path)
 
         print(root_path)
-        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + image_format)))
+        self.ext = check_image_format(self.root_path)
+        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
@@ -66,11 +68,11 @@ class Group(object):
             print("recon command error : ", result)
             return result 
 
-        result = self.colmap.cvt_colmap_model(self.db.get_cursur())
+        result = self.colmap.cvt_colmap_model(self.ext)
 
         return result
 
-    def create_group(self, root_path, image_format='png'):
+    def create_group(self, root_path):
         """Loops through the images and creates an array of views"""
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -81,7 +83,8 @@ class Group(object):
             feature_path = True
 
         print(root_path)
-        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + image_format)))
+        self.ext = check_image_format(self.root_path)        
+        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
@@ -196,7 +199,10 @@ class Group(object):
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]                
+                    viewname = self.cameras[i].view.name[:-8]
+                    if self.ext == 'tiff':
+                        viewname = self.cameras[i].view.name[:-8]
+                    
                     pts = self.answer[viewname]
                     print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
@@ -220,7 +226,10 @@ class Group(object):
         else : 
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]                
+                    viewname = self.cameras[i].view.name[:-7]
+                    if self.ext == 'tiff':
+                        viewname = self.cameras[i].view.name[:-8]
+
                     pts = self.answer[viewname]
                     print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
@@ -249,13 +258,17 @@ class Group(object):
 
         max = 0
         min = 10000
+        ave = 0
         t_error = 0
 
         for i in range(len(self.cameras)) :
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = self.cameras[i].view.name[:-7]
+            viewname = self.cameras[i].view.name[:-8]
+            if self.ext == 'tiff':
+                viewname = self.cameras[i].view.name[:-8]
+
             print("name : ", self.cameras[i].view.name, viewname)            
             gt = self.answer[viewname]
 
@@ -279,14 +292,16 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-        print("total real error : {} max {} min {} ".format(t_error, max, min))
+        ave = t_error / len(self.cameras)
+        print("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
-    def visualize(self) :
-        print("visualize camera in  group")        
-        plot_cameras(self.cameras, self.limit)
-        # plot_pointmap(self.sfm)    
+    def visualize(self, mode) :
+        if mode == 'colmap' :
+            self.colmap.visualize_colmap_model()
+        else :         
+            plot_scene(self.cameras, self.sfm, mode)
 
 
     def export(self) :
-        export_points(self)
+        export_points(self, 'mct')
         save_point_image(self)        

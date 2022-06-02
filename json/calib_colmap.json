@@ -19,5 +19,11 @@
     "model_cvt_cmd" : "colmap model_converter ",
     "model_cvt_param1" : " --input_path ",    
     "model_cvt_param2" : " --output_path ", 
-    "model_cvt_param3" : " --output_type "
+    "model_cvt_param3" : " --output_type ",
+
+    "visualize_cmd" : "colmap gui ",
+    "visualize_param1" : " --import_path ",    
+    "visualize_param2" : " --database_path ", 
+    "visualize_param3" : " --image_path "
+
 }

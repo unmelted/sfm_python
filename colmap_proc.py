@@ -17,8 +17,6 @@ class Colmap(object) :
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 
     def recon_command(self) :
-        # result = subprocess.run([colmap_cmd["auto_recon_cmd"] + colmap_cmd["auto_recon_param1"] + self.root_path + colmap_cmd["auto_recon_param2"] + os.path.join(self.root_path, 'images')], capture_output=True, shell=True)
-        # print(result.returncode)
         ''' automatic recon''' 
         '''
         call_colmap = subprocess.Popen([self.colmap_cmd['auto_recon_cmd'] + self.colmap_cmd['auto_recon_param1'] + self.root_path + self.colmap_cmd['auto_recon_param2'] + os.path.join(self.root_path, 'images')], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -45,22 +43,26 @@ class Colmap(object) :
             print('Matcher Error : ', result)
             return -2
         
+        just_read = False
+        if just_read == True:
+            return 0
+
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
         print(self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath)
-        '''
+        
         call_colmap = subprocess.Popen([self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         call_colmap.wait()
         result = call_colmap.poll()
-        ''' 
+        
         if result != 0 :
             print('Mapper Error : ', result)
             return -3
 
         return result
 
-    def cvt_colmap_model(self, dbcur):
+    def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')
         call_colmap = subprocess.Popen([self.colmap_cmd['model_cvt_cmd'] + self.colmap_cmd['model_cvt_param1'] +  modelpath + self.colmap_cmd['model_cvt_param2'] + self.root_path + self.colmap_cmd['model_cvt_param3'] + ' TXT'], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
@@ -76,15 +78,16 @@ class Colmap(object) :
         cursur = conn.cursor()    
         cursur.execute('PRAGMA table_info(cameras)')
         rows = cursur.fetchall()
+        need_alter = True
         for row in rows : 
             if 'image' in row:
                 print('Already altered table! ')
-                conn.close()
-                return 0
+                need_alter = False
         
-        colms = ['image TEXT', 'focal_length REAL', 'qw REAL', 'qx REAL', 'qy REAL', 'qz REAL', 'skew REAL', 'tx REAL', 'ty REAL', 'tz REAL']
-        for i, col in enumerate(colms) : 
-            cursur.execute('ALTER TABLE cameras ADD COLUMN ' + col)
+        if need_alter == True :
+            colms = ['image TEXT', 'focal_length REAL', 'qw REAL', 'qx REAL', 'qy REAL', 'qz REAL', 'skew REAL', 'tx REAL', 'ty REAL', 'tz REAL']
+            for i, col in enumerate(colms) : 
+                cursur.execute('ALTER TABLE cameras ADD COLUMN ' + col)
 
         cam = open(self.camera_file, 'r')
         img = open(self.image_file, 'r')
@@ -97,7 +100,7 @@ class Colmap(object) :
             id = int(line[0])
             focal = float(line[4])
             skew = float(line[7])
-            print(id, focal, skew)
+            # print(id, focal, skew)
             q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')
             cursur.execute(q, (focal, skew, id))
 
@@ -107,7 +110,7 @@ class Colmap(object) :
             if line[0] == '#' : 
                 continue
 
-            if 'png' in line[-1]: 
+            if ext in line[-1]: 
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
@@ -117,7 +120,7 @@ class Colmap(object) :
                 ty = float(line[6])
                 tz = float(line[7])
                 img = str(line[9])
-                print(id, qw, qx, qy, qz, tx, ty, tz, img)
+                # print(id, qw, qx, qy, qz, tx, ty, tz, img)
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
 
@@ -167,9 +170,15 @@ class Colmap(object) :
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
-            print(cam.R)
-            print(cam.t)
-            print(cam.K)
+            # print(cam.R)
+            # print(cam.t)
+            # print(cam.K)
 
         return 0      
+
+
+    def visualize_colmap_model(self):
+        print("visualize colmap model.. ")
+        image_path = os.path.join(self.root_path, 'images')
+        subprocess.Popen([self.colmap_cmd['visualize_cmd'] + self.colmap_cmd['visualize_param1'] +  self.root_path + self.colmap_cmd['visualize_param2'] + self.coldb_path + self.colmap_cmd['visualize_param3'] + image_path], shell=True)
 
