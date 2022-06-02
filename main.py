@@ -3,7 +3,7 @@ import time
 
 from flask import Flask
 from flask import request, jsonify
-from flask_restx import fields, Resource, Api
+from flask_restx import fields, Resource, Api, reqparse
 
 import json
 
@@ -19,23 +19,26 @@ app = Flask(__name__)
 api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slavery')
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
-recon_args = api.model('model' , {
-    'root_path' : fields.String,
+recon_args = api.model('recon_args' , {
+    'root_dir' : fields.String,
     'mode' : fields.String
 })
 
-@api.route('/exodus/run')
+@api.route('/exodus/autocalib')
 @api.doc()
 class autocalib(Resource) : 
     @api.expect(recon_args)
-    def run(self, recon_args):
-        parser = api.parser()
-        parser.add_argement('root_path', type=str)
-        parser.adD_argement('mode', type=str)
+    def post(self, model=recon_args):
+        time_s = time.time()        
+        parser = reqparse.RequestParser()
+        parser.add_argument('root_dir', type=str)
+        parser.add_argument('mode', type=str)
         args = parser.parse_args()
 
         logging.basicConfig(level=logging.INFO)
 
+        print(args['root_dir'])
+        print(args['mode'])        
         preset1 = Group()
 
         if args['mode'] == 'colmap' :
@@ -77,6 +80,11 @@ class autocalib(Resource) :
             preset1.export()
             preset1.visualize(args['mode'])
         
+        time_e = time.time() - time_s
+        print("Spending time total (sec) :", time_e)
+        
+        return 0
+
     # def set_args(parser):
 
     #     parser.add_argument('--root_dir', action='store', type=str, dest='root_dir',

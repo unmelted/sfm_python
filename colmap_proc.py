@@ -100,7 +100,7 @@ class Colmap(object) :
             id = int(line[0])
             focal = float(line[4])
             skew = float(line[7])
-            print(id, focal, skew)
+            # print(id, focal, skew)
             q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')
             cursur.execute(q, (focal, skew, id))
 
@@ -120,7 +120,7 @@ class Colmap(object) :
                 ty = float(line[6])
                 tz = float(line[7])
                 img = str(line[9])
-                print(id, qw, qx, qy, qz, tx, ty, tz, img)
+                # print(id, qw, qx, qy, qz, tx, ty, tz, img)
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
 
@@ -170,9 +170,9 @@ class Colmap(object) :
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
-            print(cam.R)
-            print(cam.t)
-            print(cam.K)
+            # print(cam.R)
+            # print(cam.t)
+            # print(cam.K)
 
         return 0      
 

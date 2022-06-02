@@ -258,6 +258,7 @@ class Group(object):
 
         max = 0
         min = 10000
+        ave = 0
         t_error = 0
 
         for i in range(len(self.cameras)) :
@@ -291,7 +292,8 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-        print("total real error : {} max {} min {} ".format(t_error, max, min))
+        ave = t_error / len(self.cameras)
+        print("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
     def visualize(self, mode) :
         if mode == 'colmap' :
