@@ -43,7 +43,7 @@ class Colmap(object) :
             print('Matcher Error : ', result)
             return -2
         
-        just_read = True
+        just_read = False
         if just_read == True:
             return 0
 
@@ -175,4 +175,10 @@ class Colmap(object) :
             print(cam.K)
 
         return 0      
+
+
+    def visualize_colmap_model(self):
+        print("visualize colmap model.. ")
+        image_path = os.path.join(self.root_path, 'images')
+        subprocess.Popen([self.colmap_cmd['visualize_cmd'] + self.colmap_cmd['visualize_param1'] +  self.root_path + self.colmap_cmd['visualize_param2'] + self.coldb_path + self.colmap_cmd['visualize_param3'] + image_path], shell=True)
 

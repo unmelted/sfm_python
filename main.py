@@ -25,12 +25,12 @@ def run(args):
         preset1.generate_points(args.mode)    
         preset1.calculate_real_error()
         preset1.export()
-        preset1.visualize()    
+        preset1.visualize()
 
     elif args.mode == 'vis' :
         preset1.read_cameras(args.mode)
         # import_camera_pose(preset1)        
-        preset1.visualize() 
+        preset1.visualize(args.mode)
 
     elif args.mode == 'eval':
         preset1.read_cameras(args.mode)
@@ -38,7 +38,7 @@ def run(args):
         preset1.generate_points(args.mode)            
         preset1.calculate_real_error()
         preset1.export()
-        preset1.visualize() 
+        preset1.visualize(args.mode)
 
     elif args.mode == 'test' :
         preset1.calculate_real_error()
@@ -48,7 +48,7 @@ def run(args):
         preset1.generate_points(args.mode)    
         preset1.calculate_real_error()
         preset1.export()
-        preset1.visualize()    
+        preset1.visualize(args.mode)
     
 def set_args(parser):
 

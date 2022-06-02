@@ -8,6 +8,10 @@ from pytransform3d.transformations import transform_from, plot_transform
 from cam_group import *
 
 
+def plot_scene(cameras, sfm) :
+        plot_camera(cameras)
+        plot_pointmap(sfm)
+
 
 def plot_cameras(cameras, limit):
     plt.figure(figsize=(20, 10))

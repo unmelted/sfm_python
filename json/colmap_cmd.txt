@@ -1,0 +1,28 @@
+colmap automatic_reconstructor --workspace_path $DATASET_PATH --image_path $DATASET_PATH/images
+
+colmap feature_extractor --database_path /Users/4dreplay/work/sfm_python/nba3/test.db --image_path /Users/4dreplay/work/sfm_python/nba3/images
+colmap exhaustive_matcher --database_path /Users/4dreplay/work/sfm_python/nba3/test.db
+mkdir -p nba3/sparse
+colmap mapper --database_path /Users/4dreplay/work/sfm_python/nba3/test.db --image_path /Users/4dreplay/work/sfm_python/nba3/images --output_path /Users/4dreplay/work/sfm_python/nba3/sparse
+
+
+
+colmap model_converter --input_path /home/replay/work/colmap/data/nba3/sparse/0/ --output_path /home/replay/work/colmap/data/nba3/ --output_type TXT
+
+
+CREATE TABLE cameras (camera_id INTEGER PRIMARY KEY NOT NULL, create_data TEXT, cal_id INTEGER, cameraset_id INTEGER, group_id INTEGER, camera_ip TEXT, gymbal_ip TEXT, focal_length INTEGER, is_exclude INTEGER, is_first INTEGER, is_standard INTEGER, width INTEGER, height INTEGER, camera_model TEXT, qw REAL, qx REAL, qy REAL, qz REAL, refine_focal INTEGER, skew REAL, tx REAL, ty REAL, tz REAL)
+
+ALTER TABLE cameras ADD COLUMN
+
+focal_length REAL
+qw REAL
+qx REAL 
+qy REAL 
+qz REAL
+skew REAL
+tx REAL
+ty REAL
+tz REAL
+
+
+colmap gui --import_path data/nba/ --database_path data/nba/colmap.db --image_path data/nba/images

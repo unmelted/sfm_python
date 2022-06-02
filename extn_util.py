@@ -8,7 +8,83 @@ import json
 from mathutil import quaternion_rotation_matrix
 
 
-def export_points(preset):
+def export_points(preset, mode):
+    if mode == 'dm' :
+        export_points_dm(preset)
+    elif mode == 'mct' :
+        export_points_mct(preset)
+
+def export_points_mct(preset) :
+
+    filename = os.path.join(preset.root_path, 'images', 'answer.pts')
+    with open(filename, 'r') as json_file :
+        from_data = json.load(json_file)
+
+    if from_data == None:
+        logging.info("Can't open the pts file.") 
+        return
+    point_json = {}
+    point_json["stadium"] = "BasketballGround"
+    point_json["world_coords"] = {}
+    point_json["points"] = []
+
+    for i in range(len(preset.cameras)) :
+        print("name : ", preset.cameras[i].view.name)
+        _json = {}
+        _json['dsc_id'] = preset.cameras[i].view.name[:-6]
+
+        _json['pts_2d'] = from_data['points'][i]['pts_2d']
+        _json['pts_3d'] = from_data['points'][i]['pts_3d']
+
+        _json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_2d']['Upper']['IsEmpty'] = False
+        _json['pts_2d']['Upper']['X'] = -1.0
+        _json['pts_2d']['Upper']['Y'] = -1.0
+        _json['pts_2d']['Middle'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_2d']['Middle']['IsEmpty'] = False
+        _json['pts_2d']['Middle']['X'] = -1.0
+        _json['pts_2d']['Middle']['Y'] = -1.0
+        _json['pts_2d']['Lower'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_2d']['Lower']['IsEmpty'] = False
+        _json['pts_2d']['Lower']['X'] = -1.0
+        _json['pts_2d']['Lower']['Y'] = -1.0
+
+        _json['pts_3d']['Point1'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_3d']['Point1']['IsEmpty'] = False
+        _json['pts_3d']['Point1']['X'] = round(preset.cameras[i].pts[0][0], 2)
+        _json['pts_3d']['Point1']['Y'] = round(preset.cameras[i].pts[0][1], 2)
+        _json['pts_3d']['Point2'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_3d']['Point2']['IsEmpty'] = False
+        _json['pts_3d']['Point2']['X'] = round(preset.cameras[i].pts[1][0], 2)
+        _json['pts_3d']['Point2']['Y'] = round(preset.cameras[i].pts[1][1], 2)
+        _json['pts_3d']['Point3'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_3d']['Point3']['IsEmpty'] = False
+        _json['pts_3d']['Point3']['X'] = round(preset.cameras[i].pts[2][0], 2)
+        _json['pts_3d']['Point3']['Y'] = round(preset.cameras[i].pts[2][1], 2)
+        _json['pts_3d']['Point4'] = {"IsEmpty":None,"X":0,"Y":0}
+        _json['pts_3d']['Point4']['IsEmpty'] = False
+        _json['pts_3d']['Point4']['X'] = round(preset.cameras[i].pts[3][0], 2)
+        _json['pts_3d']['Point4']['Y'] = round(preset.cameras[i].pts[3][1], 2)
+        
+        _json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
+        _json['pts_swipe']['X1']=-1.0
+        _json['pts_swipe']['Y1']=-1.0
+        _json['pts_swipe']['X2']=-1.0
+        _json['pts_swipe']['Y2']=-1.0
+
+        point_json['points'].append(_json)
+
+        if preset.limit != 0 and i == preset.limit :
+            break                
+
+    bn_json = json.dumps(point_json,indent=4)
+    output = os.path.join(preset.root_path, 'images', 'output_mct.pts')    
+    ofile = open(output, 'w')
+    ofile.write(bn_json)
+    ofile.close()
+
+
+def export_points_dm(preset) :
 
     filename = os.path.join(preset.root_path, 'images', 'answer.pts')
     with open(filename, 'r') as json_file :

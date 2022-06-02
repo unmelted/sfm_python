@@ -199,7 +199,7 @@ class Group(object):
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]
+                    viewname = self.cameras[i].view.name[:-8]
                     if self.ext == 'tiff':
                         viewname = self.cameras[i].view.name[:-8]
                     
@@ -264,7 +264,7 @@ class Group(object):
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = self.cameras[i].view.name[:-7]
+            viewname = self.cameras[i].view.name[:-8]
             if self.ext == 'tiff':
                 viewname = self.cameras[i].view.name[:-8]
 
@@ -293,12 +293,13 @@ class Group(object):
 
         print("total real error : {} max {} min {} ".format(t_error, max, min))
 
-    def visualize(self) :
-        print("visualize camera in  group")        
-        plot_cameras(self.cameras, self.limit)
-        # plot_pointmap(self.sfm)    
+    def visualize(self, mode) :
+        if mode == 'colmap' :
+            self.colmap.visualize_colmap_model()
+        else :         
+            plot_scene(self.cameras, self.sfm, mode)
 
 
     def export(self) :
-        export_points(self)
+        export_points(self, 'mct')
         save_point_image(self)        
