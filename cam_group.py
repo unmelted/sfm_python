@@ -190,16 +190,13 @@ class Group(object):
             break
 
     def generate_points(self, mode) :
-        first_index = 0
-        #self.check_pair()
-
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
         self.answer = import_answer(filename, self.limit)
 
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-8]
+                    viewname = self.cameras[i].view.name[:-4]
                     if self.ext == 'tiff':
                         viewname = self.cameras[i].view.name[:-8]
                     
@@ -265,7 +262,7 @@ class Group(object):
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = self.cameras[i].view.name[:-8]
+            viewname = self.cameras[i].view.name[:-4]
             if self.ext == 'tiff':
                 viewname = self.cameras[i].view.name[:-8]
 

@@ -76,7 +76,7 @@ class autocalib(Resource) :
         elif args['mode'] == 'colmap' :
             preset1.read_cameras(args['mode'])        
             preset1.generate_points(args['mode'])    
-            preset1.calculate_real_error()
+            # preset1.calculate_real_error()
             preset1.export()
             preset1.visualize(args['mode'])
         

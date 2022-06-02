@@ -28,10 +28,11 @@ def export_points_mct(preset) :
     point_json["world_coords"] = {}
     point_json["points"] = []
 
-    for i in range(len(preset.cameras)) :
+    # for i in range(len(preset.cameras)) :
+    for i in range(2) :
         print("name : ", preset.cameras[i].view.name)
         _json = {}
-        _json['dsc_id'] = preset.cameras[i].view.name[:-6]
+        _json['dsc_id'] = preset.cameras[i].view.name[:-4]
 
         _json['pts_2d'] = from_data['points'][i]['pts_2d']
         _json['pts_3d'] = from_data['points'][i]['pts_3d']
@@ -269,7 +270,7 @@ def save_point_image(preset) :
         os.makedirs(output_path)
 
     for i in range(len(preset.cameras)) :
-        viewname = preset.cameras[i].view.name[:-7]
+        viewname = preset.cameras[i].view.name[:-4]
         if preset.ext == 'tiff':
             viewname = preset.cameras[i].view.name[:-8]
 
