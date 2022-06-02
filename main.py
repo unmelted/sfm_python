@@ -78,7 +78,7 @@ class autocalib(Resource) :
             preset1.generate_points(args['mode'])    
             # preset1.calculate_real_error()
             preset1.export()
-            preset1.visualize(args['mode'])
+#            preset1.visualize(args['mode'])
         
         time_e = time.time() - time_s
         print("Spending time total (sec) :", time_e)
@@ -103,4 +103,5 @@ class autocalib(Resource) :
 
 if __name__ == '__main__':
     
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    app.run(host="0.0.0.0", port=9000)
+
