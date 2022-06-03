@@ -1,11 +1,61 @@
+import sys
 import os
-import subprocess
 import time
+import threading
+import queue
+from datetime import datetime
+import subprocess
 import numpy as np
 import sqlite3
 from mathutil import quaternion_rotation_matrix
-
 from extn_util import * 
+
+def _monitor_readline(process, q):
+    while True:
+        bail = True
+        if process.poll() is None:
+            bail = False
+        out = ""
+        if sys.version_info[0] >= 3:
+            out = process.stdout.readline().decode('utf-8')
+        else:
+            out = process.stdout.readline()
+        q.put(out)
+        if q.empty() and bail:
+            break
+
+def shell_cmd(cmd):
+    # Kick off the command
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+    # Create the queue instance
+    q = queue.Queue()
+    # Kick off the monitoring thread
+    thread = threading.Thread(target=_monitor_readline, args=(process, q))
+    thread.daemon = True
+    thread.start()
+    start = datetime.now()
+    while True:
+        bail = True
+        if process.poll() is None:
+            bail = False
+            # Re-set the thread timer
+            start = datetime.now()
+        out = ""
+        while not q.empty():
+            out += q.get()
+        if out:
+            print(out)
+
+        # In the case where the thread is still alive and reading, and
+        # the process has exited and finished, give it up to 3 seconds
+        # to finish reading
+        if bail and thread.is_alive() and (datetime.now() - start).total_seconds() < 1:
+            bail = False
+        if bail:
+            break
+
+    return 0
 
 class Colmap(object) :
 
@@ -17,32 +67,14 @@ class Colmap(object) :
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 
     def recon_command(self) :
-        ''' automatic recon''' 
-        '''
-        call_colmap = subprocess.Popen([self.colmap_cmd['auto_recon_cmd'] + self.colmap_cmd['auto_recon_param1'] + self.root_path + self.colmap_cmd['auto_recon_param2'] + os.path.join(self.root_path, 'images')], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        call_colmap.wait()
-        result = call_colmap.poll()
-        print('Exit : ', result)
-        '''
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
+        cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
+        shell_cmd(cmd)
 
-        call_colmap = subprocess.Popen([self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        call_colmap.wait()
-        result = call_colmap.poll()
+        cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
+        shell_cmd(cmd)
 
-        if result != 0 :
-            print('Extract Feature Error : ', result)
-            return -1
-
-        call_colmap = subprocess.Popen([self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        call_colmap.wait()
-        result = call_colmap.poll()
-
-        if result != 0 :
-            print('Matcher Error : ', result)
-            return -2
-        
         just_read = False
         if just_read == True:
             return 0
@@ -50,15 +82,9 @@ class Colmap(object) :
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
-        print(self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath)
-        
-        call_colmap = subprocess.Popen([self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath], stdin=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        call_colmap.wait()
-        result = call_colmap.poll()
-        
-        if result != 0 :
-            print('Mapper Error : ', result)
-            return -3
+        cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
+        shell_cmd(cmd)
+        result = 0
 
         return result
 
@@ -110,7 +136,7 @@ class Colmap(object) :
             if line[0] == '#' : 
                 continue
 
-            if ext in line[-1]: 
+            if ext == line[-4:-1] :
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
