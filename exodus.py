@@ -39,10 +39,11 @@ class autocalib(Resource) :
 
         print(args['root_dir'])
         print(args['mode'])        
-        preset1 = Group()
+        preset1 = Group()        
+        run_mode = 'colmap'
 
-        if args['mode'] == 'colmap' :
-            ret = preset1.create_group_colmap(args['root_dir']) 
+        if run_mode == 'colmap' :
+            ret = preset1.create_group_colmap(args['root_dir'], args['mode']) 
         else:
             ret = preset1.create_group(args['root_dir'])
 
@@ -50,6 +51,7 @@ class autocalib(Resource) :
             logging.error("terminated. ")
             return 0
 
+        '''
         if args['mode'] == 'sfm' : 
             preset1.run_sfm()
             preset1.generate_points(args['mode'])    
@@ -72,13 +74,13 @@ class autocalib(Resource) :
 
         elif args['mode'] == 'test' :
             preset1.calculate_real_error()
-
-        elif args['mode'] == 'colmap' :
-            preset1.read_cameras(args['mode'])        
-            preset1.generate_points(args['mode'])    
-            preset1.calculate_real_error()
+        '''
+        if args['mode'] == 'full' or args['mode'] == 'visualize' :
+            preset1.read_cameras()        
+            preset1.generate_points()    
+            # preset1.calculate_real_error()
             preset1.export()
-            preset1.visualize(args['mode'])
+            preset1.visualize()
         
         time_e = time.time() - time_s
         print("Spending time total (sec) :", time_e)
@@ -103,4 +105,5 @@ class autocalib(Resource) :
 
 if __name__ == '__main__':
     
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    app.run(host="0.0.0.0", port=9000)
+

@@ -37,21 +37,19 @@ class Group(object):
         self.colmap = None
         self. ext = None
 
-    def create_group_colmap(self, root_path) :
+    def create_group_colmap(self, root_path, mode) :
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
         self.db = DbManager(self.root_path)
         self.colmap = Colmap(self.root_path)
 
-        print(root_path)
         self.ext = check_image_format(self.root_path)
         image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
 
-        print(image_names)
         index = 0
 
         for image_name in image_names:
@@ -63,7 +61,10 @@ class Group(object):
 
             index += 1            
 
-        result = self.colmap.recon_command()
+        if mode == 'visualize' :
+            return 0
+
+        result = self.colmap.recon_command(False)
         if result < 0 :
             print("recon command error : ", result)
             return result 
@@ -120,7 +121,7 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-    def read_cameras(self, mode):
+    def read_cameras(self, mode='colmap'):
         if mode == 'colmap' :
             if self.colmap == None :
                 print("there is no colmap data")                
@@ -189,17 +190,14 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
-    def generate_points(self, mode) :
-        first_index = 0
-        #self.check_pair()
-
+    def generate_points(self, mode='colmap') :
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
         self.answer = import_answer(filename, self.limit)
 
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-8]
+                    viewname = self.cameras[i].view.name[:-4]
                     if self.ext == 'tiff':
                         viewname = self.cameras[i].view.name[:-8]
                     
@@ -265,7 +263,7 @@ class Group(object):
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = self.cameras[i].view.name[:-8]
+            viewname = self.cameras[i].view.name[:-4]
             if self.ext == 'tiff':
                 viewname = self.cameras[i].view.name[:-8]
 
@@ -295,7 +293,7 @@ class Group(object):
         ave = t_error / len(self.cameras)
         print("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
-    def visualize(self, mode) :
+    def visualize(self, mode='colmap') :
         if mode == 'colmap' :
             self.colmap.visualize_colmap_model()
         else :         
