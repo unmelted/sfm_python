@@ -15,27 +15,29 @@ class Commander(object) :
         return Commander.instance
 
     def __init__(self) :
-        print("init call?")
         self.cmd_que = Queue()        
         self.index = 0
 
-    def Receiver(self) :
+    def Receiver(self, t) :
         self.index = 0
         print("start? ")
         while True :
             if(self.index % 10000000 == 0) :
-                print("..")
                 self.index = 0
-            time.sleep(0.01)
+            time.sleep(0.5)
+            print("..")            
             if(self.cmd_que.empty() is False) :
+                print("que.. ! ")
                 task, obj = self.cmd_que.get()
+                print("que.. get  ", task, obj)                
                 self.processor(task, obj)
-            self.index += 1
+                self.index += 1
 
     def add_task(self, task, obj) :
         print("call ? ")
         self.cmd_que.put((task, obj))
         print(task, obj)
+        print(self.cmd_que.empty())        
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :

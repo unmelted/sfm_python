@@ -4,6 +4,7 @@ from flask import Flask
 from flask import request, jsonify
 from flask_restx import fields, Resource, Api, reqparse
 import json
+import definition as df
 from exodus import *
 
 app = Flask(__name__)
@@ -28,7 +29,7 @@ class calib_run(Resource) :
         
         print(args['root_dir'])
         print(args['mode'])        
-        Commander.getInstance().add_task(100, (args['root_dir'], args['mode']))
+        Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['root_dir'], args['mode']))
 
         result = {
             'status': 0,
@@ -61,9 +62,9 @@ class calib_status(Resource) :
         return jsonify(result)   
 
 if __name__ == '__main__':    
-    print("main call? ")
-    cmd = Process(target=Commander.getInstance().Receiver, args=None)
-    cmd.start()
-    print("main call? ...")    
-    app.run(host="0.0.0.0", port=9000, user_reloader=False)
+
+    pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
+    pr.start()
+
+    app.run(debug=True, host='0.0.0.0', port=9000)
 
