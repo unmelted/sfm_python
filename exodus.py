@@ -75,14 +75,12 @@ class autocalib(Resource) :
         elif args['mode'] == 'test' :
             preset1.calculate_real_error()
         '''
-        if args['mode'] == 'full' :
-            pass
-        elif args['mode'] == 'visualize' :
-            preset1.read_cameras(args['mode'])        
-            preset1.generate_points(args['mode'])    
+        if args['mode'] == 'full' or args['mode'] == 'visualize' :
+            preset1.read_cameras()        
+            preset1.generate_points()    
             # preset1.calculate_real_error()
             preset1.export()
-#            preset1.visualize(args['mode'])
+            preset1.visualize()
         
         time_e = time.time() - time_s
         print("Spending time total (sec) :", time_e)

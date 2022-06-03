@@ -121,7 +121,7 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-    def read_cameras(self, mode):
+    def read_cameras(self, mode='colmap'):
         if mode == 'colmap' :
             if self.colmap == None :
                 print("there is no colmap data")                
