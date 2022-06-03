@@ -37,7 +37,7 @@ class Group(object):
         self.colmap = None
         self. ext = None
 
-    def create_group_colmap(self, root_path, mode)
+    def create_group_colmap(self, root_path, mode) :
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
