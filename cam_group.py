@@ -37,7 +37,7 @@ class Group(object):
         self.colmap = None
         self. ext = None
 
-    def create_group_colmap(self, root_path) :
+    def create_group_colmap(self, root_path, mode)
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
@@ -63,7 +63,7 @@ class Group(object):
 
             index += 1            
 
-        result = self.colmap.recon_command()
+        result = self.colmap.recon_command(mode)
         if result < 0 :
             print("recon command error : ", result)
             return result 

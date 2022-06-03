@@ -66,7 +66,7 @@ class Colmap(object) :
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 
-    def recon_command(self) :
+    def recon_command(self, skip):
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
         cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
@@ -75,7 +75,7 @@ class Colmap(object) :
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         shell_cmd(cmd)
 
-        just_read = False
+        just_read = skip
         if just_read == True:
             return 0
 
@@ -136,7 +136,7 @@ class Colmap(object) :
             if line[0] == '#' : 
                 continue
 
-            if ext == line[-4:-1] :
+            if ext in line[-4:-1] :
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
