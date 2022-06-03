@@ -44,14 +44,12 @@ class Group(object):
         self.db = DbManager(self.root_path)
         self.colmap = Colmap(self.root_path)
 
-        print(root_path)
         self.ext = check_image_format(self.root_path)
         image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
         if len(image_names) < 1 : 
             logging.error("can't read images . ")
             return -1
 
-        print(image_names)
         index = 0
 
         for image_name in image_names:
@@ -63,7 +61,10 @@ class Group(object):
 
             index += 1            
 
-        result = self.colmap.recon_command(mode)
+        if mode == 'visualize' :
+            return 0
+
+        result = self.colmap.recon_command()
         if result < 0 :
             print("recon command error : ", result)
             return result 
