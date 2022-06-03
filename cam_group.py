@@ -64,7 +64,7 @@ class Group(object):
         if mode == 'visualize' :
             return 0
 
-        result = self.colmap.recon_command()
+        result = self.colmap.recon_command(False)
         if result < 0 :
             print("recon command error : ", result)
             return result 
