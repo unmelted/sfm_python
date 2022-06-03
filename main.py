@@ -1,10 +1,10 @@
 import os
-
+from multiprocessing.dummy import Process
 from flask import Flask
 from flask import request, jsonify
 from flask_restx import fields, Resource, Api, reqparse
 import json
-from main import *
+from exodus import *
 
 app = Flask(__name__)
 api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slavery')
@@ -17,7 +17,7 @@ recon_args = api.model('recon_args' , {
 
 @api.route('/exodus/autocalib')
 @api.doc()
-class exodus(Resource) : 
+class calib_run(Resource) : 
     @api.expect(recon_args)
     def post(self, model=recon_args):
 
@@ -28,6 +28,7 @@ class exodus(Resource) :
         
         print(args['root_dir'])
         print(args['mode'])        
+        Commander.getInstance().add_task(100, (args['root_dir'], args['mode']))
 
         result = {
             'status': 0,
@@ -41,7 +42,7 @@ jobid = api.model('jobid' , {
 })
 @api.route('/exodus/autocalib/status')
 @api.doc()
-class exodus_status(Resource) : 
+class calib_status(Resource) : 
     @api.expect(jobid)
     def post(self, jid=jobid):
 
@@ -58,6 +59,11 @@ class exodus_status(Resource) :
         }
 
         return jsonify(result)   
+
 if __name__ == '__main__':    
-    app.run(host="0.0.0.0", port=9000)
+    print("main call? ")
+    cmd = Process(target=Commander.getInstance().Receiver, args=None)
+    cmd.start()
+    print("main call? ...")    
+    app.run(host="0.0.0.0", port=9000, user_reloader=False)
 

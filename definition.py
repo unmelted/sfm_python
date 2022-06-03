@@ -1,8 +1,14 @@
 import os
+from enum import Enum
 import logging
 
 
-
+class TaskCategory(Enum):
+    INIT                    = 0 
+    AUTOCALIB               = 100
+    AUTOCALIB_STATUS        = 200
+    FINISH                  = 1
+    
 def get_err_msg(err_code) :
     msg = None
     msg_pair = {
