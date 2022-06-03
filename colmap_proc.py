@@ -69,7 +69,7 @@ class Colmap(object) :
     def recon_command(self, skip):
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
-        cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
+        cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath + ' --SiftExtraction.use_gpu 0'
         shell_cmd(cmd)
 
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
