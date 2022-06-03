@@ -1,9 +1,47 @@
 import os
 import time
-import numpy as np
 import logging
-
+from multiprocessing.dummy import Queue
 from cam_group import *
+import definition as df
+
+class Commander(object) :
+    instance = None
+
+    @staticmethod
+    def getInstance():
+        if Commander.instance is None:
+            Commander.instance = Commander()
+        return Commander.instance
+
+    def __init__(self) :
+        self.cmd_que = Queue()        
+        self.index = 0
+
+    def Receiver(self, t) :
+        self.index = 0
+        print("start? ")
+        while True :
+            if(self.index % 10000000 == 0) :
+                self.index = 0
+            time.sleep(0.5)
+            print("..")            
+            if(self.cmd_que.empty() is False) :
+                print("que.. ! ")
+                task, obj = self.cmd_que.get()
+                print("que.. get  ", task, obj)                
+                self.processor(task, obj)
+                self.index += 1
+
+    def add_task(self, task, obj) :
+        print("call ? ")
+        self.cmd_que.put((task, obj))
+        print(task, obj)
+        print(self.cmd_que.empty())        
+
+    def processor(self, task, obj) :
+        if task == df.TaskCategory.AUTOCALIB :
+            print("auto calib task add !")
 
 class autocalib(object) :
 
@@ -25,7 +63,7 @@ class autocalib(object) :
         if( ret < 0 ):
             logging.error("terminated. ")
             return
-             
+
         if self.mode == 'full' or self.mode == 'visualize' :
             preset1.read_cameras()        
             preset1.generate_points()    
