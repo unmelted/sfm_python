@@ -1,3 +1,5 @@
+import os
+import time
 from cam_group import *
 import numpy as np
 import logging
@@ -7,12 +9,14 @@ from extn_util import *
 
 def run(args):
 
+    time_s = time.time()        
     logging.basicConfig(level=logging.INFO)
 
     preset1 = Group()
 
-    if args.mode == 'colmap' :
-        ret = preset1.create_group_colmap(args.root_dir)        
+    run_mode = 'colmap'
+    if run_mode == 'colmap' :        
+        ret = preset1.create_group_colmap(args.root_dir, args.mode)
     else:
         ret = preset1.create_group(args.root_dir)
 
@@ -20,6 +24,7 @@ def run(args):
         logging.error("terminated. ")
         return 0
 
+    '''
     if args.mode == 'sfm' : 
         preset1.run_sfm()
         preset1.generate_points(args.mode)    
@@ -42,14 +47,17 @@ def run(args):
 
     elif args.mode == 'test' :
         preset1.calculate_real_error()
-
-    elif args.mode == 'colmap' :
-        preset1.read_cameras(args.mode)        
-        preset1.generate_points(args.mode)    
-        preset1.calculate_real_error()
+    '''
+    if args.mode == 'full' or args.mode == 'visualize' :
+        preset1.read_cameras()
+        preset1.generate_points()    
+        # preset1.calculate_real_error()
         preset1.export()
-        preset1.visualize(args.mode)
-    
+        preset1.visualize()
+
+    time_e = time.time() - time_s
+    print("Spending time total (sec) :", time_e)
+
 def set_args(parser):
 
     parser.add_argument('--root_dir', action='store', type=str, dest='root_dir',
