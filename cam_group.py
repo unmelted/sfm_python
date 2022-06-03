@@ -190,7 +190,7 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
-    def generate_points(self, mode) :
+    def generate_points(self, mode='colmap') :
         filename = os.path.join(self.root_path, 'images', 'answer.pts')
         self.answer = import_answer(filename, self.limit)
 
@@ -293,7 +293,7 @@ class Group(object):
         ave = t_error / len(self.cameras)
         print("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
-    def visualize(self, mode) :
+    def visualize(self, mode='colmap') :
         if mode == 'colmap' :
             self.colmap.visualize_colmap_model()
         else :         
