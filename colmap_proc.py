@@ -29,8 +29,8 @@ def shell_cmd(cmd):
     # Kick off the command
     process = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
-    for line in iter(process.stdout.readline, b''):
-        print(line)
+    for line in iter(process.stdout.readline, ''):
+        print(line.decode('utf-8'))
     process.stdout.close()
     process.wait()
 
