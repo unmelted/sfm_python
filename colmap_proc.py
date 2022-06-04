@@ -1,3 +1,4 @@
+from socket import inet_aton
 import sys
 import os
 import time
@@ -26,8 +27,14 @@ def _monitor_readline(process, q):
 
 def shell_cmd(cmd):
     # Kick off the command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    process = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
+    for line in iter(process.stdout.readline, b''):
+        print(line)
+    process.stdout.close()
+    process.wait()
+
+    '''
     # Create the queue instance
     q = queue.Queue()
     # Kick off the monitoring thread
@@ -54,7 +61,7 @@ def shell_cmd(cmd):
             bail = False
         if bail:
             break
-
+        '''
     return 0
 
 class Colmap(object) :
