@@ -13,7 +13,7 @@ app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
     'root_dir' : fields.String,
-    'mode' : fields.String
+    'mode' : fields.String,
 })
 
 @api.route('/exodus/autocalib')
@@ -52,11 +52,12 @@ class calib_status(Resource) :
         args = parser.parse_args()
         
         print(args['job_id'])
-
+        result = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id']))
+        msg = df.get_progress_msg(result)
         result = {
-            'job_id': 0,
-            'progress' : 10,
-            'message': 'PLZ WAIT..',
+            'job_id': args['job_id'],
+            'progress' : result,
+            'message': msg,
         }
 
         return jsonify(result)   

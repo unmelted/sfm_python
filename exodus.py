@@ -17,6 +17,7 @@ class Commander(object) :
     def __init__(self) :
         self.cmd_que = Queue()        
         self.index = 0
+        self.db = DbManager()
 
     def Receiver(self, t) :
         self.index = 0
@@ -40,6 +41,8 @@ class Commander(object) :
             ac = autocalib(obj[0], obj[1])
             ac.run()
             # subprocess.call('python bb.py', creationflags=subprocess.CREATE_NEW_CONSOLE)
+        elif task == df.TaskCategory.AUTOCALIB_STATUS :
+            DbManager.getInstance().getJobStatus(obj[0])
 
 class autocalib(object) :
 
@@ -59,16 +62,19 @@ class autocalib(object) :
             ret = preset1.create_group(self.root_dir)
 
         if( ret < 0 ):
-            logging.error("terminated. ")
-            return
+            return -11
 
-        if self.mode == 'full' or self.mode == 'visualize' :
-            preset1.read_cameras()        
+        if self.mode > df.CommandMode.HALF:
+            preset1.read_cameras()
             preset1.generate_points()    
-            # preset1.calculate_real_error()
             preset1.export()
+
+        if df.CommandMode.PTS_ERROR_ANALYSIS in self.mode :
+            preset1.calculate_real_error()
+
+        if df.CommandMode.VISUALIZE in self.mode:
             preset1.visualize()
-        
+
         time_e = time.time() - time_s
         print("Spending time total (sec) :", time_e)
         
