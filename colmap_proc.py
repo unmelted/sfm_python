@@ -134,8 +134,9 @@ class Colmap(object) :
             focal = float(line[4])
             skew = float(line[7])
             # print(id, focal, skew)
-            q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')
+            q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')            
             cursur.execute(q, (focal, skew, id))
+            print("execuete update1 ", id)
 
         lines = img.readlines()
         for line in lines:
@@ -156,6 +157,7 @@ class Colmap(object) :
                 # print(id, qw, qx, qy, qz, tx, ty, tz, img)
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
+                print("execuete update2  ", img, id)
 
         conn.close()
         return result
