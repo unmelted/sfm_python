@@ -20,34 +20,32 @@ class Commander(object) :
 
     def Receiver(self, t) :
         self.index = 0
-        print("start? ")
+
         while True :
-            if(self.index % 10000000 == 0) :
+            if(self.index % 100000 == 0) :
                 self.index = 0
-            time.sleep(0.5)
-            print("..")            
+            time.sleep(0.2)
             if(self.cmd_que.empty() is False) :
-                print("que.. ! ")
                 task, obj = self.cmd_que.get()
                 print("que.. get  ", task, obj)                
                 self.processor(task, obj)
                 self.index += 1
 
     def add_task(self, task, obj) :
-        print("call ? ")
         self.cmd_que.put((task, obj))
-        print(task, obj)
-        print(self.cmd_que.empty())        
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
             print("auto calib task add !")
+            ac = autocalib(obj[0], obj[1])
+            ac.run()
+            # subprocess.call('python bb.py', creationflags=subprocess.CREATE_NEW_CONSOLE)
 
 class autocalib(object) :
 
     def __init__ (self, root_dir, mode) :
         self.root_dir = root_dir
-        self.run_mdoe = 'colmap'
+        self.run_mode = 'colmap'
         self.mode = mode
         logging.basicConfig(level=logging.INFO)        
 
