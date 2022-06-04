@@ -144,7 +144,7 @@ class Colmap(object) :
             if line[0] == '#' : 
                 continue
 
-            if ext in line[-4:-1] :
+            if ext in line :
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
