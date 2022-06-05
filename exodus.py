@@ -32,6 +32,13 @@ class Commander(object) :
                 self.processor(task, obj)
                 self.index += 1
 
+    def send_query(self, query, obj) :
+        result = None
+        if query == df.TaskCategory.AUTOCALIB_STATUS :
+            result = DbManager.getInstance().getJobStatus(obj[0])
+        
+        return result
+
     def add_task(self, task, obj) :
         self.cmd_que.put((task, obj))
 
@@ -41,8 +48,7 @@ class Commander(object) :
             ac = autocalib(obj[0], obj[1])
             ac.run()
             # subprocess.call('python bb.py', creationflags=subprocess.CREATE_NEW_CONSOLE)
-        elif task == df.TaskCategory.AUTOCALIB_STATUS :
-            DbManager.getInstance().getJobStatus(obj[0])
+
 
 class autocalib(object) :
 

@@ -311,3 +311,9 @@ def import_colmap_cmd_json(path) :
     json_file = open(path, 'r')
     json_data = json.load(json_file)
     return json_data
+
+
+def capture_images_from_videos(path) :
+    count = 0
+    
+    return count
