@@ -105,7 +105,7 @@ class Colmap(object) :
 
         if result != 0 :
             print('Model Convert Error : ', result)
-            return -4
+            return -140
 
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()    
@@ -173,7 +173,7 @@ class Colmap(object) :
 
             if len(row) > 1 or len(row) == 0:
                 print('Data is odd . ')
-                return -41
+                return -141
 
             poseR = np.empty((0))
             poseT = np.empty((0))

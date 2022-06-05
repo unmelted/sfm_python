@@ -27,7 +27,13 @@ def get_err_msg(err_code) :
     msg_pair = {
          0 : "ERR NONE",
         -1 : "PROC ERR",
-        -11 : "Create Preset Error"
+        -11 : "Create Preset Error",
+        -21 : "Input value is invalid",
+
+        -101 : "Error on Autocalib Init. (create group)",
+        -140 : "Convert model error ",
+        -141 : "Camera info duplicated with image name",
+        -201 : "Query job_is is ambigous"
     }
 
     if err_code in msg_pair : 

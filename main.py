@@ -29,6 +29,7 @@ class calib_run(Resource) :
         
         print(args['root_dir'])
         print(args['mode'])        
+        print("calib run .. : " ,Commander.getInstance())
         Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['root_dir'], args['mode']))
 
         result = {
@@ -39,7 +40,7 @@ class calib_run(Resource) :
         return result
 
 jobid = api.model('jobid' , {
-    'id' : fields.Integer,
+    'job_id' : fields.Integer,
 })
 @api.route('/exodus/autocalib/status')
 @api.doc()
@@ -52,8 +53,12 @@ class calib_status(Resource) :
         args = parser.parse_args()
         
         print(args['job_id'])
+        print("calib status  .. : " ,Commander.getInstance())        
         result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id']))
-        msg = df.get_progress_msg(result)
+        if result > 0 : 
+            msg = df.get_progress_msg(result)            
+        else :
+            msg = df.get_err_msg(result)
 
         result = {
             'job_id': args['job_id'],
@@ -63,10 +68,10 @@ class calib_status(Resource) :
 
         return result
 
-if __name__ == '__main__':    
 
+if __name__ == '__main__':    
     pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
     pr.start()
-
-    app.run(debug=True, host='0.0.0.0', port=9000)
+    print("main.. start : " ,Commander.getInstance())
+    app.run(debug=False, host='0.0.0.0', port=9000)
 
