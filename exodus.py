@@ -4,6 +4,7 @@ import logging
 from multiprocessing.dummy import Queue
 from cam_group import *
 import definition as df
+from db_manager import DbManager
 
 class Commander(object) :
     instance = None
@@ -17,10 +18,11 @@ class Commander(object) :
     def __init__(self) :
         self.cmd_que = Queue()        
         self.index = 0
-        self.db = DbManager()
+        self.db = DbManager.getInstance()
+        print("command init : ", DbManager.getInstance())
 
     def Receiver(self, t) :
-        self.index = 0
+        self.index = 100
 
         while True :
             if(self.index % 100000 == 0) :
@@ -35,8 +37,11 @@ class Commander(object) :
     def send_query(self, query, obj) :
         result = None
         if query == df.TaskCategory.AUTOCALIB_STATUS :
-            result = DbManager.getInstance().getJobStatus(obj[0])
-        
+            if obj == None :
+                return -21
+
+            print("send query : ", DbManager.getInstance())
+            result = DbManager.getInstance().getJobStatus(obj)
         return result
 
     def add_task(self, task, obj) :
@@ -45,6 +50,8 @@ class Commander(object) :
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
             print("auto calib task add !")
+            print("process  : ", DbManager.getInstance())            
+            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, root_path=obj[0], mode=obj[1])            
             ac = autocalib(obj[0], obj[1])
             ac.run()
             # subprocess.call('python bb.py', creationflags=subprocess.CREATE_NEW_CONSOLE)
@@ -68,17 +75,17 @@ class autocalib(object) :
             ret = preset1.create_group(self.root_dir)
 
         if( ret < 0 ):
-            return -11
+            return -101
 
-        if self.mode > df.CommandMode.HALF:
+        if self.mode == df.CommandMode.FULL:
             preset1.read_cameras()
             preset1.generate_points()    
             preset1.export()
 
-        if df.CommandMode.PTS_ERROR_ANALYSIS in self.mode :
+        if self.mode == df.CommandMode.PTS_ERROR_ANALYSIS:
             preset1.calculate_real_error()
 
-        if df.CommandMode.VISUALIZE in self.mode:
+        if self.mode  == df.CommandMode.VISUALIZE:
             preset1.visualize()
 
         time_e = time.time() - time_s
