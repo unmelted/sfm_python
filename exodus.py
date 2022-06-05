@@ -1,10 +1,12 @@
 import os
 import time
+from datetime import datetime
 import logging
 from multiprocessing.dummy import Queue
 from cam_group import *
 import definition as df
 from db_manager import DbManager
+from image_proc import *
 
 class Commander(object) :
     instance = None
@@ -51,23 +53,44 @@ class Commander(object) :
         if task == df.TaskCategory.AUTOCALIB :
             print("auto calib task add !")
             print("process  : ", DbManager.getInstance())            
-            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, root_path=obj[0], mode=obj[1])            
-            ac = autocalib(obj[0], obj[1])
+            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj[0], mode=obj[1])            
+            ac = autocalib(obj[0], obj[1], self.index)
             ac.run()
             # subprocess.call('python bb.py', creationflags=subprocess.CREATE_NEW_CONSOLE)
 
 
 class autocalib(object) :
 
-    def __init__ (self, root_dir, mode) :
-        self.root_dir = root_dir
+    def __init__ (self, input_dir, mode, job_id) :
+        self.input_dir = input_dir
+        self.root_dir = None
         self.run_mode = 'colmap'
         self.mode = mode
+        self.job_id = job_id
         logging.basicConfig(level=logging.INFO)        
+
+    def checkDataValidity(self) :
+        video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
+        if len(video_files) < 3 :
+            return -102
+
+        now = datetime.now()
+        root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
+        os.makedirs(os.path.join(os.getcwd(), root))
+        self.root_path = os.path.join(os.getcwd(), root)
+        print(self.root_path)
+        os.makedirs(os.path.join(self.root_path, 'images'))
+        result = make_snapshot(self.input_dir, os.path.join(self.root_path, 'images'))
+        return result
 
     def run(self) :
         time_s = time.time()                
         preset1 = Group()        
+
+        result = self.checkDataValidity()
+
+        if result != 0 :
+            return result
 
         if self.run_mode == 'colmap' :
             ret = preset1.create_group_colmap(self.root_dir, self.mode)

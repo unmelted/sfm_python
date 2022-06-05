@@ -12,7 +12,7 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'root_dir' : fields.String,
+    'input_dir' : fields.String,
     'mode' : fields.String,
 })
 
@@ -23,14 +23,14 @@ class calib_run(Resource) :
     def post(self, model=recon_args):
 
         parser = reqparse.RequestParser()
-        parser.add_argument('root_dir', type=str)
+        parser.add_argument('input_dir', type=str)
         parser.add_argument('mode', type=str)
         args = parser.parse_args()
         
-        print(args['root_dir'])
+        print(args['input_dir'])
         print(args['mode'])        
         print("calib run .. : " ,Commander.getInstance())
-        Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['root_dir'], args['mode']))
+        Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['mode']))
 
         result = {
             'status': 0,

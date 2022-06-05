@@ -1,5 +1,5 @@
 {
-    "create_command_db" : "CREATE TABLE IF NOT EXISTS command (no INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, datetime DATETIME DEFAULT (DATETIME('now', 'localtime')), job_id INTEGER NOT NULL, task TEXT NOT NULL, root_path TEXT, mode TEXT, status INTEGER , result_id INTEGER, result_msg TEXT, terminate INTEGER)",
+    "create_command_db" : "CREATE TABLE IF NOT EXISTS command (no INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, datetime DATETIME DEFAULT (DATETIME('now', 'localtime')), job_id INTEGER NOT NULL, task TEXT NOT NULL, input_path TEXT, mode TEXT, status INTEGER , root_path TEXT, result_id INTEGER, result_msg TEXT, terminate INTEGER)",
 
     "create_log_db" : "CREATE TABLE IF NOT EXISTS log (no INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, datetime DATETIME DEFAULT (DATETIME('now', 'localtime')), detail BLOB)",
 

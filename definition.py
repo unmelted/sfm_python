@@ -31,6 +31,8 @@ def get_err_msg(err_code) :
         -21 : "Input value is invalid",
 
         -101 : "Error on Autocalib Init. (create group)",
+        -102 : "Video (Camera) file is too small count",
+        -103 : "Making Snapshot error",
         -140 : "Convert model error ",
         -141 : "Camera info duplicated with image name",
         -201 : "Query job_is is ambigous"
