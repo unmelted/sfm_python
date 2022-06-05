@@ -1,3 +1,4 @@
+from socket import inet_aton
 import sys
 import os
 import time
@@ -26,8 +27,14 @@ def _monitor_readline(process, q):
 
 def shell_cmd(cmd):
     # Kick off the command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    process = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
+    for line in iter(process.stdout.readline, b''):
+        print(line)
+    process.stdout.close()
+    process.wait()
+
+    '''
     # Create the queue instance
     q = queue.Queue()
     # Kick off the monitoring thread
@@ -54,7 +61,7 @@ def shell_cmd(cmd):
             bail = False
         if bail:
             break
-
+        '''
     return 0
 
 class Colmap(object) :
@@ -127,8 +134,9 @@ class Colmap(object) :
             focal = float(line[4])
             skew = float(line[7])
             # print(id, focal, skew)
-            q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')
+            q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')            
             cursur.execute(q, (focal, skew, id))
+            print("execuete update1 ", id)
 
         lines = img.readlines()
         for line in lines:
@@ -136,7 +144,7 @@ class Colmap(object) :
             if line[0] == '#' : 
                 continue
 
-            if ext in line[-4:-1] :
+            if ext in line :
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
@@ -149,6 +157,7 @@ class Colmap(object) :
                 # print(id, qw, qx, qy, qz, tx, ty, tz, img)
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
+                print("execuete update2  ", img, id)
 
         conn.close()
         return result

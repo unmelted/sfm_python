@@ -41,7 +41,6 @@ class Group(object):
         self.root_path = root_path        
         self.world.get_world()
         self.adjust = Adjust(self.world)
-        self.db = DbManager(self.root_path)
         self.colmap = Colmap(self.root_path)
 
         self.ext = check_image_format(self.root_path)
