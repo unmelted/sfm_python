@@ -50,22 +50,30 @@ class DbManager(object) :
         v = []
 
         for i in k :
-            c.append(i[0])
-            v.append(i[1])
+            c.append(i)
+            v.append(k[i])
 
         for ii in range(len(c)) :
-            t = c[ii] + " = " + v[ii]
-            q += t
             if ii == len(c) - 1:
-                q += "WHERE " + c[ii] + " = " + v[ii]
+                q += 'WHERE ' + c[ii] + ' = ' + str(v[ii])
+            else :
+                t = c[ii] + ' = \"' + str(v[ii]) + '\"'
+                q += t
 
         print("update query : ", q)
-        self.sursur.execute(q)
+        self.cursur.execute(q)
         self.conn.commit()
 
+    def getRootPath(self, id) :
+        q = "SELECT root_path FROM command where job_id = " + str(id) + " ORDER BY datetime DESC "
+        print("get rootpath query : " , q)
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+                
+        return rows[0][0]
+
     def getJobStatus(self, id) :
-        # q = self.sql_list["query_status"]
-        q = "SELECT job_id  FROM command where job_id = " + str(id)
+        q = "SELECT status FROM command where job_id = " + str(id)
         print("job status query : " , q)
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
