@@ -21,19 +21,16 @@ class Commander(object) :
         self.cmd_que = Queue()        
         self.index = 0
         self.db = DbManager.getInstance()
-        print("command init : ", DbManager.getInstance())
+        self.index = 0
 
     def Receiver(self, t) :
-        self.index = 110
-
         while True :
             if(self.index % 100000 == 0) :
                 self.index = 0
             time.sleep(0.2)
-            print("..")
+            # print("..")
             if(self.cmd_que.empty() is False) :
                 task, obj = self.cmd_que.get()
-                print("que.. get  ", task, obj)                
                 self.processor(task, obj)
 
 
@@ -55,7 +52,9 @@ class Commander(object) :
 
     def add_task(self, task, obj) :
         self.cmd_que.put((task, obj))
-        self.index += 1
+        self.index = DbManager.getInstance().getJobIndex() +1
+        print("alloc job id : ", self.index)
+        
         return self.index
 
     def processor(self, task, obj) :

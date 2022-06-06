@@ -72,6 +72,17 @@ class DbManager(object) :
                 
         return rows[0][0]
 
+    def getJobIndex(self) :
+        index = 0
+        q = "SELECT job_id FROM command ORDER BY job_id DESC"
+        self.cursur.execute(q)
+        rows = self.cursur.fetchone()
+        if len(rows) == 0 :
+            return 0
+            
+        index = rows[0]
+        return index 
+
     def getJobStatus(self, id) :
         q = "SELECT status FROM command where job_id = " + str(id)
         print("job status query : " , q)
