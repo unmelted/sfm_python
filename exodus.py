@@ -39,7 +39,6 @@ class Commander(object) :
 
     def send_query(self, query, obj) :
         result = 0
-        DbManager.getInstance().insert('command', job_id=obj, task=query.name,  mode=query.value)
         if query == df.TaskCategory.AUTOCALIB_STATUS :
             if obj == None :
                 return -21
