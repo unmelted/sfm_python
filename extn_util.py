@@ -87,7 +87,7 @@ def export_points_mct(preset) :
 
 def export_points_dm(preset) :
 
-    filename = os.path.join(preset.root_path, 'images', 'answer.pts')
+    filename = os.path.join(preset.root_path, 'images', 'UserPointData.pts')
     with open(filename, 'r') as json_file :
         from_data = json.load(json_file)
 
@@ -95,22 +95,14 @@ def export_points_dm(preset) :
         logging.info("Can't open the pts file.") 
         return
 
-    json_data = {
-            "RecordName" : None,
-            "PreSetNumber" : 0,
-            "worlds" : [
-                {
-            
-                    "group":None,
-                    "stadium":None,
-                    "world_coords":None
-                }
-            ]
-                ,
-            "points" : None
-        }
-    json_data['worlds'][0]['group'] = "Group1"
-    json_data['worlds'][0]['stadium'] = preset.world.stadium
+    output_path = os.path.join(preset.root_path, 'output')
+    if not os.path.exists(output_path):    
+        os.makedirs(output_path)
+
+    json_data = {}
+    json_data["RecordName"] = from_data["RecordName"]
+    json_data["PreSetNumber"] = from_data["PreSetNumber"]    
+    json_data["worlds"] = from_data["worlds"]        
     json_data['points'] = []
 
     for i in range(len(preset.cameras)) :
@@ -130,8 +122,8 @@ def export_points_dm(preset) :
         point_json['ManualOffesetY'] = 0
         point_json['FocalLength'] = preset.cameras[i].focal
 
-        point_json['pts_2d'] = from_data['points'][i]['pts_2d']
-        point_json['pts_3d'] = from_data['points'][i]['pts_3d']
+        point_json['pts_2d'] = {}
+        point_json['pts_3d'] = {}
 
         point_json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
         point_json['pts_2d']['Upper']['IsEmpty'] = False
@@ -175,7 +167,7 @@ def export_points_dm(preset) :
             break                
 
     bn_json = json.dumps(json_data,indent=4)
-    output = os.path.join(preset.root_path, 'images', 'output.pts')    
+    output = os.path.join(preset.root_path, 'output', 'AutoCalib.pts')    
     ofile = open(output, 'w')
     ofile.write(bn_json)
     ofile.close()

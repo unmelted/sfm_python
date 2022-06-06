@@ -6,6 +6,7 @@ class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
+    VISUALIZE               = 300
     FINISH                  = 1
 
 class CommandMode(Enum):
@@ -33,9 +34,14 @@ def get_err_msg(err_code) :
         -101 : "Error on Autocalib Init. (create group)",
         -102 : "Video (Camera) file is too small count",
         -103 : "Making Snapshot error",
+        -104 : "There is no model info in root_dir",
+        -105 : "Can't access to input dire",
+        -106 : "There is no pts file",
         -140 : "Convert model error ",
         -141 : "Camera info duplicated with image name",
+
         -201 : "Query job_is is ambigous"
+
     }
 
     if err_code in msg_pair : 

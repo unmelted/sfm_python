@@ -35,7 +35,7 @@ class Group(object):
         self.answer = {}
         self.db = None
         self.colmap = None
-        self. ext = None
+        self.ext = None
 
     def create_group_colmap(self, root_path, mode) :
         self.root_path = root_path        
@@ -190,8 +190,9 @@ class Group(object):
             break
 
     def generate_points(self, mode='colmap') :
-        filename = os.path.join(self.root_path, 'images', 'answer.pts')
-        self.answer = import_answer(filename, self.limit)
+        filename = os.path.join(self.root_path, 'images', 'UserPointData.pts')
+        #not calculate_real_error mode 
+        self.answer = import_answer(filename, 2)
 
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
@@ -300,5 +301,5 @@ class Group(object):
 
 
     def export(self) :
-        export_points(self, 'mct')
+        export_points(self, 'dm')
         save_point_image(self)        

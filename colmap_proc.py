@@ -143,8 +143,8 @@ class Colmap(object) :
             line = line.split()
             if line[0] == '#' : 
                 continue
-
-            if ext in line :
+            print(line[9])
+            if ext in line[9] :
                 id = int(line[0])
                 qw = float(line[1])
                 qx = float(line[2])
@@ -154,7 +154,7 @@ class Colmap(object) :
                 ty = float(line[6])
                 tz = float(line[7])
                 img = str(line[9])
-                # print(id, qw, qx, qy, qz, tx, ty, tz, img)
+
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
                 print("execuete update2  ", img, id)
