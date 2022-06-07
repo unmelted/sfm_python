@@ -10,6 +10,7 @@ import numpy as np
 import sqlite3
 from mathutil import quaternion_rotation_matrix
 from extn_util import * 
+from db_manager import DbManager
 
 def _monitor_readline(process, q):
     while True:
@@ -78,6 +79,7 @@ class Colmap(object) :
         outpath = os.path.join(self.root_path, 'sparse')
         cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath + ' --SiftExtraction.use_gpu 0'
         shell_cmd(cmd)
+        DbManager.getInstance().update('command', status=20, job_id=self.job_id)
 
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         shell_cmd(cmd)
@@ -86,13 +88,15 @@ class Colmap(object) :
         if just_read == True:
             return 0
 
+        DbManager.getInstance().update('command', status=30, job_id=self.job_id)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
         cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
         shell_cmd(cmd)
         result = 0
-
+        DbManager.getInstance().update('command', status=40, job_id=self.job_id)
+        
         return result
 
     def cvt_colmap_model(self, ext):

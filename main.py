@@ -12,8 +12,7 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String,
-    'mode' : fields.String,
+    'input_dir' : fields.String
 })
 
 @api.route('/exodus/autocalib')
@@ -24,13 +23,11 @@ class calib_run(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
-        parser.add_argument('mode', type=str)
         args = parser.parse_args()
         
         print(args['input_dir'])
-        print(args['mode'])        
         print("calib run .. : " ,Commander.getInstance())
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['mode']))
+        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir']))
 
         result = {
             'status': 0,

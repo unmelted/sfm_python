@@ -61,8 +61,8 @@ class Commander(object) :
         if task == df.TaskCategory.AUTOCALIB :
             print("auto calib task add !")
             print("process  : ", DbManager.getInstance())            
-            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj[0], mode=obj[1])
-            ac = autocalib(obj[0], obj[1], self.index)
+            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj[0], mode='full')
+            ac = autocalib(obj[0], 'full', self.index)
             ac.run()
 
 def visualize_mode(job_id) :
@@ -123,21 +123,21 @@ class autocalib(object) :
     def run(self) :
         time_s = time.time()                
         preset1 = Group()        
-
         result = self.checkDataValidity()
 
         if result != 0 :
             return result
+        DbManager.getInstance().update('command', status=10, job_id=self.job_id)
 
         if self.run_mode == 'colmap' :
             ret = preset1.create_group_colmap(self.root_dir, self.mode)
         else:
             ret = preset1.create_group(self.root_dir)
 
-        DbManager.getInstance().update('command', status=50, job_id=self.job_id)
         if( ret < 0 ):
             return -101
-
+        DbManager.getInstance().update('command', status=60, job_id=self.job_id)
+        
         if self.mode == df.CommandMode.FULL or self.mode == 'full':
             preset1.read_cameras()
             preset1.generate_points()    
@@ -145,6 +145,8 @@ class autocalib(object) :
             DbManager.getInstance().update('command', status=100, job_id=self.job_id)            
 
         if self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or self.mode == 'analysis':
+            preset1.read_cameras()
+            preset1.generate_points('colmap', 'analysis')
             preset1.calculate_real_error()
 
         if self.mode  == df.CommandMode.VISUALIZE or self.mode == 'visualize':

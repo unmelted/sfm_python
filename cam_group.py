@@ -189,10 +189,13 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
-    def generate_points(self, mode='colmap') :
+    def generate_points(self, mode='colmap', answer='seed') :
         filename = os.path.join(self.root_path, 'images', 'UserPointData.pts')
         #not calculate_real_error mode 
-        self.answer = import_answer(filename, 2)
+        if answer == 'seed' :
+            self.answer = import_answer(filename, 2)
+        else :
+            self.answer = import_answer(filename, 0)
 
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
