@@ -5,6 +5,7 @@ import logging
 from multiprocessing.dummy import Queue
 from cam_group import *
 import definition as df
+from logger import Logger as l
 from db_manager import DbManager
 from image_proc import *
 
@@ -22,6 +23,7 @@ class Commander(object) :
         self.index = 0
         self.db = DbManager.getInstance()
         self.index = 0
+        l.get().w.info("Commander initialized.")
 
     def Receiver(self, t) :
         while True :
@@ -53,6 +55,7 @@ class Commander(object) :
     def add_task(self, task, obj) :
         self.cmd_que.put((task, obj))
         self.index = DbManager.getInstance().getJobIndex() +1
+        l.get().w.info("alloc job id ", self.index)
         print("alloc job id : ", self.index)
         
         return self.index
