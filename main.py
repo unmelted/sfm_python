@@ -91,8 +91,6 @@ class calib_status(Resource) :
 
 if __name__ == '__main__':    
     pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
-    print("check ..")
     pr.start()
-    print("check2 ..")    
     app.run(debug=False, host='0.0.0.0', port=9000)
 
