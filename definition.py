@@ -50,7 +50,3 @@ def get_err_msg(err_code) :
         msg = 'None'
 
     return msg
-
-def get_progress_msg(progress):
-    msg = "May return proper message"
-    return msg
