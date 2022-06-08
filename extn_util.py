@@ -84,6 +84,8 @@ def export_points_mct(preset) :
     ofile.write(bn_json)
     ofile.close()
 
+def import_camera_list() :
+    pass
 
 def export_points_dm(preset) :
 

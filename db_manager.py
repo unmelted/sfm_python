@@ -1,6 +1,8 @@
 import os
 import sqlite3
 from extn_util import * 
+from logger import Logger as l
+
 
 class DbManager(object) :
     instance = None
@@ -23,7 +25,7 @@ class DbManager(object) :
         self.conn = sqlite3.connect(os.path.join(os.getcwd(), 'db', self.db_name), isolation_level=None, check_same_thread=False)
         self.cursur = self.conn.cursor()        
 
-        create = ["create_command_db", "create_log_db", "create_calib_history"]
+        create = ["create_command_db", "create_calib_history", "create_hw_info"]
         for i in create :
             # print(self.sql_list[i])
             self.cursur.execute(self.sql_list[i])
@@ -40,7 +42,7 @@ class DbManager(object) :
         v = v[:-2] + ')'
 
         q = q + c + v
-        # print("insert query : ", q)
+        l.get().w.info("Inser Query: {} ".format(q))
         self.cursur.execute(q)
         self.conn.commit()
 
@@ -55,18 +57,18 @@ class DbManager(object) :
 
         for ii in range(len(c)) :
             if ii == len(c) - 1:
+                q = q[:-2]
                 q += 'WHERE ' + c[ii] + ' = ' + str(v[ii])
             else :
-                t = c[ii] + ' = \"' + str(v[ii]) + '\"'
+                t = c[ii] + ' = \"' + str(v[ii]) + '\" ,'
                 q += t
 
-        print("update query : ", q)
+        l.get().w.info("Update Query: {} ".format(q))        
         self.cursur.execute(q)
         self.conn.commit()
 
     def getRootPath(self, id) :
-        q = "SELECT root_path FROM command where job_id = " + str(id) + " ORDER BY datetime DESC "
-        print("get rootpath query : " , q)
+        q = self.sql_list['query_root_path'] + str(id) + self.sql_list['query_root_path_ex']
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
                 
@@ -74,8 +76,7 @@ class DbManager(object) :
 
     def getJobIndex(self) :
         index = 0
-        q = "SELECT job_id FROM command ORDER BY job_id DESC"
-        self.cursur.execute(q)
+        self.cursur.execute(self.sql_list['query_job_id'])
         rows = self.cursur.fetchone()
         if len(rows) == 0 :
             return 0
@@ -84,14 +85,14 @@ class DbManager(object) :
         return index 
 
     def getJobStatus(self, id) :
-        q = "SELECT status FROM command where job_id = " + str(id)
-        print("job status query : " , q)
+        q = self.sql_list['query_status'] + str(id)
+        l.get().w.info("Get Status Query: {} ".format(q))
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
         
         if len(rows) > 1 :
             return -201
         else : 
-            print(rows[0][0])
+            print(rows[0][0], rows[0][1])
                 
-        return rows[0][0]
+        return rows[0][0], rows[0][1]

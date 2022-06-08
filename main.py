@@ -26,7 +26,6 @@ class calib_run(Resource) :
         args = parser.parse_args()
         
         print(args['input_dir'])
-        print("calib run .. : " ,Commander.getInstance())
         job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir']))
 
         result = {
@@ -74,15 +73,13 @@ class calib_status(Resource) :
         
         print(args['job_id'])
         print("calib status  .. : " ,Commander.getInstance())        
-        result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id']))
-        if result > 0 : 
-            msg = df.get_progress_msg(result)            
-        else :
-            msg = df.get_err_msg(result)
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id']))
+        msg = df.get_err_msg(result)
 
         result = {
             'job_id': args['job_id'],
-            'progress' : result,
+            'status' : status,
+            'result' : result,
             'message': msg,
         }
 
