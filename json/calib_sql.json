@@ -8,5 +8,5 @@
     "query_root_path" : "SELECT root_path FROM command where job_id = ",
     "query_root_path_ex" : " ORDER BY datetime DESC ",
     "query_job_id" : "SELECT job_id FROM command ORDER BY job_id DESC",
-    "query_status" : "SELECT status, result FROM command where job_id = "
+    "query_status" : "SELECT status, result_id FROM command where job_id = "
 }

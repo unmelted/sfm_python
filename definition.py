@@ -27,6 +27,8 @@ def get_err_msg(err_code) :
     msg = None
     msg_pair = {
          0 : "ERR NONE",
+         100 : "Comepelete",
+         
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
         -21 : "Input value is invalid",
