@@ -5,7 +5,7 @@ from pytransform3d.plot_utils import make_3d_axis
 from pytransform3d.rotations import active_matrix_from_intrinsic_euler_xyz
 from  pytransform3d.camera import make_world_grid, world2image, plot_camera
 from pytransform3d.transformations import transform_from, plot_transform
-from cam_group import *
+from camera_group import *
 
 
 def plot_scene(cameras, sfm) :

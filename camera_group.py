@@ -37,11 +37,64 @@ class Group(object):
         self.colmap = None
         self.ext = None
 
-    def create_group_colmap(self, root_path, mode) :
-        self.root_path = root_path        
+    def create_croup(self, root_path, run_mode):
+        self.root_path = root_path
+        result = 0
+        if run_mode == 'colmap':
+            result = self.create_group_colmap(self)
+        else :
+            result = self.create_group(self)
+
+        return result
+
+    def create_group_colmap(self, root_path) :
+
+        self.colmap = Colmap(self.root_path)
+        result = self.colmap.recon_command(False)
+        if result < 0 :
+            print("recon command error : ", result)
+            return result 
+
+        result = self.colmap.cvt_colmap_model(self.ext)
+
+        return result
+
+    def create_group(self, root_path):
+        """Loops through the images and creates an array of views"""
         self.world.get_world()
         self.adjust = Adjust(self.world)
-        self.colmap = Colmap(self.root_path)
+
+
+        self.ext = check_image_format(self.root_path)        
+        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + self.ext)))
+        if len(image_names) < 1 : 
+            logging.error("can't read images . ")
+            return -1
+
+        self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
+        index = 0
+
+        feature_path = False
+        if os.path.exists(os.path.join(root_path, 'features')):
+            feature_path = True
+
+        for image_name in image_names:
+            tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
+            self.cameras.append(tcam)
+            self.views.append(tcam.view)
+            if self.limit != 0 and index == self.limit :
+                break 
+
+            index += 1            
+
+        self.pairs = Pair.create_pair(self.cameras)
+        self.sfm = SFM(self.views, self.pairs)
+        return 0
+
+    def prepare_camera_list(self):
+
+        self.world.get_world()
+        self.adjust = Adjust(self.world)
 
         self.ext = check_image_format(self.root_path)
         image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
@@ -59,52 +112,7 @@ class Group(object):
                 break 
 
             index += 1            
-
-        if mode == 'visualize' :
-            return 0
-
-        result = self.colmap.recon_command(False)
-        if result < 0 :
-            print("recon command error : ", result)
-            return result 
-
-        result = self.colmap.cvt_colmap_model(self.ext)
-
-        return result
-
-    def create_group(self, root_path):
-        """Loops through the images and creates an array of views"""
-        self.world.get_world()
-        self.adjust = Adjust(self.world)
-
-        feature_path = False
-        self.root_path = root_path
-        if os.path.exists(os.path.join(root_path, 'features')):
-            feature_path = True
-
-        print(root_path)
-        self.ext = check_image_format(self.root_path)        
-        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + self.ext)))
-        if len(image_names) < 1 : 
-            logging.error("can't read images . ")
-            return -1
-
-        print(image_names)
-        self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
-        index = 0
-
-        for image_name in image_names:
-            tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
-            self.cameras.append(tcam)
-            self.views.append(tcam.view)
-            if self.limit != 0 and index == self.limit :
-                break 
-
-            index += 1            
-
-        self.pairs = Pair.create_pair(self.cameras)
-        self.sfm = SFM(self.views, self.pairs)
-        return 0
+        
 
     def write_cameras(self):
         if not os.path.exists(os.path.join(self.root_path, 'cameras')):
