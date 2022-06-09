@@ -1,6 +1,6 @@
 import os
 import time
-from cam_group import *
+from camera_groua import *
 import numpy as np
 import logging
 import argparse

@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import logging
 from multiprocessing.dummy import Queue
-from cam_group import *
+from camera_group import *
 import definition as df
 from logger import Logger as l
 from db_manager import DbManager
@@ -139,10 +139,10 @@ class autocalib(object) :
 
         status_update(self.job_id, 10)
 
-        if self.run_mode == 'colmap' :
-            ret = preset1.create_group_colmap(self.root_dir, self.mode)
-        else:
-            ret = preset1.create_group(self.root_dir)
+        ret = preset1.create_group(self.root_dir, self.run_mode)
+
+        time_e1 = time.time() - time_s 
+        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
 
         if( ret < 0 ):
             return finish(self.job_id, -101)
@@ -152,6 +152,7 @@ class autocalib(object) :
         if self.mode == df.CommandMode.FULL or self.mode == 'full':
             preset1.read_cameras()
             preset1.generate_points()    
+            status_update(self.job_id, 90)            
             preset1.export()
             status_update(self.job_id, 100)
 
@@ -164,7 +165,9 @@ class autocalib(object) :
         if self.mode  == df.CommandMode.VISUALIZE or self.mode == 'visualize':
             preset1.visualize()
 
-        time_e = time.time() - time_s
+        time_eg = time.time() - time_e1
+        l.get().w.critical("Spending time of post matching (sec) : {}".format(time_eg))
+        time_e2 = time.time() - time_s
+        l.get().w.critical("Spending time total (sec) : {}".format(time_e2))
 
-        l.get().w.info("Spending time total (sec) : {}".format(time_e))
         return 0

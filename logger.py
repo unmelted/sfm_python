@@ -32,7 +32,7 @@ class Logger(object) :
 
     def __init__ (self, type, ip='127.0.0.1') :
         self.w = logging.getLogger("autocalib")
-        self.w.setLevel(logging.INFO)
+        self.w.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')            
         log_dir = os.path.join(os.getcwd(), 'log')
         if not os.path.exists(log_dir) :
@@ -48,14 +48,14 @@ class Logger(object) :
 
         if 'console' in type  :
             console = logging.StreamHandler()
-            console.setLevel(logging.DEBUG)
+            console.setLevel(logging.INFO)
             console.setFormatter(formatter)
             self.w.addHandler(console)
 
 
         if 'viewer' in type:            
             socket_handler = SocketHandler(ip, 19996)  # default listening address
-            socket_handler.setLevel(logging.INFO)                        
+            socket_handler.setLevel(logging.DEBUG)                        
             socket_handler.setFormatter(formatter)
             self.w.addHandler(socket_handler)
 
@@ -63,5 +63,5 @@ class Logger(object) :
             # telegram_log_handler = TelegramLoggingHandler(BOT_TOKEN, CHANNEL_NAME)
             telegram_log_handler = TelegramBotHandler(BOT_TOKEN, CHAT_ID)
             formatter = logging.Formatter('%(asctime)s : %(name)s : %(message)s')                        
-            telegram_log_handler.setLevel(logging.ERROR)            
+            telegram_log_handler.setLevel(logging.WARNING)            
             self.w.addHandler(telegram_log_handler)
