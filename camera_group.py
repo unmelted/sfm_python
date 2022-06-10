@@ -56,7 +56,7 @@ class Group(object):
 
         return 0
 
-    def prepare_camera_list(self, list_from, group_id = 0):
+    def prepare_camera_list(self, list_from, group_id = 'Group1'):
         self.world.get_world()
         self.adjust = Adjust(self.world)
 
@@ -68,7 +68,10 @@ class Group(object):
 
         elif list_from == 'pts_file' :
             from_path = os.path.join(self.root_path, 'images')
-            image_names = get_camera_list_by_group(from_path, group_id)
+            result, image_names = get_info(from_path, group_id)
+            l.get().w.debug('Create camera list from pts file result : {} count : {}'.format(result, len(image_names)))
+            if result < 0 :
+                return result
 
         index = 0
         for image_name in image_names:

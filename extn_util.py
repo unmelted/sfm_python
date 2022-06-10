@@ -1,12 +1,13 @@
 import os
 import glob
 import numpy as np
+from mathutil import quaternion_rotation_matrix
 import cv2
 from logger import Logger as l
 import json
-from definition import DEFINITION as df
 
-from mathutil import quaternion_rotation_matrix
+from definition import DEFINITION as df
+from db_manager import *
 
 def export_points(preset, mode):
     if mode == 'dm' :
@@ -84,9 +85,6 @@ def export_points_mct(preset) :
     ofile.write(bn_json)
     ofile.close()
 
-def import_camera_list() :
-    pass
-
 def export_points_dm(preset) :
 
     filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
@@ -95,7 +93,7 @@ def export_points_dm(preset) :
 
     if from_data == None:
         l.get().w.error("Can't open the pts file.") 
-        return
+        return -12
 
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):    
@@ -180,10 +178,10 @@ def import_answer(filepath, limit):
         json_data = json.load(json_file)
 
     if json_data == None:
-        l.get().w..error("Can't open the pts file.") 
+        l.get().w.error("Can't open the pts file.") 
         return
 
-    l.get()w.info("import_answer : " , len(json_data['points']))
+    l.get().w.info("import_answer : " , len(json_data['points']))
     answer = {}
     for i in range(len(json_data['points'])):
         answer_pt = np.empty((0,2))
@@ -288,18 +286,68 @@ def import_json(path) :
     json_data = json.load(json_file)
     return json_data
 
-def import_group_info(group_id):
-    pass 
+
+def make_cam_list_in_group(from_path, group_id):
+    cam_inpts = []
+    filename = os.path.join(from_path, df.pts_file_name)
+    with open(filename, 'r') as json_file :
+        _data = json.load(json_file)
+
+    if _data == None:
+        l.get().w.error("Can't open the pts file (for find camera list in group") 
+        return -12, 0
+
+    count = 0 
+    for i in range(len(_data["points"])) :
+        if _data["points"][i]["Group"] == group_id :
+            cam_inpts.append(_data["points"][i]["dsc_id"])
+            count += 1
+
+    return count, cam_inpts
+
 
 def get_camera_list_by_group(from_path, group_id) :
     image_names = []
 
-    files = sorted(glob.glob(from_path))
-    ptsfiles = import_group_info(group_id)
+    img_files = sorted(glob.glob(from_path))
+    result, cam_inpts = make_cam_list_in_group(from_path, group_id)
+    if result != 0 :
+        return result, None, None
 
-    for img in files :
-        if img in ptsfiles:
-            image_names.append(img)
+    for img_file in img_files :
+        cam_id = img_file[:-4] # extention = jpeg
+        if cam_id in cam_inpts:
+            image_names.append(img_file)
     
+    if len(image_names) == result :
+        l.get().w.info("Image file = dsc_id in pts file")
+    else :
+        l.get().w.error("Image file != dsc_id in pts file")
+        return -13, None
+        
+    return 0, image_names, cam_inpts
 
-    return image_names
+def get_caemra_info(from_path, cam_ids) :
+    filename = os.path.join(from_path, df.pts_file_name)
+    with open(filename, 'r') as json_file :
+        _data = json.load(json_file)
+
+    for cam in cam_ids :
+        for i in range(len(_data["points"])):
+            if cam == _data["points"][i]["dsc_id"] :
+                cam_model = _data["points"][i]["ModelName"]
+                lens_model = _data["points"][i]["LensName"]
+                focal_length = _data["points"][i]["FocalLnegth"] # don't use now
+                DbManager.getInstance().insert('hw_info', type='camera', name=cam_model)
+                DbManager.getInstance().insert('hw_info', type='lense', name=lens_model)
+                break
+
+def get_info(from_path, group_id) :
+
+    result, image_names, cam_ids = get_camera_list_by_group(from_path, group_id)
+    if result != 0 :
+        return result, None
+
+    #result = get_caemra_info(cam_ids)
+
+    return 0, image_names

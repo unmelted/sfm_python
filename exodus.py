@@ -82,11 +82,11 @@ class autocalib(object) :
     def __init__ (self, input_dir, mode, job_id) :
         self.input_dir = input_dir
         self.root_dir = None
-        self.run_mode = 'colmap'
+        self.run_mode = df.run_mode
+        self.list_from = df.run_mode        
         self.mode = mode
         self.job_id = job_id
         #list_from = ['video_folder' , 'image_folder', 'pts_file']
-        self.list_from = 'video_folder'
 
     def run(self) :
         time_s = time.time()                
@@ -176,7 +176,7 @@ class autocalib(object) :
             elif self.list_from == 'pts_file' :
                 result = make_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
 
-            l.get().w.info("Check validty root path: {} ".format(self.root_dir))
+            l.get().w.info("Check validity root path: {} ".format(self.root_dir))
             DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
 
             return result
