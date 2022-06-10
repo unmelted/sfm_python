@@ -30,7 +30,7 @@ def make_snapshot(from_path, to_path) :
             return -103
 
         target = os.path.join(to_path, filename)
-        l.get().w.debug("snapshot save : ", target)
+        l.get().w.debug("snapshot save : {}".format(target))
         cv2.imwrite(target, frame)
         cam.release()
 

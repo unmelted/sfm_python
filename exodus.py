@@ -82,8 +82,8 @@ class autocalib(object) :
     def __init__ (self, input_dir, mode, job_id) :
         self.input_dir = input_dir
         self.root_dir = None
-        self.run_mode = df.run_mode
-        self.list_from = df.run_mode        
+        self.run_mode = df.DEFINITION.run_mode
+        self.list_from = df.DEFINITION.cam_list        
         self.mode = mode
         self.job_id = job_id
         #list_from = ['video_folder' , 'image_folder', 'pts_file']
@@ -97,6 +97,7 @@ class autocalib(object) :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)
 
+        l.get().w.error("list from type : {} ".format(self.list_from))        
         ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from)
 
         if( ret < 0 ):
@@ -105,7 +106,7 @@ class autocalib(object) :
         time_e1 = time.time() - time_s 
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
 
-        ret = preset1.run_sfm(self.run_mode)
+        ret = preset1.run_sfm()
         if( ret < 0 ):
             return finish(self.job_id, -101)
         status_update(self.job_id, 50)

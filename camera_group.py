@@ -13,7 +13,6 @@ from adjust import *
 from world import *
 from extn_util import * 
 from intrn_util import *
-from db_manager import *
 from colmap_proc import *
 from sfm import *
 
@@ -42,8 +41,10 @@ class Group(object):
 
     def create_group(self, root_path, run_mode, list_from='pts_file'):
         self.root_path = root_path
-        self.run_mdoe = run_mode
-        result = self.prepare_camera_list(run_mode, list_from)
+        self.run_mode = run_mode
+
+        l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))        
+        result = self.prepare_camera_list(list_from)
         if result < 0 :
             return result
 
@@ -59,9 +60,12 @@ class Group(object):
     def prepare_camera_list(self, list_from, group_id = 'Group1'):
         self.world.get_world()
         self.adjust = Adjust(self.world)
+        image_names = []
+        l.get().w.error("image folder ext : {} {} ".format(self.ext, list_from))
 
-        if list_from == 'images_folder' : 
+        if list_from == 'image_folder' : 
             self.ext = check_image_format(self.root_path)
+            l.get().w.error("image folder ext : {} ".format(self.ext))
             image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
             if len(image_names) < 2: 
                 return -107
@@ -75,7 +79,7 @@ class Group(object):
 
         index = 0
         for image_name in image_names:
-            tcam = Camera(image_name, self.root_path, self.K, feature_path=self.run_mdoe)
+            tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
             if self.limit != 0 and index == self.limit :
@@ -83,6 +87,7 @@ class Group(object):
 
             index += 1            
 
+        return 0
 
     def write_cameras(self):
         if not os.path.exists(os.path.join(self.root_path, 'cameras')):
@@ -291,4 +296,4 @@ class Group(object):
 
     def export(self) :
         export_points(self, 'dm')
-        save_point_image(self)        
+        save_point_image(self)
