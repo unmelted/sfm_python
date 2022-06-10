@@ -28,5 +28,7 @@ def check_image_format(path) :
             return 'png'
         elif ext == 'tiff' :
             return 'tiff'
+        elif ext == 'jpeg' :
+            return 'jpeg'
 
     return 'png'

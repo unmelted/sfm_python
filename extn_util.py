@@ -7,7 +7,6 @@ from logger import Logger as l
 import json
 
 from definition import DEFINITION as df
-from db_manager import *
 
 def export_points(preset, mode):
     if mode == 'dm' :
@@ -338,8 +337,8 @@ def get_caemra_info(from_path, cam_ids) :
                 cam_model = _data["points"][i]["ModelName"]
                 lens_model = _data["points"][i]["LensName"]
                 focal_length = _data["points"][i]["FocalLnegth"] # don't use now
-                DbManager.getInstance().insert('hw_info', type='camera', name=cam_model)
-                DbManager.getInstance().insert('hw_info', type='lense', name=lens_model)
+                # DbManager.getInstance().insert('hw_info', type='camera', name=cam_model)
+                # DbManager.getInstance().insert('hw_info', type='lense', name=lens_model)
                 break
 
 def get_info(from_path, group_id) :
