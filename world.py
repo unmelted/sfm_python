@@ -9,6 +9,7 @@ class World(object):
         self.stadium = None
         self.event = None
         self.world_points = None
+        self.groups = []
 
     def get_world(self) :
         '''insert world data by connecting db or storage / points insert'''

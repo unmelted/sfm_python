@@ -283,19 +283,6 @@ def save_point_image(preset) :
         print(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 
-
-def check_image_format(path) :
-    flist = glob.glob(os.path.join(path, 'images', '*'))
-    for i in flist :
-        print(i)
-        ext = i[i.rfind('.')+1 :]
-        if ext == 'png' :
-            return 'png'
-        elif ext == 'tiff' :
-            return 'tiff'
-
-    return 'png'
-
 def import_sql_json(path) :
     json_file = open(path, 'r')
     json_data = json.load(json_file)
@@ -307,7 +294,18 @@ def import_colmap_cmd_json(path) :
     return json_data
 
 
-def capture_images_from_videos(path) :
-    count = 0
+def import_group_info(group_id):
+    pass 
+
+def get_camera_list_by_group(from_path, group_id) :
+    image_names = []
+
+    files = sorted(glob.glob(from_path))
+    ptsfiles = import_group_info(group_id)
+
+    for img in files :
+        if img in ptsfiles:
+            image_names.append(img)
     
-    return count
+
+    return image_names

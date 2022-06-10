@@ -85,49 +85,8 @@ class autocalib(object) :
         self.run_mode = 'colmap'
         self.mode = mode
         self.job_id = job_id
-        logging.basicConfig(level=logging.INFO)        
-
-    def checkDataValidity(self) :
-        if self.mode == df.CommandMode.VISUALIZE or  \
-            self.mode == 'visualize' or \
-            self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or \
-            self.mode == 'analysis':
-    
-            self.root_dir = self.input_dir
-
-            if not os.path.exists(self.root_dir) or \
-               not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'sparse')):
-                return finish(self.job_id, -104)
-
-
-        else :
-            if not os.path.exists(self.input_dir):
-                return finish(self.job_id, -105)
-
-
-            video_files = 0
-            video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
-
-            if len(video_files) < 3 :
-                return finish(self.job_id, -102)
-
-
-            now = datetime.now()
-            root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
-            if not os.path.exists(os.path.join(os.getcwd(), root)) :
-                os.makedirs(os.path.join(os.getcwd(), root))
-            self.root_dir = os.path.join(os.getcwd(), root)
-
-            l.get().w.info("Check validty root pat : {} ".format(self.root_dir))
-            DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
-
-            if not os.path.exists(os.path.join(self.root_dir, 'images')) :
-                os.makedirs(os.path.join(self.root_dir, 'images'))
-            result = make_snapshot(self.input_dir, os.path.join(self.root_dir, 'images'))
-            return result
+        #list_from = ['video_folder' , 'image_folder', 'pts_file']
+        self.list_from = 'video_folder'
 
     def run(self) :
         time_s = time.time()                
@@ -136,19 +95,22 @@ class autocalib(object) :
 
         if result != 0 :
             return finish(self.job_id, result)
-
         status_update(self.job_id, 10)
 
-        ret = preset1.create_group(self.root_dir, self.run_mode)
-
-        time_e1 = time.time() - time_s 
-        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
+        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from)
 
         if( ret < 0 ):
             return finish(self.job_id, -101)
+        status_update(self.job_id, 20)
+        time_e1 = time.time() - time_s 
+        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
 
-        status_update(self.job_id, 60)            
-        
+        ret = preset1.run_sfm(self.run_mode)
+        if( ret < 0 ):
+            return finish(self.job_id, -101)
+        status_update(self.job_id, 50)
+
+
         if self.mode == df.CommandMode.FULL or self.mode == 'full':
             preset1.read_cameras()
             preset1.generate_points()    
@@ -171,3 +133,50 @@ class autocalib(object) :
         l.get().w.critical("Spending time total (sec) : {}".format(time_e2))
 
         return 0
+
+
+    def checkDataValidity(self) :
+        if self.mode == df.CommandMode.VISUALIZE or  \
+            self.mode == 'visualize' or \
+            self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or \
+            self.mode == 'analysis':
+    
+            self.root_dir = self.input_dir
+
+            if not os.path.exists(self.root_dir) or \
+               not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
+               not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
+               not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
+               not os.path.exists(os.path.join(self.root_dir, 'sparse')):
+                return finish(self.job_id, -104)
+
+
+        else :
+            if not os.path.exists(self.input_dir):
+                return -105
+
+            now = datetime.now()
+            root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
+            if not os.path.exists(os.path.join(os.getcwd(), root)) :
+                os.makedirs(os.path.join(os.getcwd(), root))
+            self.root_dir = os.path.join(os.getcwd(), root)
+            if not os.path.exists(os.path.join(self.root_dir, 'images')) :
+                os.makedirs(os.path.join(self.root_dir, 'images'))
+
+            if self.list_from == 'video_folder' :
+                video_files = 0
+                video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
+
+                if len(video_files) < 3 :
+                    return -102
+
+                result = make_snapshot(self.input_dir, os.path.join(self.root_dir, 'images'))
+                self.list_from = 'image_folder'                
+
+            elif self.list_from == 'pts_file' :
+                result = make_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+
+            l.get().w.info("Check validty root path: {} ".format(self.root_dir))
+            DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
+
+            return result
