@@ -32,6 +32,8 @@ def get_err_msg(err_code) :
 
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
+        -12 : "Can't open and read pts file",
+        -13 : "Image count is not match with dsc_id in pts",
         -21 : "Input value is invalid",
 
         -101 : "Error on Autocalib Init. (create group)",
@@ -57,6 +59,9 @@ def get_err_msg(err_code) :
 
 
 class DEFINITION(object) :
+    run_mode = 'colmap'
+    cam_list = 'video_folder'
+    
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
     main_db_name = 'autocalib.db'
