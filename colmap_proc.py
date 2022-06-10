@@ -12,6 +12,7 @@ from mathutil import quaternion_rotation_matrix
 from extn_util import * 
 from db_manager import DbManager
 from logger import Logger as l
+from definition import DEFINITION as df
 
 def _monitor_readline(process, q):
     while True:
@@ -71,7 +72,7 @@ class Colmap(object) :
     def __init__ (self, root_path) :
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, 'colmap.db')
-        self.colmap_cmd = import_colmap_cmd_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
+        self.colmap_cmd = import_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 

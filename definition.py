@@ -2,6 +2,7 @@ import os
 from enum import Enum
 import logging
 
+
 class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
@@ -28,7 +29,7 @@ def get_err_msg(err_code) :
     msg_pair = {
          0 : "ERR NONE",
          100 : "Comepelete",
-         
+
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
         -21 : "Input value is invalid",
@@ -37,8 +38,9 @@ def get_err_msg(err_code) :
         -102 : "Video (Camera) file is too small count",
         -103 : "Making Snapshot error",
         -104 : "There is no model info in root_dir",
-        -105 : "Can't access to input dire",
+        -105 : "Can't access to input directory",
         -106 : "There is no pts file",
+        -107 : "Can't read images",
         -140 : "Convert model error ",
         -141 : "Camera info duplicated with image name",
 
@@ -52,3 +54,9 @@ def get_err_msg(err_code) :
         msg = 'None'
 
     return msg
+
+
+class DEFINITION(object) :
+    pts_file_name = 'UserPointData.pts'
+    calib_sql_file = 'calib_sql.json'
+    main_db_name = 'autocalib.db'

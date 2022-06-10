@@ -6,7 +6,7 @@ from view import *
 class Camera(object):
     """ Class for representing pin-hole camera """
 
-    def __init__(self, image_name, root_path, K, feature_path):
+    def __init__(self, image_name, root_path, K, run_mode):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
@@ -17,12 +17,18 @@ class Camera(object):
         self.E = np.zeros((3,3), dtype=np.float64)        
         self.Rvec = np.zeros((3,1), dtype=np.float64)
         self.c = None  # camera center
-        if feature_path == 'colmap' :
+
+        feature_path = None
+        if run_mode == 'colmap' :
             self.K = None
             self.focal = None
+            feature_path = run_mode
         else :
             self.K = K        # intrinsic matrix
-            self.focal = K[0][0]        
+            self.focal = K[0][0]
+            if os.path.exists(os.path.join(root_path, 'features')):
+                os.makedirs(os.path.join(root_path, 'feature'))
+            feature_path = os.path.join(root_path, 'features')
 
         self.view = View(image_name, root_path, feature_path=feature_path)
 

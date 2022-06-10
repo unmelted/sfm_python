@@ -1,4 +1,5 @@
 import os
+import glob
 import time
 from logger import Logger as l
 from db_manager import DbManager
@@ -16,3 +17,16 @@ def finish(job_id, result) :
     l.get().w.warning("JOB_ID: {} Result: {} Message: {}".format(job_id, result, msg))
     DbManager.getInstance().update('command', status=100, result_msg=msg, result_id=result, job_id=job_id)
     return result
+
+
+def check_image_format(path) :
+    flist = glob.glob(os.path.join(path, 'images', '*'))
+    for i in flist :
+        print(i)
+        ext = i[i.rfind('.')+1 :]
+        if ext == 'png' :
+            return 'png'
+        elif ext == 'tiff' :
+            return 'tiff'
+
+    return 'png'

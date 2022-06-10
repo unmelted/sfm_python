@@ -3,9 +3,8 @@ from re import I
 import sys
 import glob
 import numpy as np
-import logging
 
-from sfm import *
+from logger import Logger as l
 from camera import *
 from pair import *
 from view import *
@@ -13,8 +12,11 @@ from visualize import *
 from adjust import *
 from world import *
 from extn_util import * 
+from intrn_util import *
 from db_manager import *
 from colmap_proc import *
+from sfm import *
+
 
 class Group(object):
 
@@ -32,87 +34,52 @@ class Group(object):
         self.limit = 0
 
         self.root_path = None
+        self.run_mode = None
         self.answer = {}
         self.db = None
         self.colmap = None
         self.ext = None
 
-    def create_croup(self, root_path, run_mode):
+    def create_group(self, root_path, run_mode, list_from='pts_file'):
         self.root_path = root_path
-        result = 0
-        if run_mode == 'colmap':
-            result = self.create_group_colmap(self)
-        else :
-            result = self.create_group(self)
-
-        return result
-
-    def create_group_colmap(self, root_path) :
-
-        self.colmap = Colmap(self.root_path)
-        result = self.colmap.recon_command(False)
+        self.run_mdoe = run_mode
+        result = self.prepare_camera_list(run_mode, list_from)
         if result < 0 :
-            print("recon command error : ", result)
-            return result 
+            return result
 
-        result = self.colmap.cvt_colmap_model(self.ext)
+        if self.run_mode == 'colmap':
+            self.colmap = Colmap(self.root_path)            
+        else :
+            self.K = np.loadtxt(os.path.join(self.root_path, 'images', 'K.txt'))
+            self.pairs = Pair.create_pair(self.cameras)
+            self.sfm = SFM(self.views, self.pairs)
 
-        return result
-
-    def create_group(self, root_path):
-        """Loops through the images and creates an array of views"""
-        self.world.get_world()
-        self.adjust = Adjust(self.world)
-
-
-        self.ext = check_image_format(self.root_path)        
-        image_names = sorted(glob.glob(os.path.join(root_path, 'images', '*.' + self.ext)))
-        if len(image_names) < 1 : 
-            logging.error("can't read images . ")
-            return -1
-
-        self.K = np.loadtxt(os.path.join(root_path, 'images', 'K.txt'))
-        index = 0
-
-        feature_path = False
-        if os.path.exists(os.path.join(root_path, 'features')):
-            feature_path = True
-
-        for image_name in image_names:
-            tcam = Camera(image_name, root_path, self.K, 0, feature_path=feature_path)
-            self.cameras.append(tcam)
-            self.views.append(tcam.view)
-            if self.limit != 0 and index == self.limit :
-                break 
-
-            index += 1            
-
-        self.pairs = Pair.create_pair(self.cameras)
-        self.sfm = SFM(self.views, self.pairs)
         return 0
 
-    def prepare_camera_list(self):
-
+    def prepare_camera_list(self, list_from, group_id = 0):
         self.world.get_world()
         self.adjust = Adjust(self.world)
 
-        self.ext = check_image_format(self.root_path)
-        image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
-        if len(image_names) < 1 : 
-            logging.error("can't read images . ")
-            return -1
+        if list_from == 'images_folder' : 
+            self.ext = check_image_format(self.root_path)
+            image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
+            if len(image_names) < 2: 
+                return -107
+
+        elif list_from == 'pts_file' :
+            from_path = os.path.join(self.root_path, 'images')
+            image_names = get_camera_list_by_group(from_path, group_id)
 
         index = 0
-
         for image_name in image_names:
-            tcam = Camera(image_name, self.root_path, self.K, feature_path='colmap')
+            tcam = Camera(image_name, self.root_path, self.K, feature_path=self.run_mdoe)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
             if self.limit != 0 and index == self.limit :
                 break 
 
             index += 1            
-        
+
 
     def write_cameras(self):
         if not os.path.exists(os.path.join(self.root_path, 'cameras')):
@@ -162,44 +129,52 @@ class Group(object):
                     break
     
     def run_sfm(self) :
-        baseline = True
-        j  = 0          
+        if self.run_mode == 'colmap' :
+            result = self.colmap.recon_command(False)
+            if result < 0 :
+                print("recon command error : ", result)
+                return result 
 
-        for pair in self.pairs :
-            pair_obj = self.pairs[pair]
-            print("pair_obj ------ " , pair)
+            result = self.colmap.cvt_colmap_model(self.ext)
+            return result
 
-            if baseline == True:
-                self.sfm.compute_pose(pair_obj, baseline)
-                # homo_points = pair_obj.find_homography_from_points()
-                # homo_pose = pair_obj.find_homography_from_disp()
-                baseline = False
-                logging.info("Mean reprojection error for 1 image is %f", self.sfm.errors[0])
-                logging.info("Mean reprojection error for 2 images is %f", self.sfm.errors[1])
-                j = 2
+        elif self.run_mode == 'off' : 
+            baseline = True
+            j  = 0          
 
-            else :
-                self.sfm.compute_pose(pair_obj, baseline)
-                logging.info("Mean reprojection error for images is %f ", self.sfm.errors[j])
-                j += 1
+            for pair in self.pairs :
+                pair_obj = self.pairs[pair]
 
-            self.sfm.save_3d_points()
+                if baseline == True:
+                    self.sfm.compute_pose(pair_obj, baseline)
+                    baseline = False
+                    l.get().w.debug("Mean reprojection error for 1 image is {}".format(self.sfm.errors[0]))
+                    l.get().w.debug("Mean reprojection error for 2 images is {}".format(self.sfm.errors[1]))
+                    j = 2
 
-            if self.limit != 0 and j-1 == self.limit :
-                break
+                else :
+                    self.sfm.compute_pose(pair_obj, baseline)
+                    l.get().w.debug("Mean reprojection error for images is {}".format(self.sfm.errors[j]))
+                    j += 1
 
-        self.write_cameras()
+                self.sfm.save_3d_points()
+
+                if self.limit != 0 and j-1 == self.limit :
+                    break
+
+            self.write_cameras()
+            return 0
 
     def check_pair(self) :
         for i, pair in enumerate(self.pairs):
             pair_obj = self.pairs[pair]
-            print("Pair name ", pair_obj.image_name1, pair_obj.image_name2)
+            l.get().w.debug("Pair name {} {}".format(pair_obj.image_name1, pair_obj.image_name2))
             pair_obj.check_points_3d()
             break
 
     def generate_points(self, mode='colmap', answer='seed') :
         filename = os.path.join(self.root_path, 'images', 'UserPointData.pts')
-        #not calculate_real_error mode 
+
         if answer == 'seed' :
             self.answer = import_answer(filename, 2)
         else :
@@ -213,7 +188,7 @@ class Group(object):
                         viewname = self.cameras[i].view.name[:-8]
                     
                     pts = self.answer[viewname]
-                    print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
+                    l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
                 
                 if i > 1 : 
@@ -240,7 +215,7 @@ class Group(object):
                         viewname = self.cameras[i].view.name[:-8]
 
                     pts = self.answer[viewname]
-                    print(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
+                    l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts
                 
                 if i > 1 : 
@@ -278,7 +253,7 @@ class Group(object):
             if self.ext == 'tiff':
                 viewname = self.cameras[i].view.name[:-8]
 
-            print("name : ", self.cameras[i].view.name, viewname)            
+            l.get().w.debug("name : ", self.cameras[i].view.name, viewname)            
             gt = self.answer[viewname]
 
             for j in range(self.cameras[i].pts.shape[0]) :
@@ -287,7 +262,7 @@ class Group(object):
                 gt_pt = gt[j, :]
                 terr = np.linalg.norm(pt_2d - gt_pt)
                 # print("3d {} pts {} : answer {} : err {} ".format(pt_3d, pt_2d, gt_pt, terr))
-                print("pts {} : answer {} : err {} ".format(pt_2d, gt_pt, terr))
+                l.get().w.debug("pts {} : answer {} : err {} ".format(pt_2d, gt_pt, terr))
                 if terr > max : 
                     max = terr
 
@@ -297,12 +272,12 @@ class Group(object):
                 s_error += terr
                 t_error += terr
 
-            print('scene err : ', s_error)
+            l.get().w.debug('scene err : ', s_error)
             if self.limit != 0 and i == self.limit :
                 break
 
         ave = t_error / len(self.cameras)
-        print("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
+        l.get().w.debug("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
     def visualize(self, mode='colmap') :
         if mode == 'colmap' :

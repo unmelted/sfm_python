@@ -1,11 +1,12 @@
 import os
 import time
-from camera_groua import *
+from camera_group import *
 import numpy as np
 import logging
 import argparse
 import visualize
 from extn_util import * 
+from logger import Logger as l
 
 def run(args):
 
@@ -15,18 +16,15 @@ def run(args):
     preset1 = Group()
 
     run_mode = 'colmap'
-    if run_mode == 'colmap' :        
-        ret = preset1.create_group_colmap(args.root_dir, args.mode)
-    else:
-        ret = preset1.create_group(args.root_dir)
+    ret = preset1.create_group(args.root_dir, run_mode, list_from='image_folder')
 
     if( ret < 0 ):
-        logging.error("terminated. ")
+        l.get().w.error("terminated. ")
         return 0
 
     '''
     if args.mode == 'sfm' : 
-        preset1.run_sfm()
+        preset1.run_sfm('off')
         preset1.generate_points(args.mode)    
         preset1.calculate_real_error()
         preset1.export()
@@ -49,14 +47,15 @@ def run(args):
         preset1.calculate_real_error()
     '''
     if args.mode == 'full' or args.mode == 'visualize' :
-        preset1.read_cameras()
+        preset1.run_sfm('off')        
+        # preset1.read_cameras()
         preset1.generate_points()    
         # preset1.calculate_real_error()
         preset1.export()
-        preset1.visualize()
+        preset1.visualize('off')
 
     time_e = time.time() - time_s
-    print("Spending time total (sec) :", time_e)
+    l.get().w.info("Exodus Offline Spending time total (sec) :", time_e)
 
 def set_args(parser):
 
