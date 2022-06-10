@@ -2,7 +2,7 @@ import os
 import sqlite3
 from extn_util import * 
 from logger import Logger as l
-
+from definition import DEFINITION as df
 
 class DbManager(object) :
     instance = None
@@ -17,8 +17,8 @@ class DbManager(object) :
         self.cmd_db = 'command'
         self.log_db = 'log'
         self.calib_history_db = 'calib_history'
-        self.sql_list = import_sql_json(os.path.join(os.getcwd(), 'json', 'calib_sql.json'))
-        self.db_name = 'autoclalib.db'
+        self.sql_list = import_json(os.path.join(os.getcwd(), 'json', df.calib_sql_file))
+        self.db_name = df.main_db_name
         if not os.path.exists(os.path.join(os.getcwd(), 'db')):
             os.makedirs(os.path.join(os.getcwd(), 'db')) 
 

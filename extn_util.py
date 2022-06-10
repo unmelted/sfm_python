@@ -2,11 +2,11 @@ import os
 import glob
 import numpy as np
 import cv2
-import logging
+from logger import Logger as l
 import json
+from definition import DEFINITION as df
 
 from mathutil import quaternion_rotation_matrix
-
 
 def export_points(preset, mode):
     if mode == 'dm' :
@@ -21,7 +21,7 @@ def export_points_mct(preset) :
         from_data = json.load(json_file)
 
     if from_data == None:
-        logging.info("Can't open the pts file.") 
+        l.get().w.info("Can't open the pts file.") 
         return
     point_json = {}
     point_json["stadium"] = "BasketballGround"
@@ -30,7 +30,7 @@ def export_points_mct(preset) :
 
     # for i in range(len(preset.cameras)) :
     for i in range(2) :
-        print("name : ", preset.cameras[i].view.name)
+        l.get().w.debug("name : ", preset.cameras[i].view.name)
         _json = {}
         _json['dsc_id'] = preset.cameras[i].view.name[:-4]
 
@@ -89,12 +89,12 @@ def import_camera_list() :
 
 def export_points_dm(preset) :
 
-    filename = os.path.join(preset.root_path, 'images', 'UserPointData.pts')
+    filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
         from_data = json.load(json_file)
 
     if from_data == None:
-        logging.info("Can't open the pts file.") 
+        l.get().w.error("Can't open the pts file.") 
         return
 
     output_path = os.path.join(preset.root_path, 'output')
@@ -108,7 +108,7 @@ def export_points_dm(preset) :
     json_data['points'] = []
 
     for i in range(len(preset.cameras)) :
-        print("name : ", preset.cameras[i].view.name)
+        l.get().w.info("name : ", preset.cameras[i].view.name)
 
         point_json = {}
         point_json['dsc_id'] = preset.cameras[i].view.name
@@ -180,10 +180,10 @@ def import_answer(filepath, limit):
         json_data = json.load(json_file)
 
     if json_data == None:
-        logging.info("Can't open the pts file.") 
+        l.get().w..error("Can't open the pts file.") 
         return
 
-    print("import_answer : " , len(json_data['points']))
+    l.get()w.info("import_answer : " , len(json_data['points']))
     answer = {}
     for i in range(len(json_data['points'])):
         answer_pt = np.empty((0,2))
@@ -228,7 +228,7 @@ def import_answer(filepath, limit):
 
 def import_camera_pose(preset) :
     filename = os.path.join(preset.root_path, 'cameras', 'pose_colmap.json')    
-    print("import_camera pose " , filename)
+    l.get().w.info("import_camera pose " , filename)
 
     with open(filename, 'r') as json_file :
         json_data = json.load(json_file)
@@ -237,7 +237,7 @@ def import_camera_pose(preset) :
     for i in range(11) :
         poseR = np.empty((0))
         poseT = np.empty((0))
-        print("import camera i : ", i)
+        l.get().w.debug("import camera i : ", i)
 
         for r in json_data["pose"][i]["R"] :
             poseR = np.append(poseR, np.array(r).reshape((1)), axis = 0)
@@ -248,8 +248,8 @@ def import_camera_pose(preset) :
         # poseR = poseR.reshape((3,3))
         poseR = quaternion_rotation_matrix(poseR)
         poseT = poseT.reshape((3,1))        
-        print(poseR)
-        print(poseT)
+        l.get().w.debug(poseR)
+        l.get().w.debug(poseT)
         cam = preset.cameras[i]
         cam.R = poseR
         cam.t = poseT
@@ -280,19 +280,13 @@ def save_point_image(preset) :
             if j == (preset.cameras[i].pts.shape[0] - 1):
                 cv2.line(preset.cameras[i].view.image, pt_int[j], pt_int[0], (255,255,0), 3)
 
-        print(file_name)
+        l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 
-def import_sql_json(path) :
+def import_json(path) :
     json_file = open(path, 'r')
     json_data = json.load(json_file)
     return json_data
-
-def import_colmap_cmd_json(path) :
-    json_file = open(path, 'r')
-    json_data = json.load(json_file)
-    return json_data
-
 
 def import_group_info(group_id):
     pass 

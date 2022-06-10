@@ -2,6 +2,7 @@ import os
 from enum import Enum
 import logging
 
+
 class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
@@ -53,3 +54,9 @@ def get_err_msg(err_code) :
         msg = 'None'
 
     return msg
+
+
+class DEFINITION(object) :
+    pts_file_name = 'UserPointData.pts'
+    calib_sql_file = 'calib_sql.json'
+    main_db_name = 'autocalib.db'
