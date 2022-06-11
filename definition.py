@@ -60,8 +60,12 @@ def get_err_msg(err_code) :
 
 class DEFINITION(object) :
     run_mode = 'colmap'
-    cam_list = 'video_folder'
+    #list_from = ['video_folder' , 'image_folder', 'pts_file']    
+    cam_list = 'pts_filer'
     
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
     main_db_name = 'autocalib.db'
+
+    BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
+    CHAT_ID = '1140943041'

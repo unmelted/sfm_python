@@ -86,7 +86,6 @@ class autocalib(object) :
         self.list_from = df.DEFINITION.cam_list        
         self.mode = mode
         self.job_id = job_id
-        #list_from = ['video_folder' , 'image_folder', 'pts_file']
 
     def run(self) :
         time_s = time.time()                
@@ -105,6 +104,7 @@ class autocalib(object) :
         status_update(self.job_id, 20)
         time_e1 = time.time() - time_s 
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
+        return 0
 
         ret = preset1.run_sfm()
         if( ret < 0 ):
