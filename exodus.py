@@ -64,7 +64,6 @@ class Commander(object) :
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
-            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj, mode='full')
             l.get().w.info("Task Proc start : {} ".format(self.index))
             ac = autocalib(obj, 'full', self.index)
             ac.run()
@@ -86,9 +85,9 @@ class autocalib(object) :
         self.list_from = df.DEFINITION.cam_list        
         self.mode = mode
         self.job_id = job_id
-        #list_from = ['video_folder' , 'image_folder', 'pts_file']
 
     def run(self) :
+        DbManager.getInstance().insert('command', job_id=self.job_id, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
@@ -116,7 +115,7 @@ class autocalib(object) :
             preset1.read_cameras()
             preset1.generate_points()    
             status_update(self.job_id, 90)            
-            preset1.export()
+            preset1.export(self.input_dir, self.job_id)
             status_update(self.job_id, 100)
 
 
@@ -156,6 +155,7 @@ class autocalib(object) :
             if not os.path.exists(self.input_dir):
                 return -105
 
+            result = 0
             now = datetime.now()
             root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
             if not os.path.exists(os.path.join(os.getcwd(), root)) :

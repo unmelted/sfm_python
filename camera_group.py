@@ -61,7 +61,6 @@ class Group(object):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         image_names = []
-        l.get().w.error("image folder ext : {} {} ".format(self.ext, list_from))
 
         if list_from == 'image_folder' : 
             self.ext = check_image_format(self.root_path)
@@ -72,7 +71,8 @@ class Group(object):
 
         elif list_from == 'pts_file' :
             from_path = os.path.join(self.root_path, 'images')
-            result, image_names = get_info(from_path, group_id)
+            self.ext = check_image_format(from_path)            
+            result, image_names = get_info(from_path, group_id, self.ext)
             l.get().w.debug('Create camera list from pts file result : {} count : {}'.format(result, len(image_names)))
             if result < 0 :
                 return result
@@ -294,6 +294,6 @@ class Group(object):
             plot_scene(self.cameras, self.sfm, mode)
 
 
-    def export(self) :
-        export_points(self, 'dm')
+    def export(self, output_path, job_id) :
+        export_points(self, df.DEFINITION.export_point_type, output_path, job_id)
         save_point_image(self)

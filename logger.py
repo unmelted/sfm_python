@@ -4,9 +4,7 @@ from datetime import datetime
 from logging.handlers import SocketHandler
 import telebot
 from logging import Handler, LogRecord
-
-BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
-CHAT_ID = '1140943041'
+import definition as df
 
 class TelegramBotHandler(Handler):
     def __init__(self, token: str, chat_id: str):
@@ -61,7 +59,7 @@ class Logger(object) :
 
         if 'bot' in type:
             # telegram_log_handler = TelegramLoggingHandler(BOT_TOKEN, CHANNEL_NAME)
-            telegram_log_handler = TelegramBotHandler(BOT_TOKEN, CHAT_ID)
-            formatter = logging.Formatter('%(asctime)s : %(name)s : %(message)s')                        
-            telegram_log_handler.setLevel(logging.WARNING)            
+            telegram_log_handler = TelegramBotHandler(df.DEFINITION.BOT_TOKEN, df.DEFINITION.CHAT_ID)
+            formatter = logging.Formatter('%(asctime)s : %(name)s : %(message)s')            
+            telegram_log_handler.setLevel(logging.WARNING)
             self.w.addHandler(telegram_log_handler)
