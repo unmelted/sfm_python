@@ -5,13 +5,12 @@ from mathutil import quaternion_rotation_matrix
 import cv2
 from logger import Logger as l
 import json
-
 from definition import DEFINITION as df
 
-def export_points(preset, mode):
-    if mode == 'dm' :
-        export_points_dm(preset)
-    elif mode == 'mct' :
+def export_points(preset, output_type, output_path):
+    if output_type == 'dm' :
+        export_points_dm(preset, output_path)
+    elif output_type == 'mct' :
         export_points_mct(preset)
 
 def export_points_mct(preset) :
@@ -84,7 +83,7 @@ def export_points_mct(preset) :
     ofile.write(bn_json)
     ofile.close()
 
-def export_points_dm(preset) :
+def export_points_dm(preset, output_path, job_id) :
 
     filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
@@ -94,36 +93,37 @@ def export_points_dm(preset) :
         l.get().w.error("Can't open the pts file.") 
         return -12
 
-    output_path = os.path.join(preset.root_path, 'output')
-    if not os.path.exists(output_path):    
-        os.makedirs(output_path)
+    for j in range(len(from_data['points'])) :
+        l.get().w.debug('pts dsc_id : '.format(from_data['points'][j]['dsc_id']))
+        for i in range(len(preset.cameras)) :
+            if from_data['points'][j]['dsc_id'] == preset.cameras[i].view.name:
+                l.get().w.info('camera view name : '.format(preset.cameras[i].view.name))
+                from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
+                from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
+                from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
+                from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
+                from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
+                from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
+                from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
+                from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
 
-    json_data = {}
-    json_data["RecordName"] = from_data["RecordName"]
-    json_data["PreSetNumber"] = from_data["PreSetNumber"]    
-    json_data["worlds"] = from_data["worlds"]        
-    json_data['points'] = []
+                from_data['points'][j]['pts_3d']['Point1']['X'] = preset.cameras[i].pts[0][0]
+                from_data['points'][j]['pts_3d']['Point1']['Y'] = preset.cameras[i].pts[0][1]
+                from_data['points'][j]['pts_3d']['Point2'] = {"IsEmpty":None,"X":0,"Y":0}
+                from_data['points'][j]['pts_3d']['Point2']['IsEmpty'] = False
+                from_data['points'][j]['pts_3d']['Point2']['X'] = preset.cameras[i].pts[1][0]
+                from_data['points'][j]['pts_3d']['Point2']['Y'] = preset.cameras[i].pts[1][1]
+                from_data['points'][j]['pts_3d']['Point3'] = {"IsEmpty":None,"X":0,"Y":0}
+                from_data['points'][j]['pts_3d']['Point3']['IsEmpty'] = False
+                from_data['points'][j]['pts_3d']['Point3']['X'] = preset.cameras[i].pts[2][0]
+                from_data['points'][j]['pts_3d']['Point3']['Y'] = preset.cameras[i].pts[2][1]
+                from_data['points'][j]['pts_3d']['Point4'] = {"IsEmpty":None,"X":0,"Y":0}
+                from_data['points'][j]['pts_3d']['Point4']['IsEmpty'] = False
+                from_data['points'][j]['pts_3d']['Point4']['X'] = preset.cameras[i].pts[3][0]
+                from_data['points'][j]['pts_3d']['Point4']['Y'] = preset.cameras[i].pts[3][1]                                
+                break;
 
-    for i in range(len(preset.cameras)) :
-        l.get().w.info("name : ", preset.cameras[i].view.name)
-
-        point_json = {}
-        point_json['dsc_id'] = preset.cameras[i].view.name
-        point_json['point_index'] = 1
-        point_json['framenum'] = 181
-        point_json['camfps'] = 30
-        point_json['flip'] = 0
-        point_json['Group'] = "Group1"
-        point_json['Width'] = preset.cameras[i].view.image_width
-        point_json['Height'] = preset.cameras[i].view.image_height
-        point_json['infection_point'] = 0
-        point_json['swipe_base_length'] = -1.0
-        point_json['ManualOffesetY'] = 0
-        point_json['FocalLength'] = preset.cameras[i].focal
-
-        point_json['pts_2d'] = {}
-        point_json['pts_3d'] = {}
-
+        '''
         point_json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
         point_json['pts_2d']['Upper']['IsEmpty'] = False
         point_json['pts_2d']['Upper']['X'] = -1.0
@@ -164,9 +164,13 @@ def export_points_dm(preset) :
 
         if preset.limit != 0 and i == preset.limit :
             break                
+        '''
+
+    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind('.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.')+1:]
+    l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
     bn_json = json.dumps(json_data,indent=4)
-    output = os.path.join(preset.root_path, 'output', 'AutoCalib.pts')    
+    output = os.path.join(output_path, outfile)    
     ofile = open(output, 'w')
     ofile.write(bn_json)
     ofile.close()

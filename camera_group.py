@@ -294,6 +294,6 @@ class Group(object):
             plot_scene(self.cameras, self.sfm, mode)
 
 
-    def export(self) :
-        export_points(self, 'dm')
+    def export(self, output_path, job_id) :
+        export_points(self, df.DEFINITION.export_point_type, output_path, job_id)
         save_point_image(self)

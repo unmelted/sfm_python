@@ -115,7 +115,7 @@ class autocalib(object) :
             preset1.read_cameras()
             preset1.generate_points()    
             status_update(self.job_id, 90)            
-            preset1.export()
+            preset1.export(self.input_dir, self.job_id)
             status_update(self.job_id, 100)
 
 
