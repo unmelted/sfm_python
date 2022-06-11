@@ -104,7 +104,6 @@ class autocalib(object) :
         status_update(self.job_id, 20)
         time_e1 = time.time() - time_s 
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
-        return 0
 
         ret = preset1.run_sfm()
         if( ret < 0 ):
@@ -156,6 +155,7 @@ class autocalib(object) :
             if not os.path.exists(self.input_dir):
                 return -105
 
+            result = 0
             now = datetime.now()
             root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
             if not os.path.exists(os.path.join(os.getcwd(), root)) :

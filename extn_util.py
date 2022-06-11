@@ -286,7 +286,7 @@ def import_json(path) :
     return json_data
 
 
-def make_cam_list_in_group(from_path, group_id):
+def make_cam_list_in_pts(from_path, group_id):
     cam_inpts = []
     filename = os.path.join(from_path, df.pts_file_name)
     with open(filename, 'r') as json_file :
@@ -302,27 +302,32 @@ def make_cam_list_in_group(from_path, group_id):
             cam_inpts.append(_data["points"][i]["dsc_id"])
             count += 1
 
+    print(cam_inpts)
     return count, cam_inpts
 
 
-def get_camera_list_by_group(from_path, group_id) :
+def get_camera_list_in_both(from_path, group_id, ext) :
     image_names = []
-
-    img_files = sorted(glob.glob(from_path))
-    result, cam_inpts = make_cam_list_in_group(from_path, group_id)
-    if result != 0 :
+    print(ext)
+    img_files = sorted(glob.glob(os.path.join(from_path, '*.' + ext)))
+    result, cam_inpts = make_cam_list_in_pts(from_path, group_id)
+    if result < 0 :
         return result, None, None
-
+    print(img_files)
     for img_file in img_files :
-        cam_id = img_file[:-4] # extention = jpeg
+        cam_id = img_file[img_file.rfind('/')+1:-1*len(ext) -1]
+        if cam_id.rfind('_') == 0:
+            pass
+        else :
+            cam_id = cam_id[:cam_id.rfind('_')]
+        print(cam_id)
         if cam_id in cam_inpts:
             image_names.append(img_file)
     
     if len(image_names) == result :
-        l.get().w.info("Image file = dsc_id in pts file")
+        l.get().w.info("Image file = dsc_id in pts file same count")
     else :
-        l.get().w.error("Image file != dsc_id in pts file")
-        return -13, None
+        l.get().w.info("Image file != dsc_id in pts file cam count is different")
         
     return 0, image_names, cam_inpts
 
@@ -341,9 +346,9 @@ def get_caemra_info(from_path, cam_ids) :
                 # DbManager.getInstance().insert('hw_info', type='lense', name=lens_model)
                 break
 
-def get_info(from_path, group_id) :
+def get_info(from_path, group_id, ext) :
 
-    result, image_names, cam_ids = get_camera_list_by_group(from_path, group_id)
+    result, image_names, cam_ids = get_camera_list_in_both(from_path, group_id,ext)
     if result != 0 :
         return result, None
 

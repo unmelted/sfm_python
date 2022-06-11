@@ -61,7 +61,7 @@ def get_err_msg(err_code) :
 class DEFINITION(object) :
     run_mode = 'colmap'
     #list_from = ['video_folder' , 'image_folder', 'pts_file']    
-    cam_list = 'pts_filer'
+    cam_list = 'pts_file'
     
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
