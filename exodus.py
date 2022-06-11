@@ -64,7 +64,6 @@ class Commander(object) :
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
-            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj, mode='full')
             l.get().w.info("Task Proc start : {} ".format(self.index))
             ac = autocalib(obj, 'full', self.index)
             ac.run()
@@ -88,6 +87,7 @@ class autocalib(object) :
         self.job_id = job_id
 
     def run(self) :
+        DbManager.getInstance().insert('command', job_id=self.job_id, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
