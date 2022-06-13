@@ -78,7 +78,9 @@ class DbManager(object) :
         index = 0
         self.cursur.execute(self.sql_list['query_job_id'])
         rows = self.cursur.fetchone()
-        if len(rows) == 0 or rows == None:
+        if rows == None:
+            return 0
+        if len(rows) == 0 :
             return 0
             
         index = rows[0]
