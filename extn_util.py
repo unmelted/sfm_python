@@ -166,10 +166,10 @@ def export_points_dm(preset, output_path, job_id) :
             break                
         '''
 
-    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind('.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.')+1:]
+    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind('.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
-    bn_json = json.dumps(json_data,indent=4)
+    bn_json = json.dumps(from_data,indent=4)
     output = os.path.join(output_path, outfile)    
     ofile = open(output, 'w')
     ofile.write(bn_json)
