@@ -40,19 +40,19 @@ class Commander(object) :
     def send_query(self, query, obj) :
         result = 0 
         status = 0
-        if query == df.TaskCategory.AUTOCALIB_STATUS :
-            if obj == None :
-                return finish(obj, -21)
+        if obj == None :
+            return finish(obj, -21)                
 
+        if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj)
 
         elif query == df.TaskCategory.VISUALIZE :
-            if obj == None :
-                return finish(obj, -21)                
-
             status = 100
             result = visualize_mode(obj)
 
+        elif query == df.TaskCategory.ANALYSIS :
+
+            pass
         return status, result
 
     def add_task(self, task, obj) :
@@ -123,9 +123,6 @@ class autocalib(object) :
             preset1.read_cameras()
             preset1.generate_points('colmap', 'analysis')
             preset1.calculate_real_error()
-
-        if self.mode  == df.CommandMode.VISUALIZE or self.mode == 'visualize':
-            preset1.visualize()
 
         time_eg = time.time() - time_e1
         l.get().w.critical("Spending time of post matching (sec) : {}".format(time_eg))

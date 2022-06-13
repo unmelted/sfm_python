@@ -8,6 +8,7 @@ class TaskCategory(Enum):
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
     VISUALIZE               = 300
+    ANALYSIS                = 400
     FINISH                  = 1
 
 class CommandMode(Enum):

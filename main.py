@@ -39,27 +39,6 @@ class calib_run(Resource) :
 jobid = api.model('jobid' , {
     'job_id' : fields.Integer,
 })
-@api.route('/exodus/autocalib/visualize')
-@api.doc()
-class calib_visualize(Resource) : 
-    @api.expect(jobid)
-    def post(self, jid=jobid):
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('job_id', type=int)
-        args = parser.parse_args()
-        
-        print(args['job_id'])
-        result = Commander.getInstance().send_query(df.TaskCategory.VISUALIZE, (args['job_id']))
-        msg = df.get_err_msg(result)
-
-        result = {
-            'job_id': args['job_id'],
-            'progress' : result,
-            'message': msg,
-        }
-
-        return result
 
 @api.route('/exodus/autocalib/status')
 @api.doc()
@@ -86,6 +65,38 @@ class calib_status(Resource) :
         return result
 
 
+analysis = api.model('jobid' , {
+    'job_id' : fields.Integer,
+    'mode' : fields.String,
+})
+
+@api.route('/exodus/autocalib/analysis')
+@api.doc()
+class calib_analysis(Resource) : 
+    @api.expect(analysis)
+    def post(self, an=analysis):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('job_id', type=int)
+        args = parser.parse_args()
+        
+        print(args['job_id'])
+        print(args['mode'])
+        result = 0 
+        if args['job_id'] == df.TaskCategory.VISUALIZE.name :
+            result = Commander.getInstance().send_query(df.TaskCategory.VISUALIZE, (args['job_id']))
+
+        elif args['job_id'] == df.TaskCategory.ANALYSIS.name :
+            result = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS, (args['job_id']))
+            
+        msg = df.get_err_msg(result)
+        result = {
+            'job_id': args['job_id'],
+            'progress' : result,
+            'message': msg,
+        }
+
+        return result
 if __name__ == '__main__':    
     pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
     pr.start()
