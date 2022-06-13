@@ -5,6 +5,7 @@ import glob
 import numpy as np
 
 from logger import Logger as l
+from definition import DEFINITION as df
 from camera import *
 from pair import *
 from view import *
@@ -295,5 +296,5 @@ class Group(object):
 
 
     def export(self, output_path, job_id) :
-        export_points(self, df.DEFINITION.export_point_type, output_path, job_id)
+        export_points(self, df.export_point_type, output_path, job_id)
         save_point_image(self)

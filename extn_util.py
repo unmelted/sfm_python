@@ -7,9 +7,9 @@ from logger import Logger as l
 import json
 from definition import DEFINITION as df
 
-def export_points(preset, output_type, output_path):
+def export_points(preset, output_type, output_path, job_id):
     if output_type == 'dm' :
-        export_points_dm(preset, output_path)
+        export_points_dm(preset, output_path, job_id)
     elif output_type == 'mct' :
         export_points_mct(preset)
 
@@ -166,10 +166,10 @@ def export_points_dm(preset, output_path, job_id) :
             break                
         '''
 
-    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind('.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.')+1:]
+    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind('.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
-    bn_json = json.dumps(json_data,indent=4)
+    bn_json = json.dumps(from_data,indent=4)
     output = os.path.join(output_path, outfile)    
     ofile = open(output, 'w')
     ofile.write(bn_json)
@@ -184,7 +184,7 @@ def import_answer(filepath, limit):
         l.get().w.error("Can't open the pts file.") 
         return
 
-    l.get().w.info("import_answer : " , len(json_data['points']))
+    l.get().w.info("import_answer : ".format(len(json_data['points'])))
     answer = {}
     for i in range(len(json_data['points'])):
         answer_pt = np.empty((0,2))
