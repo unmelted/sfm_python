@@ -33,5 +33,6 @@ pytransform3d==1.12.1
 pytz==2021.3
 scipy==1.8.0
 vtk==9.0.1
-Werkzeug==2.1.2
+Werkze$ug==2.1.2
 pyTelegramBotAPI
+cutelog
