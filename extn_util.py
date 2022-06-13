@@ -7,9 +7,9 @@ from logger import Logger as l
 import json
 from definition import DEFINITION as df
 
-def export_points(preset, output_type, output_path):
+def export_points(preset, output_type, output_path, job_id):
     if output_type == 'dm' :
-        export_points_dm(preset, output_path)
+        export_points_dm(preset, output_path, job_id)
     elif output_type == 'mct' :
         export_points_mct(preset)
 
