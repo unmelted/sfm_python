@@ -64,7 +64,6 @@ class Commander(object) :
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
-            DbManager.getInstance().insert('command', job_id=self.index, task=task.name, input_path=obj, mode='full')
             l.get().w.info("Task Proc start : {} ".format(self.index))
             ac = autocalib(obj, 'full', self.index)
             ac.run()
@@ -82,13 +81,13 @@ class autocalib(object) :
     def __init__ (self, input_dir, mode, job_id) :
         self.input_dir = input_dir
         self.root_dir = None
-        self.run_mode = df.run_mode
-        self.list_from = df.run_mode        
+        self.run_mode = df.DEFINITION.run_mode
+        self.list_from = df.DEFINITION.cam_list        
         self.mode = mode
         self.job_id = job_id
-        #list_from = ['video_folder' , 'image_folder', 'pts_file']
 
     def run(self) :
+        DbManager.getInstance().insert('command', job_id=self.job_id, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
@@ -97,6 +96,7 @@ class autocalib(object) :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)
 
+        l.get().w.error("list from type : {} ".format(self.list_from))        
         ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from)
 
         if( ret < 0 ):
@@ -105,7 +105,7 @@ class autocalib(object) :
         time_e1 = time.time() - time_s 
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
 
-        ret = preset1.run_sfm(self.run_mode)
+        ret = preset1.run_sfm()
         if( ret < 0 ):
             return finish(self.job_id, -101)
         status_update(self.job_id, 50)
@@ -115,7 +115,7 @@ class autocalib(object) :
             preset1.read_cameras()
             preset1.generate_points()    
             status_update(self.job_id, 90)            
-            preset1.export()
+            preset1.export(self.input_dir, self.job_id)
             status_update(self.job_id, 100)
 
 
@@ -155,6 +155,7 @@ class autocalib(object) :
             if not os.path.exists(self.input_dir):
                 return -105
 
+            result = 0
             now = datetime.now()
             root = 'Cal' + datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
             if not os.path.exists(os.path.join(os.getcwd(), root)) :

@@ -30,7 +30,7 @@ def make_snapshot(from_path, to_path) :
             return -103
 
         target = os.path.join(to_path, filename)
-        l.get().w.debug("snapshot save : ", target)
+        l.get().w.debug("snapshot save : {}".format(target))
         cv2.imwrite(target, frame)
         cam.release()
 
@@ -44,7 +44,7 @@ def make_copy(from_path, to_path) :
     pts = os.path.join(from_path, df.pts_file_name)
     shutil.copy(pts, to_path)
 
-    image_files = sorted(glob.glob(os.path.join(from_path,'*.jpeg')))
+    image_files = sorted(glob.glob(os.path.join(from_path,'*')))
 
     for image in image_files : 
         from_file = os.path.join(from_path, image)
