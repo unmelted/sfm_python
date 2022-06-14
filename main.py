@@ -52,7 +52,7 @@ class calib_status(Resource) :
         
         print(args['job_id'])
         print("calib status  .. : " ,Commander.getInstance())        
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id']))
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, args['job_id'])
         msg = df.get_err_msg(result)
 
         result = {
@@ -78,17 +78,13 @@ class calib_analysis(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
+        parser.add_argument('mode', type=str)        
         args = parser.parse_args()
         
         print(args['job_id'])
         print(args['mode'])
-        result = 0 
-        if args['job_id'] == df.TaskCategory.VISUALIZE.name :
-            result = Commander.getInstance().send_query(df.TaskCategory.VISUALIZE, (args['job_id']))
+        result = Commander.getInstance().send_query( args['mode'], args['job_id'])
 
-        elif args['job_id'] == df.TaskCategory.ANALYSIS.name :
-            result = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS, (args['job_id']))
-            
         msg = df.get_err_msg(result)
         result = {
             'job_id': args['job_id'],

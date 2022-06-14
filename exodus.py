@@ -43,16 +43,20 @@ class Commander(object) :
         if obj == None :
             return finish(obj, -21)                
 
-        if query == df.TaskCategory.AUTOCALIB_STATUS :
+        l.get().w.debug('receive query {} {}'.format(query, obj))
+        print(df.TaskCategory.ANALYSIS.name)
+
+        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
             status, result = DbManager.getInstance().getJobStatus(obj)
 
-        elif query == df.TaskCategory.VISUALIZE :
+        elif query.upper() == df.TaskCategory.VISUALIZE :
             status = 100
             result = visualize_mode(obj)
 
-        elif query == df.TaskCategory.ANALYSIS :
+        elif query.upper() == df.TaskCategory.ANALYSIS.name :
+            status = 100
+            result = analysis_mode(obj)
 
-            pass
         return status, result
 
     def add_task(self, task, obj) :
@@ -65,7 +69,7 @@ class Commander(object) :
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
             l.get().w.info("Task Proc start : {} ".format(self.index))
-            ac = autocalib(obj, 'full', self.index)
+            ac = autocalib(obj, self.index)
             ac.run()
 
 def visualize_mode(job_id) :
@@ -75,15 +79,24 @@ def visualize_mode(job_id) :
     colmap.visualize_colmap_model()
     return 0
 
+def analysis_mode(job_id) :
+    l.get().w.info("analysis  start : ".format(job_id))    
+    preset1 = Group()
+    root_path = DbManager.getInstance().getRootPath(job_id)
+    ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
+    preset1.read_cameras()
+    preset1.generate_points(answer='full')
+    preset1.calculate_real_error()
+    return 0
 
 class autocalib(object) :
 
-    def __init__ (self, input_dir, mode, job_id) :
+    def __init__ (self, input_dir, job_id) :
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
         self.list_from = df.DEFINITION.cam_list        
-        self.mode = mode
+        self.mode = 0 #mode
         self.job_id = job_id
 
     def run(self) :
@@ -102,27 +115,22 @@ class autocalib(object) :
         if( ret < 0 ):
             return finish(self.job_id, -101)
         status_update(self.job_id, 20)
-        time_e1 = time.time() - time_s 
-        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1))
+        time_e1 = time.time()
+        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1 - time_s))
 
         ret = preset1.run_sfm()
         if( ret < 0 ):
             return finish(self.job_id, -101)
         status_update(self.job_id, 50)
 
+        ret = preset1.read_cameras()
+        if( ret < 0 ):
+            return finish(self.job_id, ret)
 
-        if self.mode == df.CommandMode.FULL or self.mode == 'full':
-            preset1.read_cameras()
-            preset1.generate_points()    
-            status_update(self.job_id, 90)            
-            preset1.export(self.input_dir, self.job_id)
-            status_update(self.job_id, 100)
-
-
-        if self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or self.mode == 'analysis':
-            preset1.read_cameras()
-            preset1.generate_points('colmap', 'analysis')
-            preset1.calculate_real_error()
+        preset1.generate_points()    
+        status_update(self.job_id, 90)            
+        preset1.export(self.input_dir, self.job_id)
+        status_update(self.job_id, 100)
 
         time_eg = time.time() - time_e1
         l.get().w.critical("Spending time of post matching (sec) : {}".format(time_eg))
@@ -161,7 +169,10 @@ class autocalib(object) :
             if not os.path.exists(os.path.join(self.root_dir, 'images')) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            if self.list_from == 'video_folder' :
+            if self.list_from == 'image_folder':
+                result = make_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+
+            elif self.list_from == 'video_folder' :
                 video_files = 0
                 video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
 

@@ -71,7 +71,7 @@ class Colmap(object) :
 
     def __init__ (self, root_path) :
         self.root_path = root_path
-        self.coldb_path = os.path.join(self.root_path, 'colmap.db')
+        self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
         self.colmap_cmd = import_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
@@ -107,10 +107,9 @@ class Colmap(object) :
 
         call_colmap.wait()
         result = call_colmap.poll()
-        print('Exit : ', result)
 
         if result != 0 :
-            print('Model Convert Error : ', result)
+            l.get().w.error("Model Convert Error : {}".format(result))            
             return -140
 
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
@@ -120,7 +119,7 @@ class Colmap(object) :
         need_alter = True
         for row in rows : 
             if 'image' in row:
-                print('Already altered table! ')
+                l.get().w.warn("Already altered table!")                
                 need_alter = False
         
         if need_alter == True :
@@ -142,7 +141,7 @@ class Colmap(object) :
             # print(id, focal, skew)
             q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')            
             cursur.execute(q, (focal, skew, id))
-            print("execuete update1 ", id)
+            l.get().w.debug("execute update  : {}".format(id))
 
         lines = img.readlines()
         for line in lines:
@@ -163,7 +162,7 @@ class Colmap(object) :
 
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
                 cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
-                print("execuete update2  ", img, id)
+                l.get().w.debug("execute update 2 : {} {}".format(img, id))
 
         conn.close()
         return result
@@ -177,8 +176,12 @@ class Colmap(object) :
             cursur.execute(q + str(cam.view.name) + '\'')
             row = cursur.fetchall()
 
-            if len(row) > 1 or len(row) == 0:
-                print('Data is odd . ')
+            if row == None:
+                l.get().w.error('no cameras in db')                
+                return -142
+
+            if len(row) > 1 :
+                l.get().w.error("read colmap data is odd")
                 return -141
 
             poseR = np.empty((0))
@@ -217,9 +220,32 @@ class Colmap(object) :
 
         return 0      
 
+    def import_colmap_cameras(self, file_names) :
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()
+        image_names = []
+
+        q = ('SELECT image FROM cameras')
+        cursur.execute(q)
+        rows = cursur.fetchall()
+
+        if rows == None:
+            l.get().w.error('no cameras in db')
+            return -142
+
+        file_list = []
+        for file in file_names :
+            file_name = file[file.rfind('/'):]
+            print(file_name)
+            for row in rows : 
+                if row[0] in file_name : 
+                    image_names.append(file)
+
+        print(image_names)
+        return image_names
 
     def visualize_colmap_model(self):
-        print("visualize colmap model.. ")
+        l.get().w.info('visualize colmap model')
         image_path = os.path.join(self.root_path, 'images')
         subprocess.Popen([self.colmap_cmd['visualize_cmd'] + self.colmap_cmd['visualize_param1'] +  self.root_path + self.colmap_cmd['visualize_param2'] + self.coldb_path + self.colmap_cmd['visualize_param3'] + image_path], shell=True)
 

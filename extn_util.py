@@ -312,19 +312,19 @@ def make_cam_list_in_pts(from_path, group_id):
 
 def get_camera_list_in_both(from_path, group_id, ext) :
     image_names = []
-    print(ext)
+
     img_files = sorted(glob.glob(os.path.join(from_path, '*.' + ext)))
     result, cam_inpts = make_cam_list_in_pts(from_path, group_id)
     if result < 0 :
         return result, None, None
-    print(img_files)
+
     for img_file in img_files :
         cam_id = img_file[img_file.rfind('/')+1:-1*len(ext) -1]
         if cam_id.rfind('_') == 0:
             pass
         else :
             cam_id = cam_id[:cam_id.rfind('_')]
-        print(cam_id)
+
         if cam_id in cam_inpts:
             image_names.append(img_file)
     
