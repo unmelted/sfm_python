@@ -61,10 +61,10 @@ class Group(object):
     def prepare_camera_list(self, list_from, group_id = 'Group1'):
         self.world.get_world()
         self.adjust = Adjust(self.world)
+        self.ext = check_image_format(self.root_path)        
         image_names = []
 
         if list_from == 'image_folder' : 
-            self.ext = check_image_format(self.root_path)
             l.get().w.error("image folder ext : {} ".format(self.ext))
             image_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))
             if len(image_names) < 2: 
@@ -72,11 +72,15 @@ class Group(object):
 
         elif list_from == 'pts_file' :
             from_path = os.path.join(self.root_path, 'images')
-            self.ext = check_image_format(from_path)            
             result, image_names = get_info(from_path, group_id, self.ext)
             l.get().w.debug('Create camera list from pts file result : {} count : {}'.format(result, len(image_names)))
             if result < 0 :
                 return result
+
+        elif list_from == 'colmap_db' :
+            file_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))            
+            t_colmap = Colmap(self.root_path)
+            image_names = t_colmap.import_colmap_cameras(file_names)
 
         index = 0
         for image_name in image_names:
@@ -104,10 +108,10 @@ class Group(object):
             if self.limit != 0 and i == self.limit :
                 break
 
-    def read_cameras(self, mode='colmap'):
+    def read_cameras(self, mode ='colmap'):
         if mode == 'colmap' :
             if self.colmap == None :
-                print("there is no colmap data")                
+                logging.error("there is no colmap data")                
                 return -10
            
             result = self.colmap.read_colmap_cameras(self.cameras)
@@ -122,7 +126,7 @@ class Group(object):
                         )
                     )
                 except FileNotFoundError:
-                    logging.error("Pkl file not found for camera %s. Computing from scratch", cam.view.name)
+                    logging.error("Pkl file not found for camera %s. Computing from scratch {} ".format(cam.view.name))
                     break
 
                 print("read from camera file : ", cam.view.name)
@@ -136,6 +140,7 @@ class Group(object):
 
                 if self.limit != 0 and i == self.limit :
                     break
+        return 0
     
     def run_sfm(self) :
         if self.run_mode == 'colmap' :
@@ -182,7 +187,7 @@ class Group(object):
             break
 
     def generate_points(self, mode='colmap', answer='seed') :
-        filename = os.path.join(self.root_path, 'images', 'UserPointData.pts')
+        filename = os.path.join(self.root_path, 'images', df.pts_file_name)
 
         if answer == 'seed' :
             self.answer = import_answer(filename, 2)
@@ -258,11 +263,14 @@ class Group(object):
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = self.cameras[i].view.name[:-4]
-            if self.ext == 'tiff':
-                viewname = self.cameras[i].view.name[:-8]
+            viewname = None
 
-            l.get().w.debug("name : ", self.cameras[i].view.name, viewname)            
+            if self.cameras[i].view.name.rfind('_') == -1 :
+                viewname = self.cameras[i].view.name[:-1 * (len(self.ext) + 1)]
+            else :
+                viewname = self.cameras[i].view.name[:self.cameras[i].view.name.rfind('_')]
+
+            l.get().w.debug("name : {}".format(self.cameras[i].view.name, viewname))
             gt = self.answer[viewname]
 
             for j in range(self.cameras[i].pts.shape[0]) :
@@ -281,7 +289,7 @@ class Group(object):
                 s_error += terr
                 t_error += terr
 
-            l.get().w.debug('scene err : ', s_error)
+            l.get().w.debug('scene err : {}'.format(s_error))
             if self.limit != 0 and i == self.limit :
                 break
 

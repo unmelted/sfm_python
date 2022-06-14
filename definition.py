@@ -8,6 +8,7 @@ class TaskCategory(Enum):
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
     VISUALIZE               = 300
+    ANALYSIS                = 400
     FINISH                  = 1
 
 class CommandMode(Enum):
@@ -45,6 +46,7 @@ def get_err_msg(err_code) :
         -107 : "Can't read images",
         -140 : "Convert model error ",
         -141 : "Camera info duplicated with image name",
+        -142 : "There is no cameras in colmap db",
 
         -201 : "Query job_is is ambigous"
 
@@ -60,11 +62,13 @@ def get_err_msg(err_code) :
 
 class DEFINITION(object) :
     run_mode = 'colmap'
-    cam_list = 'video_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file']    
+    cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
     
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
     main_db_name = 'autocalib.db'
+    colmap_db_name = 'colmap.db'
+
     export_point_type ='dm'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
