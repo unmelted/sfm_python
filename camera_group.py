@@ -197,7 +197,7 @@ class Group(object):
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-4]
+                    viewname = get_viewname(self.cameras[i].view.name, self.ext)
                     if self.ext == 'tiff':
                         viewname = self.cameras[i].view.name[:-8]
                     
@@ -224,9 +224,7 @@ class Group(object):
         else : 
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = self.cameras[i].view.name[:-7]
-                    if self.ext == 'tiff':
-                        viewname = self.cameras[i].view.name[:-8]
+                    viewname = get_viewname(self.cameras[i].view.name, self.ext)
 
                     pts = self.answer[viewname]
                     l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
@@ -263,12 +261,7 @@ class Group(object):
             if i < 2 : 
                 continue
             s_error = 0
-            viewname = None
-
-            if self.cameras[i].view.name.rfind('_') == -1 :
-                viewname = self.cameras[i].view.name[:-1 * (len(self.ext) + 1)]
-            else :
-                viewname = self.cameras[i].view.name[:self.cameras[i].view.name.rfind('_')]
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)
 
             l.get().w.debug("name : {}".format(self.cameras[i].view.name, viewname))
             gt = self.answer[viewname]
@@ -289,12 +282,12 @@ class Group(object):
                 s_error += terr
                 t_error += terr
 
-            l.get().w.debug('scene err : {}'.format(s_error))
+            l.get().w.info('scene err : {}'.format(s_error))
             if self.limit != 0 and i == self.limit :
                 break
 
         ave = t_error / len(self.cameras)
-        l.get().w.debug("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
+        l.get().w.info("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
 
     def visualize(self, mode='colmap') :
         if mode == 'colmap' :
@@ -306,3 +299,4 @@ class Group(object):
     def export(self, output_path, job_id) :
         export_points(self, df.export_point_type, output_path, job_id)
         save_point_image(self)
+        save_answer_image(self)
