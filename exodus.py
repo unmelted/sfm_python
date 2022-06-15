@@ -87,6 +87,7 @@ def analysis_mode(job_id) :
     preset1.generate_points(answer='full')
     preset1.calculate_real_error()
     preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.save_answer_image()
     return 0
 
 class autocalib(object) :

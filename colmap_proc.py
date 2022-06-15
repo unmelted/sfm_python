@@ -150,7 +150,7 @@ class Colmap(object) :
                 continue
             print(line[9])
             if ext in line[9] :
-                id = int(line[0])
+                id = int(line[8])
                 qw = float(line[1])
                 qx = float(line[2])
                 qy = float(line[3])

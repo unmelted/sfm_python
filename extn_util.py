@@ -260,7 +260,7 @@ def import_camera_pose(preset) :
         cam.calculate_p()
 
 
-def save_answer_image(preset) :
+def save_ex_answer_image(preset) :
 
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):    

@@ -299,4 +299,6 @@ class Group(object):
     def export(self, output_path, job_id) :
         export_points(self, df.export_point_type, output_path, job_id)
         save_point_image(self)
-        save_answer_image(self)
+
+    def save_answer_image(self):
+        save_ex_answer_image(self)
