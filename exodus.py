@@ -44,7 +44,6 @@ class Commander(object) :
             return finish(obj, -21)                
 
         l.get().w.debug('receive query {} {}'.format(query, obj))
-        print(df.TaskCategory.ANALYSIS.name)
 
         if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
             status, result = DbManager.getInstance().getJobStatus(obj)
@@ -87,6 +86,7 @@ def analysis_mode(job_id) :
     preset1.read_cameras()
     preset1.generate_points(answer='full')
     preset1.calculate_real_error()
+    preset1.export(os.path.join(root_path, 'output'), job_id)
     return 0
 
 class autocalib(object) :

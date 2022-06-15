@@ -27,11 +27,12 @@ def export_points_mct(preset) :
     point_json["world_coords"] = {}
     point_json["points"] = []
 
-    # for i in range(len(preset.cameras)) :
-    for i in range(2) :
+    for i in range(len(preset.cameras)) :
+    # for i in range(2) :
         l.get().w.debug("name : ", preset.cameras[i].view.name)
+        viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         _json = {}
-        _json['dsc_id'] = preset.cameras[i].view.name[:-4]
+        _json['dsc_id'] = viewname
 
         _json['pts_2d'] = from_data['points'][i]['pts_2d']
         _json['pts_3d'] = from_data['points'][i]['pts_3d']
@@ -96,7 +97,8 @@ def export_points_dm(preset, output_path, job_id) :
     for j in range(len(from_data['points'])) :
         l.get().w.debug('pts dsc_id : '.format(from_data['points'][j]['dsc_id']))
         for i in range(len(preset.cameras)) :
-            if from_data['points'][j]['dsc_id'] == preset.cameras[i].view.name:
+            viewname = get_viewname(preset.cameras[i].view.name, preset.ext)            
+            if from_data['points'][j]['dsc_id'] == viewname:
                 l.get().w.info('camera view name : '.format(preset.cameras[i].view.name))
                 from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
                 from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
@@ -258,6 +260,30 @@ def import_camera_pose(preset) :
         cam.calculate_p()
 
 
+def save_answer_image(preset) :
+
+    output_path = os.path.join(preset.root_path, 'output')
+    if not os.path.exists(output_path):    
+        os.makedirs(output_path)
+
+    for i in range(len(preset.cameras)) :
+        viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
+        file_name = os.path.join(output_path, viewname +"_ans.png")
+        gt_int = preset.answer[viewname].astype(np.int32)
+
+        for j in range(preset.cameras[i].pts.shape[0]) :
+            gt_pt = gt_int[j, :]
+            cv2.circle(preset.cameras[i].view.image, (int(gt_pt[0]), int(gt_pt[1])), 5, (0, 255, 0), -1)
+
+            if j > 0 :
+                cv2.line(preset.cameras[i].view.image, gt_int[j-1], gt_int[j], (255,0,0), 3)
+            if j == (preset.cameras[i].pts.shape[0] - 1):
+                cv2.line(preset.cameras[i].view.image, gt_int[j], gt_int[0], (255,255,0), 3)
+
+        l.get().w.info(file_name)
+        cv2.imwrite(file_name, preset.cameras[i].view.image)
+
+
 def save_point_image(preset) :
 
     output_path = os.path.join(preset.root_path, 'output')
@@ -265,10 +291,7 @@ def save_point_image(preset) :
         os.makedirs(output_path)
 
     for i in range(len(preset.cameras)) :
-        viewname = preset.cameras[i].view.name[:-4]
-        if preset.ext == 'tiff':
-            viewname = preset.cameras[i].view.name[:-8]
-
+        viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         file_name = os.path.join(output_path, viewname +"_pt.png")
         pt_int = preset.cameras[i].pts.astype(np.int32)            
 
@@ -283,6 +306,19 @@ def save_point_image(preset) :
 
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
+
+
+
+def get_viewname(name, ext):
+    viewname = None
+
+    if name.rfind('_') == -1 :
+        viewname = name[:-1 * (len(ext) + 1)]
+    else :
+        viewname = name[:name.rfind('_')]
+
+    return viewname
+
 
 def import_json(path) :
     json_file = open(path, 'r')
@@ -319,7 +355,7 @@ def get_camera_list_in_both(from_path, group_id, ext) :
         return result, None, None
 
     for img_file in img_files :
-        cam_id = img_file[img_file.rfind('/')+1:-1*len(ext) -1]
+        cam_id = img_file[img_file.rfind('/')+1:-1 * len(ext) -1]
         if cam_id.rfind('_') == 0:
             pass
         else :

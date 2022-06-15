@@ -4,15 +4,16 @@ import pickle
 import cv2
 import numpy as np
 import glob
-import logging
+from logger import Logger as l
 
 
 class View(object):
     """Represents an image used in the reconstruction"""
 
     def __init__(self, image_path, root_path, feature_path, feature_type='sift'):
-        self.name = image_path[image_path.rfind('/') + 1:]  # image name without extension
-        # print("View init name : ", self.name)
+        self.name = image_path[image_path.rfind('/') + 1:]  
+        l.get().w.debug("View init name : {}".format(self.name))
+
         self.image = cv2.imread(image_path)  # numpy array of the image
         self.keypoints = []  # list of keypoints obtained from feature extraction
         self.descriptors = np.zeros((0, 128), dtype=np.float32)  # list of descriptors obtained from feature extraction
@@ -60,7 +61,7 @@ class View(object):
         elif self.feature_type == 'orb':
             detector = cv2.ORB_create(nfeatures=1500)
         else:
-            logging.error("Admitted feature types are SIFT, SURF or ORB")
+            l.get().w.error("Admitted feature types are SIFT, SURF or ORB")
             sys.exit(0)
 
 
@@ -162,7 +163,7 @@ class View(object):
             self.descriptors = np.array(descriptors)  # convert descriptors into n x 128 numpy array
 
         except FileNotFoundError:
-            logging.error("Pkl file not found for image %s. Computing from scratch", self.name)
+            l.get().w.error("Pkl file not found for image %s. Computing from scratch", self.name)
             self.extract_features()
 
         if self.bMask == 0 :
