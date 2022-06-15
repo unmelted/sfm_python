@@ -95,11 +95,11 @@ def export_points_dm(preset, output_path, job_id) :
         return -12
 
     for j in range(len(from_data['points'])) :
-        l.get().w.debug('pts dsc_id : '.format(from_data['points'][j]['dsc_id']))
+        l.get().w.debug('pts dsc_id : {}'.format(from_data['points'][j]['dsc_id']))
         for i in range(len(preset.cameras)) :
             viewname = get_viewname(preset.cameras[i].view.name, preset.ext)            
             if from_data['points'][j]['dsc_id'] == viewname:
-                l.get().w.info('camera view name : '.format(preset.cameras[i].view.name))
+                l.get().w.info('camera view name : {}'.format(preset.cameras[i].view.name))
                 from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
                 from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
                 from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
@@ -260,7 +260,7 @@ def import_camera_pose(preset) :
         cam.calculate_p()
 
 
-def save_answer_image(preset) :
+def save_ex_answer_image(preset) :
 
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):    

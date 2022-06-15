@@ -65,7 +65,7 @@ class calib_status(Resource) :
         return result
 
 
-analysis = api.model('jobid' , {
+analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
     'mode' : fields.String,
 })

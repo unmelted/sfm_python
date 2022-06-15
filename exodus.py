@@ -45,10 +45,10 @@ class Commander(object) :
 
         l.get().w.debug('receive query {} {}'.format(query, obj))
 
-        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
+        if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj)
 
-        elif query.upper() == df.TaskCategory.VISUALIZE :
+        elif query.upper() == df.TaskCategory.VISUALIZE.name :
             status = 100
             result = visualize_mode(obj)
 
@@ -72,14 +72,14 @@ class Commander(object) :
             ac.run()
 
 def visualize_mode(job_id) :
-    l.get().w.info("Visualize start : ".format(job_id))
+    l.get().w.info("Visualize start : {} ".format(job_id))
     root_path = DbManager.getInstance().getRootPath(job_id)
     colmap = Colmap(root_path)
     colmap.visualize_colmap_model()
     return 0
 
 def analysis_mode(job_id) :
-    l.get().w.info("analysis  start : ".format(job_id))    
+    l.get().w.info("analysis  start : {} ".format(job_id))    
     preset1 = Group()
     root_path = DbManager.getInstance().getRootPath(job_id)
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
@@ -87,6 +87,7 @@ def analysis_mode(job_id) :
     preset1.generate_points(answer='full')
     preset1.calculate_real_error()
     preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.save_answer_image()
     return 0
 
 class autocalib(object) :

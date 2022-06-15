@@ -32,3 +32,10 @@ def check_image_format(path) :
             return 'jpeg'
 
     return 'png'
+
+
+def get_initial_pair() :
+    init_view1 = None
+    init_view2 = None
+
+    return init_view1, init_view2
