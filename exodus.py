@@ -72,14 +72,14 @@ class Commander(object) :
             ac.run()
 
 def visualize_mode(job_id) :
-    l.get().w.info("Visualize start : ".format(job_id))
+    l.get().w.info("Visualize start : {} ".format(job_id))
     root_path = DbManager.getInstance().getRootPath(job_id)
     colmap = Colmap(root_path)
     colmap.visualize_colmap_model()
     return 0
 
 def analysis_mode(job_id) :
-    l.get().w.info("analysis  start : ".format(job_id))    
+    l.get().w.info("analysis  start : {} ".format(job_id))    
     preset1 = Group()
     root_path = DbManager.getInstance().getRootPath(job_id)
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
