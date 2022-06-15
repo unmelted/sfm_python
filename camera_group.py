@@ -144,9 +144,10 @@ class Group(object):
     
     def run_sfm(self) :
         if self.run_mode == 'colmap' :
-            result = self.colmap.recon_command(False)
+            init_view1, init_view2 = get_initial_pair()
+            result = self.colmap.recon_command(init_view1, init_view2)
             if result < 0 :
-                print("recon command error : ", result)
+                l.get().w.error("Recon command error : {}".format(result))
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
