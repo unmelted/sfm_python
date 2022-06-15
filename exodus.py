@@ -45,10 +45,10 @@ class Commander(object) :
 
         l.get().w.debug('receive query {} {}'.format(query, obj))
 
-        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
+        if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj)
 
-        elif query.upper() == df.TaskCategory.VISUALIZE :
+        elif query.upper() == df.TaskCategory.VISUALIZE.name :
             status = 100
             result = visualize_mode(obj)
 
