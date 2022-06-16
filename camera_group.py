@@ -144,8 +144,7 @@ class Group(object):
     
     def run_sfm(self) :
         if self.run_mode == 'colmap' :
-            init_view1, init_view2 = get_initial_pair()
-            result = self.colmap.recon_command(init_view1, init_view2)
+            result = self.colmap.recon_command()
             if result < 0 :
                 l.get().w.error("Recon command error : {}".format(result))
                 return result 

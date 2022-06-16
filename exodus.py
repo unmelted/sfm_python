@@ -21,7 +21,7 @@ class Commander(object) :
 
     def __init__(self) :
         self.cmd_que = Queue()        
-        self.index = df.DEFINITION.base_index
+        self.index = 0
         self.db = DbManager.getInstance()
         l.get().w.info("Commander initialized.")
 
@@ -43,7 +43,7 @@ class Commander(object) :
             return finish(obj, -21)                
 
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
-        DbManager.getInstance().insert('request_history', job_id=self.job_id, requestor=self.ip, desc=query.upper())
+        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query.upper())
 
         if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj[0])
@@ -108,7 +108,7 @@ class autocalib(object) :
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
-        return 0
+
         if result != 0 :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)

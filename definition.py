@@ -62,6 +62,7 @@ def get_err_msg(err_code) :
 
 
 class DEFINITION(object) :
+
     base_index = 1000
     run_mode = 'colmap'
     cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
@@ -71,7 +72,7 @@ class DEFINITION(object) :
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    export_point_type ='dm'  # 'dm', 'mct'
+    # export_point_type ='mct'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
@@ -81,5 +82,6 @@ class DEFINITION(object) :
     feature_ini = 'colmap_feature.ini'
     matcher_ini = 'colmap_matcher.ini'    
     mapper_ini = 'colmap_mapper.ini'
-    
+
+
 

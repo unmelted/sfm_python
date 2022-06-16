@@ -99,6 +99,33 @@ class calib_analysis(Resource) :
         }
 
         return result
+
+
+file_args = api.model('file_args' , {
+    'config_file' : fields.String
+})
+
+@api.route('/exodus/autocalib/read_config')
+@api.doc()
+class read_config(Resource) : 
+    @api.expect(file_args)
+    def post(self, an=file_args):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('config_file', type=str)        
+        args = parser.parse_args()
+        
+        print(args['config_file'])
+        result = Commander.getInstance().send_query(args['config_file'], ip_addr)
+
+        result = {
+            'result' : result,
+        }
+
+        return result    
+
 if __name__ == '__main__':    
     pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
     pr.start()
