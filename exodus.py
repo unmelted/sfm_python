@@ -108,7 +108,7 @@ class autocalib(object) :
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
-        return 0
+
         if result != 0 :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)
