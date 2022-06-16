@@ -224,7 +224,7 @@ def import_answer(filepath, limit):
 
         answer[name] = answer_pt
         # print(answer[name])
-        if limit != 0 and i == limit :
+        if limit != 0 and i < limit :
             break           
     
     return answer
