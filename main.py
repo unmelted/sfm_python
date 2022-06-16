@@ -28,7 +28,7 @@ class calib_run(Resource) :
         args = parser.parse_args()
         
         print(args['input_dir'])
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir']))
+        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], ip_addr))
 
         result = {
             'status': 0,
@@ -47,6 +47,8 @@ jobid = api.model('jobid' , {
 class calib_status(Resource) : 
     @api.expect(jobid)
     def post(self, jid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
@@ -54,7 +56,7 @@ class calib_status(Resource) :
         
         print(args['job_id'])
         print("calib status  .. : " ,Commander.getInstance())        
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, args['job_id'])
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (args['job_id'], ip_addr))
         msg = df.get_err_msg(result)
 
         result = {
@@ -77,6 +79,8 @@ analysis = api.model('analysis' , {
 class calib_analysis(Resource) : 
     @api.expect(analysis)
     def post(self, an=analysis):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
@@ -85,7 +89,7 @@ class calib_analysis(Resource) :
         
         print(args['job_id'])
         print(args['mode'])
-        result = Commander.getInstance().send_query( args['mode'], args['job_id'])
+        result = Commander.getInstance().send_query( args['mode'], (args['job_id'], ip_addr))
 
         msg = df.get_err_msg(result)
         result = {

@@ -62,6 +62,7 @@ def get_err_msg(err_code) :
 
 
 class DEFINITION(object) :
+    base_index = 1000
     run_mode = 'colmap'
     cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
     
@@ -75,3 +76,10 @@ class DEFINITION(object) :
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
     CHAT_ID = '1140943041'
+    log_viewer_ip = '127.0.0.1'
+
+    feature_ini = 'colmap_feature.ini'
+    matcher_ini = 'colmap_matcher.ini'    
+    mapper_ini = 'colmap_mapper.ini'
+    
+
