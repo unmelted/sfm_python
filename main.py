@@ -20,6 +20,8 @@ recon_args = api.model('recon_args' , {
 class calib_run(Resource) : 
     @api.expect(recon_args)
     def post(self, model=recon_args):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
