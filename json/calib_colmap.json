@@ -3,6 +3,7 @@
     "auto_recon_param1" : " --workspace_path ",
     "auto_recon_param2" : " --image_path ",
 
+    "common_param" : " --project_path ", 
     "extract_cmd" : "colmap feature_extractor ",
     "extract_param1" : " --database_path ",
     "extract_param2" : " --image_path ",
