@@ -13,7 +13,7 @@ def make_snapshot(from_path, to_path) :
     pts = os.path.join(from_path, df.pts_file_name)
     shutil.copy(pts, to_path)
     copy_answer_pts(from_path, to_path)
-    
+
     video_files = sorted(glob.glob(os.path.join(from_path,'*.mp4')))
     pick_frame = 5
 
@@ -56,5 +56,5 @@ def make_image_copy(from_path, to_path) :
 
 def copy_answer_pts(from_path, to_path) :
     ans_pts = os.path.join(from_path, 'answer.pts')    
-    if os.path.exists(ans_pts)) :
+    if os.path.exists(ans_pts) :
         shutil.copy(ans_pts, to_path)

@@ -186,7 +186,7 @@ def import_answer(filepath, limit):
         l.get().w.error("Can't open the pts file.") 
         return
 
-    l.get().w.info("import_answer : ".format(len(json_data['points'])))
+    l.get().w.info("import_answer : {} ".format(len(json_data['points'])))
     answer = {}
     for i in range(len(json_data['points'])):
         answer_pt = np.empty((0,2))
