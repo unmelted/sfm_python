@@ -76,24 +76,24 @@ class Colmap(object) :
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 
-    def recon_command(self, init_view1 = None, init_view2 = None):
+    def recon_command(self)
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
-        cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath + ' --SiftExtraction.use_gpu 0'
+        # cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath + ' --SiftExtraction.use_gpu 0'
+        cmd = self.colmap_cmd['extract_cmd'] +  self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.feature_ini)
         shell_cmd(cmd)
         l.get().w.info("Colmap : Extract Done")
 
-        cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
+        # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
+        cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
         shell_cmd(cmd)
         l.get().w.info("Colmap : Matcher Done")
 
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
-        if init_view1 != None and init_view2 != None : 
-            pass
-        else : 
-            cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
+        # cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
+        cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.mapper_ini)
         shell_cmd(cmd)
         result = 0
         l.get().w.info("Colmap : Mapper Done")
