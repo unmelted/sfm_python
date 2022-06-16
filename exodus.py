@@ -7,7 +7,7 @@ from camera_group import *
 import definition as df
 from logger import Logger as l
 from db_manager import DbManager
-from image_proc import *
+from prepare_proc import *
 from intrn_util import *
 
 class Commander(object) :
@@ -21,9 +21,8 @@ class Commander(object) :
 
     def __init__(self) :
         self.cmd_que = Queue()        
-        self.index = 0
+        self.index = df.DEFINITION.base_index
         self.db = DbManager.getInstance()
-        self.index = 0
         l.get().w.info("Commander initialized.")
 
     def Receiver(self, t) :
@@ -43,18 +42,19 @@ class Commander(object) :
         if obj == None :
             return finish(obj, -21)                
 
-        l.get().w.debug('receive query {} {}'.format(query, obj))
+        l.get().w.debug('receive query {} {}'.format(query, obj[0]))
+        DbManager.getInstance().insert('request_history', job_id=self.job_id, requestor=self.ip, desc=query.upper())
 
         if query == df.TaskCategory.AUTOCALIB_STATUS :
-            status, result = DbManager.getInstance().getJobStatus(obj)
+            status, result = DbManager.getInstance().getJobStatus(obj[0])
 
         elif query.upper() == df.TaskCategory.VISUALIZE.name :
             status = 100
-            result = visualize_mode(obj)
+            result = visualize_mode(obj[0])
 
         elif query.upper() == df.TaskCategory.ANALYSIS.name :
             status = 100
-            result = analysis_mode(obj)
+            result = analysis_mode(obj[0])
 
         return status, result
 
@@ -62,13 +62,15 @@ class Commander(object) :
         self.cmd_que.put((task, obj))
         self.index = DbManager.getInstance().getJobIndex() + 1
         l.get().w.info("Alloc job id ".format(self.index))
-       
+        DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
+
         return self.index
 
     def processor(self, task, obj) :
         if task == df.TaskCategory.AUTOCALIB :
             l.get().w.info("Task Proc start : {} ".format(self.index))
-            ac = autocalib(obj, self.index)
+            l.get().w.info("Task Proc start obj : {} {} ".format(self.index, obj[0], obj[1]))
+            ac = autocalib(obj[0], self.index, obj[1])
             ac.run()
 
 def visualize_mode(job_id) :
@@ -92,20 +94,21 @@ def analysis_mode(job_id) :
 
 class autocalib(object) :
 
-    def __init__ (self, input_dir, job_id) :
+    def __init__ (self, input_dir, job_id, ip) :
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
         self.list_from = df.DEFINITION.cam_list        
         self.mode = 0 #mode
         self.job_id = job_id
+        self.ip = ip
 
     def run(self) :
-        DbManager.getInstance().insert('command', job_id=self.job_id, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
+        DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
         preset1 = Group()        
         result = self.checkDataValidity()
-
+        return 0
         if result != 0 :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)
@@ -128,7 +131,7 @@ class autocalib(object) :
         if( ret < 0 ):
             return finish(self.job_id, ret)
 
-        preset1.generate_points()    
+        preset1.generate_points(answer='full')    
         status_update(self.job_id, 90)            
         preset1.export(self.input_dir, self.job_id)
         status_update(self.job_id, 100)
@@ -171,7 +174,7 @@ class autocalib(object) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
             if self.list_from == 'image_folder':
-                result = make_image_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+                result = prepare_image_job(self.input_dir, self.root_dir)
 
             elif self.list_from == 'video_folder' :
                 video_files = 0
@@ -180,11 +183,11 @@ class autocalib(object) :
                 if len(video_files) < 3 :
                     return -102
 
-                result = make_snapshot(self.input_dir, os.path.join(self.root_dir, 'images'))
+                result = prepare_video_job(self.input_dir, self.root_dir)
                 self.list_from = 'image_folder'                
 
             elif self.list_from == 'pts_file' :
-                result = make_image_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+                result = prepare_image_job(self.input_dir, self.root_dir)
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
             DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
