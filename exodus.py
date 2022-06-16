@@ -171,7 +171,7 @@ class autocalib(object) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
             if self.list_from == 'image_folder':
-                result = make_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+                result = make_image_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
 
             elif self.list_from == 'video_folder' :
                 video_files = 0
@@ -184,7 +184,7 @@ class autocalib(object) :
                 self.list_from = 'image_folder'                
 
             elif self.list_from == 'pts_file' :
-                result = make_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
+                result = make_image_copy(self.input_dir, os.path.join(self.root_dir, 'images'))
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
             DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)

@@ -198,10 +198,7 @@ class Group(object):
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
-                    viewname = get_viewname(self.cameras[i].view.name, self.ext)
-                    if self.ext == 'tiff':
-                        viewname = self.cameras[i].view.name[:-8]
-                    
+                    viewname = get_viewname(self.cameras[i].view.name, self.ext)                   
                     pts = self.answer[viewname]
                     l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
                     cam.pts = pts

@@ -29,7 +29,7 @@ def export_points_mct(preset) :
 
     for i in range(len(preset.cameras)) :
     # for i in range(2) :
-        l.get().w.debug("name : ", preset.cameras[i].view.name)
+        l.get().w.debug("name : ".format(preset.cameras[i].view.name))
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         _json = {}
         _json['dsc_id'] = viewname
@@ -224,7 +224,7 @@ def import_answer(filepath, limit):
 
         answer[name] = answer_pt
         # print(answer[name])
-        if limit != 0 and i == limit :
+        if limit != 0 and i < limit :
             break           
     
     return answer
