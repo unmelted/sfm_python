@@ -29,7 +29,7 @@ def get_err_msg(err_code) :
     msg = None
     msg_pair = {
          0 : "ERR NONE",
-         100 : "Comepelete",
+         100 : "Comeplete",
 
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
@@ -72,7 +72,7 @@ class DEFINITION(object) :
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    # export_point_type ='mct'  # 'dm', 'mct'
+    export_point_type ='mct'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'

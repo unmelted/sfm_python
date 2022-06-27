@@ -15,7 +15,7 @@ def export_points(preset, output_type, output_path, job_id):
 
 def export_points_mct(preset) :
 
-    filename = os.path.join(preset.root_path, 'images', 'answer.pts')
+    filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
         from_data = json.load(json_file)
 
