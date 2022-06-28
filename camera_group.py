@@ -256,7 +256,7 @@ class Group(object):
 
         if len(self.answer) < 3 :
             return -301
-            
+
         for i in range(len(self.cameras)) :
             if i < 2 : 
                 continue
@@ -288,6 +288,8 @@ class Group(object):
 
         ave = t_error / len(self.cameras)
         l.get().w.info("total real error : {} ave {} max {} min {} ".format(t_error, ave, max, min))
+
+        return 0
 
     def visualize(self, mode='colmap') :
         if mode == 'colmap' :
