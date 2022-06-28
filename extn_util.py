@@ -32,7 +32,7 @@ def export_points_mct(preset) :
         l.get().w.debug("name : {} ".format(preset.cameras[i].view.name))
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         _json = {}
-        _json['dsc_id'] = viewname
+        _json['dsc_id'] = viewname + '_'
 
         if i < len(from_data['points']) :
             _json['pts_2d'] = from_data['points'][i]['pts_2d']
