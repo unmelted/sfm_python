@@ -34,8 +34,12 @@ def export_points_mct(preset) :
         _json = {}
         _json['dsc_id'] = viewname
 
-        _json['pts_2d'] = from_data['points'][i]['pts_2d']
-        _json['pts_3d'] = from_data['points'][i]['pts_3d']
+        if i < len(from_data['points']) :
+            _json['pts_2d'] = from_data['points'][i]['pts_2d']
+            _json['pts_3d'] = from_data['points'][i]['pts_3d']
+        else :
+            _json['pts_2d'] = {}
+            _json['pts_3d'] = {}
 
         _json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
         _json['pts_2d']['Upper']['IsEmpty'] = False
