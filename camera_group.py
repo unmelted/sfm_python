@@ -254,6 +254,9 @@ class Group(object):
         ave = 0
         t_error = 0
 
+        if len(self.answer) < 3 :
+            return -301
+            
         for i in range(len(self.cameras)) :
             if i < 2 : 
                 continue
