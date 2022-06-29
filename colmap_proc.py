@@ -261,23 +261,24 @@ class Colmap(object) :
         rows = cursur.fetchall()
         need_alter = True
         for row in rows : 
-            if 'image1' in row and 'image2' in row:
+            if 'image1' in row or 'image2' in row:
                 l.get().w.warn("Already altered table!")                
                 need_alter = False
         
         if need_alter == True :
             colms = ['image1 TEXT', 'image2 TEXT']
             for i, col in enumerate(colms) : 
-                cursur.execute('ALTER TABLE two_view_gemetries ADD COLUMN ' + col)
+                cursur.execute('ALTER TABLE two_view_geometries ADD COLUMN ' + col)
         
-        q = ('SELECT pair_id FROM tow_view_gemotries')
+        q = ('SELECT pair_id FROM two_view_geometries')
         cursur.execute(q)
         rows = cursur.fetchall()
 
         for row in rows :
-            img1, img2 = self.pair_id_to_image_ids(row)
-            q = ('UPDATE tow_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
-            cursur.execute(q, (img1, img2, row))
+            print(row)
+            img1, img2 = self.pair_id_to_image_ids(int(row[0]))
+            q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
+            cursur.execute(q, (img1, img2, row[0]))
             l.get().w.debug("pair_id {}  update 2 : {} {}".format(row, img1, img2))
 
         conn.close()
@@ -290,6 +291,7 @@ class Colmap(object) :
 
 
     def pair_id_to_image_ids(self, pair_id):
+        print("received pair_id : ", pair_id)
         image_id2 = pair_id % MAX_IMAGE_ID
         image_id1 = (pair_id - image_id2) / MAX_IMAGE_ID
         return image_id1, image_id2
