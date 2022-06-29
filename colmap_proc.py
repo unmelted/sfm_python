@@ -275,7 +275,13 @@ class Colmap(object) :
         rows = cursur.fetchall()
 
         for row in rows :
-            pass
+            img1, img2 = self.pair_id_to_image_ids(row)
+            q = ('UPDATE tow_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
+            cursur.execute(q, (img1, img2, row))
+            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row, img1, img2))
+
+        conn.close()
+        return 0            
 
     def image_ids_to_pair_id(self, image_id1, image_id2):
         if image_id1 > image_id2:

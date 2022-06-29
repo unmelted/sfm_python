@@ -140,6 +140,8 @@ class Group(object):
 
                 if self.limit != 0 and i == self.limit :
                     break
+        
+        self.colmap.modify_pair_table()  #test
         return 0
     
     def run_sfm(self) :
@@ -150,6 +152,8 @@ class Group(object):
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
+            self.colmap.modify_pair_table()
+
             return result
 
         elif self.run_mode == 'off' : 
