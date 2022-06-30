@@ -14,6 +14,11 @@ from db_manager import DbManager
 from logger import Logger as l
 from definition import DEFINITION as df
 
+
+IS_PYTHON3 = sys.version_info[0] >= 3
+MAX_IMAGE_ID = 2**31 - 1
+
+
 def _monitor_readline(process, q):
     while True:
         bail = True
@@ -79,21 +84,21 @@ class Colmap(object) :
     def recon_command(self) :
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
-        # cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath + ' --SiftExtraction.use_gpu 0'
-        cmd = self.colmap_cmd['extract_cmd'] +  self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.feature_ini)
+        cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
+        # cmd = self.colmap_cmd['extract_cmd'] +  self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.feature_ini)
         shell_cmd(cmd)
         l.get().w.info("Colmap : Extract Done")
 
-        # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
-        cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
+        cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
+        # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
         shell_cmd(cmd)
         l.get().w.info("Colmap : Matcher Done")
 
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
-        # cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
-        cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.mapper_ini)
+        cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['mapper_param1'] + self.coldb_path + self.colmap_cmd['mapper_param2'] + imgpath + self.colmap_cmd['mapper_param3'] + outpath
+        # cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.mapper_ini)
         shell_cmd(cmd)
         result = 0
         l.get().w.info("Colmap : Mapper Done")
@@ -248,3 +253,69 @@ class Colmap(object) :
         image_path = os.path.join(self.root_path, 'images')
         subprocess.Popen([self.colmap_cmd['visualize_cmd'] + self.colmap_cmd['visualize_param1'] +  self.root_path + self.colmap_cmd['visualize_param2'] + self.coldb_path + self.colmap_cmd['visualize_param3'] + image_path], shell=True)
 
+
+    def modify_pair_table(self) :
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()    
+        cursur.execute('PRAGMA table_info(two_view_geometries)')
+        rows = cursur.fetchall()
+        need_alter = True
+        for row in rows : 
+            if 'image1' in row or 'image2' in row:
+                l.get().w.warn("Already altered table!")                
+                need_alter = False
+        
+        if need_alter == True :
+            colms = ['image1 TEXT', 'image2 TEXT']
+            for i, col in enumerate(colms) : 
+                cursur.execute('ALTER TABLE two_view_geometries ADD COLUMN ' + col)
+        
+        q = ('SELECT pair_id FROM two_view_geometries')
+        cursur.execute(q)
+        rows = cursur.fetchall()
+
+        for row in rows :
+            img1_id, img2_id = self.pair_id_to_image_ids(int(row[0]))
+            
+            qq = ('SELECT name FROM images wehere image_id = ?')
+            cursur.execute(qq, img1_id)
+            row = cursur.fetchone()
+            img1 = row[0]
+            qq = ('SELECT name FROM images wehere image_id = ?')
+            cursur.execute(qq, img2_id)
+            row = cursur.fetchone()
+            img2 = row[0]
+
+            q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
+            cursur.execute(q, (img1, img2, row[0]))
+            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row, img1, img2))
+
+        conn.close()
+        return 0            
+
+    def image_ids_to_pair_id(self, image_id1, image_id2):
+        if image_id1 > image_id2:
+            image_id1, image_id2 = image_id2, image_id1
+        return image_id1 * MAX_IMAGE_ID + image_id2
+
+
+    def pair_id_to_image_ids(self, pair_id):
+        print("received pair_id : ", pair_id)
+        image_id2 = pair_id % MAX_IMAGE_ID
+        image_id1 = (pair_id - image_id2) / MAX_IMAGE_ID
+        return image_id1, image_id2
+
+    def array_to_blob(self, array):
+        if IS_PYTHON3:
+            return array.tostring()
+        else:
+            return np.getbuffer(array)
+
+
+    def blob_to_array(self, blob, dtype, shape=(-1,)):
+        if IS_PYTHON3:
+            return np.fromstring(blob, dtype=dtype).reshape(*shape)
+        else:
+            return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+
+    

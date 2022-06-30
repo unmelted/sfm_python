@@ -61,7 +61,7 @@ class Commander(object) :
     def add_task(self, task, obj) :
         self.cmd_que.put((task, obj))
         self.index = DbManager.getInstance().getJobIndex() + 1
-        l.get().w.info("Alloc job id ".format(self.index))
+        l.get().w.info("Alloc job id {} ".format(self.index))
         DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
 
         return self.index
@@ -87,8 +87,12 @@ def analysis_mode(job_id) :
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     preset1.read_cameras()
     preset1.generate_points(answer='full')
-    preset1.calculate_real_error()
-    preset1.export(os.path.join(root_path, 'output'), job_id)
+    result = preset1.calculate_real_error()
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    # preset1.export(os.path.join(root_path, 'output'), job_id)
     # preset1.save_answer_image()
     return 0
 

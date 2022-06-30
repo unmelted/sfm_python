@@ -28,7 +28,7 @@ class Logger(object) :
             Logger.instance = Logger(['file', 'viewer', 'bot'])
         return Logger.instance
 
-    def __init__ (self, type, ip='127.0.0.1') :
+    def __init__ (self, type, ip='10.82.5.119') :
         self.w = logging.getLogger("autocalib")
         self.w.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')            
@@ -40,7 +40,7 @@ class Logger(object) :
             now = datetime.now()
             logname = os.path.join( log_dir, datetime.strftime(now, '%Y%m%d') + 'Calib.txt')            
             file_handler = logging.FileHandler(logname)
-            file_handler.setLevel(logging.INFO)            
+            file_handler.setLevel(logging.DEBUG)
             file_handler.setFormatter(formatter)
             self.w.addHandler(file_handler)
 

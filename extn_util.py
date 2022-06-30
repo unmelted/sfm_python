@@ -32,40 +32,24 @@ def export_points_mct(preset) :
         l.get().w.debug("name : {} ".format(preset.cameras[i].view.name))
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         _json = {}
-        _json['dsc_id'] = viewname
+        _json['dsc_id'] = viewname + '_'
 
-        _json['pts_2d'] = from_data['points'][i]['pts_2d']
-        _json['pts_3d'] = from_data['points'][i]['pts_3d']
+        if i < len(from_data['points']) :
+            _json['pts_2d'] = from_data['points'][i]['pts_2d']
+            _json['pts_3d'] = from_data['points'][i]['pts_3d']
+        else :
+            _json['pts_2d'] = {}
+            _json['pts_3d'] = {}
 
-        _json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_2d']['Upper']['IsEmpty'] = False
-        _json['pts_2d']['Upper']['X'] = -1.0
-        _json['pts_2d']['Upper']['Y'] = -1.0
-        _json['pts_2d']['Middle'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_2d']['Middle']['IsEmpty'] = False
-        _json['pts_2d']['Middle']['X'] = -1.0
-        _json['pts_2d']['Middle']['Y'] = -1.0
-        _json['pts_2d']['Lower'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_2d']['Lower']['IsEmpty'] = False
-        _json['pts_2d']['Lower']['X'] = -1.0
-        _json['pts_2d']['Lower']['Y'] = -1.0
-
-        _json['pts_3d']['Point1'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_3d']['Point1']['IsEmpty'] = False
-        _json['pts_3d']['Point1']['X'] = round(preset.cameras[i].pts[0][0], 2)
-        _json['pts_3d']['Point1']['Y'] = round(preset.cameras[i].pts[0][1], 2)
-        _json['pts_3d']['Point2'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_3d']['Point2']['IsEmpty'] = False
-        _json['pts_3d']['Point2']['X'] = round(preset.cameras[i].pts[1][0], 2)
-        _json['pts_3d']['Point2']['Y'] = round(preset.cameras[i].pts[1][1], 2)
-        _json['pts_3d']['Point3'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_3d']['Point3']['IsEmpty'] = False
-        _json['pts_3d']['Point3']['X'] = round(preset.cameras[i].pts[2][0], 2)
-        _json['pts_3d']['Point3']['Y'] = round(preset.cameras[i].pts[2][1], 2)
-        _json['pts_3d']['Point4'] = {"IsEmpty":None,"X":0,"Y":0}
-        _json['pts_3d']['Point4']['IsEmpty'] = False
-        _json['pts_3d']['Point4']['X'] = round(preset.cameras[i].pts[3][0], 2)
-        _json['pts_3d']['Point4']['Y'] = round(preset.cameras[i].pts[3][1], 2)
+        _json['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
+        _json['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
+        _json['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
+        _json['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
+        _json['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
+        _json['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
+        _json['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
+        _json['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
+        
         
         _json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
         _json['pts_swipe']['X1']=-1.0
@@ -108,21 +92,7 @@ def export_points_dm(preset, output_path, job_id) :
                 from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
                 from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
                 from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
-
-                from_data['points'][j]['pts_3d']['Point1']['X'] = preset.cameras[i].pts[0][0]
-                from_data['points'][j]['pts_3d']['Point1']['Y'] = preset.cameras[i].pts[0][1]
-                from_data['points'][j]['pts_3d']['Point2'] = {"IsEmpty":None,"X":0,"Y":0}
-                from_data['points'][j]['pts_3d']['Point2']['IsEmpty'] = False
-                from_data['points'][j]['pts_3d']['Point2']['X'] = preset.cameras[i].pts[1][0]
-                from_data['points'][j]['pts_3d']['Point2']['Y'] = preset.cameras[i].pts[1][1]
-                from_data['points'][j]['pts_3d']['Point3'] = {"IsEmpty":None,"X":0,"Y":0}
-                from_data['points'][j]['pts_3d']['Point3']['IsEmpty'] = False
-                from_data['points'][j]['pts_3d']['Point3']['X'] = preset.cameras[i].pts[2][0]
-                from_data['points'][j]['pts_3d']['Point3']['Y'] = preset.cameras[i].pts[2][1]
-                from_data['points'][j]['pts_3d']['Point4'] = {"IsEmpty":None,"X":0,"Y":0}
-                from_data['points'][j]['pts_3d']['Point4']['IsEmpty'] = False
-                from_data['points'][j]['pts_3d']['Point4']['X'] = preset.cameras[i].pts[3][0]
-                from_data['points'][j]['pts_3d']['Point4']['Y'] = preset.cameras[i].pts[3][1]                                
+                             
                 break;
 
         '''
