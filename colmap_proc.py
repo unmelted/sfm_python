@@ -321,6 +321,8 @@ class Colmap(object) :
             homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
             print("homo from answer point : ", homo_answer)
 
+            repro_points = cv2.perspectiveTransform(sec=answer[view1_name], m= homo)
+            print("repro_points : ", repro_points)
             break
 
         return 0
