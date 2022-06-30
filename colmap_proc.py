@@ -275,20 +275,21 @@ class Colmap(object) :
         rows = cursur.fetchall()
 
         for row in rows :
-            img1_id, img2_id = self.pair_id_to_image_ids(int(row[0]))
-            
-            qq = ('SELECT name FROM images wehere image_id = ?')
-            cursur.execute(qq, img1_id)
+            pair_id = int(row[0])
+            img1_id, img2_id = self.pair_id_to_image_ids(pair_id)
+            img1_id = (int(img1_id))
+            img2_id = (int(img2_id))
+            print("image id : ", img1_id , img2_id)
+            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img1_id,))
             row = cursur.fetchone()
             img1 = row[0]
-            qq = ('SELECT name FROM images wehere image_id = ?')
-            cursur.execute(qq, img2_id)
+            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img2_id,))
             row = cursur.fetchone()
             img2 = row[0]
 
             q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
-            cursur.execute(q, (img1, img2, row[0]))
-            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row, img1, img2))
+            cursur.execute(q, (img1, img2, pair_id))
+            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row[0], img1, img2))
 
         conn.close()
         return 0            
