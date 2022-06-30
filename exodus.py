@@ -87,11 +87,11 @@ def analysis_mode(job_id) :
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     preset1.read_cameras()
     preset1.generate_points(answer='full')
-    preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
-    # result = preset1.calculate_real_error()
-    # if result < 0 :
-    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-    #     return 0
+    # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
+    result = preset1.calculate_real_error()
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
 
     # preset1.export(os.path.join(root_path, 'output'), job_id)
     # preset1.save_answer_image()

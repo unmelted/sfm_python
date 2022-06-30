@@ -314,16 +314,14 @@ class Colmap(object) :
                 return -144
 
             homo = self.blob_to_array(row[0], np.float64, shape=(3,3))
-            print("homo from pair_table : ", homo)
             view1_name = get_viewname(cameras[i-1].view.name, ext)
-            view2_name = get_viewname(cameras[i].view.name, ext)
-            print("answer : ", answer[view1_name], answer[view2_name])
-            homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
-            print("homo from answer point : ", homo_answer)
+            # view2_name = get_viewname(cameras[i].view.name, ext)
+            # homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
+
             new_view1 = np.array([answer[view1_name]])
             repro_points = cv2.perspectiveTransform(src=new_view1, m=homo)[0]
             print("repro_points : ", repro_points)
-            break
+
 
         return 0
     
