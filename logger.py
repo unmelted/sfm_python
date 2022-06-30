@@ -40,7 +40,7 @@ class Logger(object) :
             now = datetime.now()
             logname = os.path.join( log_dir, datetime.strftime(now, '%Y%m%d') + 'Calib.txt')            
             file_handler = logging.FileHandler(logname)
-            file_handler.setLevel(logging.DEBUG)
+            file_handler.setLevel(logging.INFO)
             file_handler.setFormatter(formatter)
             self.w.addHandler(file_handler)
 

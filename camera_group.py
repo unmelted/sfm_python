@@ -56,6 +56,13 @@ class Group(object):
             self.pairs = Pair.create_pair(self.cameras)
             self.sfm = SFM(self.views, self.pairs)
 
+        filename = os.path.join(self.root_path, 'images', df.pts_file_name)
+        if list_from == 'pts_file' :
+            self.answer = import_answer(filename, 2)
+        elif list_from == 'colmap_db':
+            self.answer = import_answer(filename, 0)
+
+
         return 0
 
     def prepare_camera_list(self, list_from, group_id = 'Group1'):
@@ -142,6 +149,8 @@ class Group(object):
                     break
         
         self.colmap.modify_pair_table()  #test
+        self.colmap.make_sequentail_homography(self.cameras)
+
         return 0
     
     def run_sfm(self) :
@@ -191,13 +200,6 @@ class Group(object):
             break
 
     def generate_points(self, mode='colmap', answer='seed') :
-        filename = os.path.join(self.root_path, 'images', df.pts_file_name)
-
-        if answer == 'seed' :
-            self.answer = import_answer(filename, 2)
-        else :
-            self.answer = import_answer(filename, 0)
-
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :

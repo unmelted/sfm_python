@@ -1,6 +1,7 @@
 from socket import inet_aton
 import sys
 import os
+import cv2
 import time
 import threading
 import queue
@@ -294,6 +295,35 @@ class Colmap(object) :
         conn.close()
         return 0            
 
+    def make_sequential_homography(self, cameras, answer) :
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()
+
+        print("make sequential homography func start. ")
+        for i in range(1, cameras) :
+            q = ('SELECT H FROM two_view_geometries WHERE image1 = \'? and image2 = \'?')
+            cursur.execute(q + str(cameras[i-1].view.name) + '\'', str(cameras[i].view.name) + '\'')
+            row = cursur.fetchall()
+
+            if row == None:
+                l.get().w.error('no pair_id in db')                
+                return -144
+
+            if len(row) > 1 :
+                l.get().w.error("pair data is odd")
+                return -145
+
+            homo = self.blob_to_array(row[0], np.float64)
+            print("homo from pair_table : ", homo)
+
+            homo_answer, _ = cv2.findHomography(answer[cameras[i-1].view.name], answer[cameras[i].view.name], 1)
+            print("homo from answer point : ", homo_answer)
+
+            break
+
+        return 0
+    
+    
     def image_ids_to_pair_id(self, image_id1, image_id2):
         if image_id1 > image_id2:
             image_id1, image_id2 = image_id2, image_id1
