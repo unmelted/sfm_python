@@ -47,7 +47,9 @@ def get_err_msg(err_code) :
         -140 : "Convert model error ",
         -141 : "Camera info duplicated with image name",
         -142 : "There is no cameras in colmap db",
-        -142 : "Command Error during colmap process",
+        -143 : "Command Error during colmap process",
+        -144 : "No pair data in db",
+        -145 : "Pair data is odd",
 
         -201 : "Query job_is is ambigous",
 

@@ -1,6 +1,7 @@
 from socket import inet_aton
 import sys
 import os
+import cv2
 import time
 import threading
 import queue
@@ -275,24 +276,56 @@ class Colmap(object) :
         rows = cursur.fetchall()
 
         for row in rows :
-            img1_id, img2_id = self.pair_id_to_image_ids(int(row[0]))
-            
-            qq = ('SELECT name FROM images wehere image_id = ?')
-            cursur.execute(qq, img1_id)
+            pair_id = int(row[0])
+            img1_id, img2_id = self.pair_id_to_image_ids(pair_id)
+            img1_id = (int(img1_id))
+            img2_id = (int(img2_id))
+            print("image id : ", img1_id , img2_id)
+            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img1_id,))
             row = cursur.fetchone()
             img1 = row[0]
-            qq = ('SELECT name FROM images wehere image_id = ?')
-            cursur.execute(qq, img2_id)
+            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img2_id,))
             row = cursur.fetchone()
             img2 = row[0]
 
             q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
-            cursur.execute(q, (img1, img2, row[0]))
-            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row, img1, img2))
+            cursur.execute(q, (img1, img2, pair_id))
+            l.get().w.debug("pair_id {}  update 2 : {} {}".format(row[0], img1, img2))
 
         conn.close()
         return 0            
 
+    def make_sequential_homography(self, cameras, answer, ext) :
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()
+
+        print("make sequential homography func start. ")
+        for i in range(1, len(cameras)) :
+            str1 = '\'' + str(cameras[i-1].view.name) + '\''
+            str2 = '\'' + str(cameras[i].view.name) + '\''
+
+            q = ('SELECT H FROM two_view_geometries WHERE image1 = ' + str1 + ' and image2 = ' + str2)
+            print(q)
+            cursur.execute(q)
+            row = cursur.fetchone()
+
+            if row == None:
+                l.get().w.error('no pair_id in db')                
+                return -144
+
+            homo = self.blob_to_array(row[0], np.float64, shape=(3,3))
+            print("homo from pair_table : ", homo)
+            view1_name = get_viewname(cameras[i-1].view.name, ext)
+            view2_name = get_viewname(cameras[i].view.name, ext)
+            print("answer : ", answer[view1_name], answer[view2_name])
+            homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
+            print("homo from answer point : ", homo_answer)
+
+            break
+
+        return 0
+    
+    
     def image_ids_to_pair_id(self, image_id1, image_id2):
         if image_id1 > image_id2:
             image_id1, image_id2 = image_id2, image_id1
