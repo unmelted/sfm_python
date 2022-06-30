@@ -295,28 +295,30 @@ class Colmap(object) :
         conn.close()
         return 0            
 
-    def make_sequential_homography(self, cameras, answer) :
+    def make_sequential_homography(self, cameras, answer, ext) :
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()
 
         print("make sequential homography func start. ")
-        for i in range(1, cameras) :
-            q = ('SELECT H FROM two_view_geometries WHERE image1 = \'? and image2 = \'?')
-            cursur.execute(q + str(cameras[i-1].view.name) + '\'', str(cameras[i].view.name) + '\'')
-            row = cursur.fetchall()
+        for i in range(1, len(cameras)) :
+            str1 = '\'' + str(cameras[i-1].view.name) + '\''
+            str2 = '\'' + str(cameras[i].view.name) + '\''
+
+            q = ('SELECT H FROM two_view_geometries WHERE image1 = ' + str1 + ' and image2 = ' + str2)
+            print(q)
+            cursur.execute(q)
+            row = cursur.fetchone()
 
             if row == None:
                 l.get().w.error('no pair_id in db')                
                 return -144
 
-            if len(row) > 1 :
-                l.get().w.error("pair data is odd")
-                return -145
-
-            homo = self.blob_to_array(row[0], np.float64)
+            homo = self.blob_to_array(row[0], np.float64, shape=(3,3))
             print("homo from pair_table : ", homo)
-
-            homo_answer, _ = cv2.findHomography(answer[cameras[i-1].view.name], answer[cameras[i].view.name], 1)
+            view1_name = get_viewname(cameras[i-1].view.name, ext)
+            view2_name = get_viewname(cameras[i].view.name, ext)
+            print("answer : ", answer[view1_name], answer[view2_name])
+            homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
             print("homo from answer point : ", homo_answer)
 
             break

@@ -149,7 +149,6 @@ class Group(object):
                     break
         
         self.colmap.modify_pair_table()  #test
-        self.colmap.make_sequentail_homography(self.cameras)
 
         return 0
     
