@@ -40,6 +40,8 @@ class Group(object):
         self.colmap = None
         self.ext = None
 
+        self.cam_count = 0
+
     def create_group(self, root_path, run_mode, list_from='pts_file'):
         self.root_path = root_path
         self.run_mode = run_mode
@@ -99,6 +101,7 @@ class Group(object):
                 break 
 
             index += 1            
+        self.cam_count = len(self.cameras)
 
         return 0
 
@@ -155,7 +158,7 @@ class Group(object):
     
     def run_sfm(self) :
         if self.run_mode == 'colmap' :
-            result = self.colmap.recon_command()
+            result = self.colmap.recon_command(self.cam_count)
             if result < 0 :
                 l.get().w.error("Recon command error : {}".format(result))
                 return result 
