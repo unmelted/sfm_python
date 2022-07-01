@@ -45,7 +45,7 @@ class Commander(object) :
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
         DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query.upper())
 
-        if query == df.TaskCategory.AUTOCALIB_STATUS :
+        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
             status, result = DbManager.getInstance().getJobStatus(obj[0])
 
         elif query.upper() == df.TaskCategory.VISUALIZE.name :
@@ -86,14 +86,14 @@ def analysis_mode(job_id) :
     root_path = DbManager.getInstance().getRootPath(job_id)
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     preset1.read_cameras()
-    preset1.generate_points(answer='full')
+    # preset1.generate_points(answer='full')
     preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
-    # result = preset1.calculate_real_error()
-    # if result < 0 :
-    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-    #     return 0
+    result = preset1.calculate_real_error()
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
 
-    # preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.export(os.path.join(root_path, 'output'), job_id)
     # preset1.save_answer_image()
     return 0
 

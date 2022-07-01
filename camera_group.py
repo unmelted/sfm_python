@@ -57,10 +57,11 @@ class Group(object):
             self.sfm = SFM(self.views, self.pairs)
 
         filename = os.path.join(self.root_path, 'images', df.pts_file_name)
-        if list_from == 'pts_file' :
-            self.answer = import_answer(filename, 2)
-        elif list_from == 'colmap_db':
+
+        if list_from == 'colmap_db':
             self.answer = import_answer(filename, 0)
+        else :
+            self.answer = import_answer(filename, 2)
 
 
         return 0
@@ -218,7 +219,7 @@ class Group(object):
                         self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
                     else :
                         self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
-                    # 
+
                     # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                     # self.adjust.check_normal(self.cameras[i])
                     # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])

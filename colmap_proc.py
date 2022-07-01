@@ -104,7 +104,18 @@ class Colmap(object) :
         result = 0
         l.get().w.info("Colmap : Mapper Done")
         
+        result = self.check_solution()
         return result
+
+    def check_solution(self) :
+        model = glob.glob(os.path.join(self.root_path, 'sparse'))
+        if len(model) == 0 :
+            return -146
+        elif len(model) > 1 :
+            return -147
+        else :
+            return 0
+
 
     def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')
@@ -298,6 +309,8 @@ class Colmap(object) :
     def make_sequential_homography(self, cameras, answer, ext) :
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()
+        view_name = get_viewname(cameras[0].view.name, ext)
+        cameras[0].pts =  answer[view_name]
 
         print("make sequential homography func start. ")
         for i in range(1, len(cameras)) :
@@ -314,15 +327,20 @@ class Colmap(object) :
                 return -144
 
             homo = self.blob_to_array(row[0], np.float64, shape=(3,3))
-            print("homo from pair_table : ", homo)
             view1_name = get_viewname(cameras[i-1].view.name, ext)
-            view2_name = get_viewname(cameras[i].view.name, ext)
-            print("answer : ", answer[view1_name], answer[view2_name])
-            homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
-            print("homo from answer point : ", homo_answer)
+            # view2_name = get_viewname(cameras[i].view.name, ext)
+            # homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
+            print("prior pts : ", cameras[i-1].pts) 
+            print("prior answer ", answer[view1_name])
+            print("input pts : " , np.array(cameras[i-1].pts))
+            print("input answer : ", np.array(answer[view1_name]))
+                       
+            new_view1 = np.array([cameras[i-1].pts])
 
-            break
-
+            repro_points = cv2.perspectiveTransform(src=new_view1, m=homo)[0]
+            cameras[i].pts = repro_points
+            print("repro_points : ", cameras[i].pts)
+            
         return 0
     
     
