@@ -298,6 +298,8 @@ class Colmap(object) :
     def make_sequential_homography(self, cameras, answer, ext) :
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()
+        view_name = get_viewname(cameras[0].view.name, ext)
+        cameras[0].pts =  answer[view_name]
 
         print("make sequential homography func start. ")
         for i in range(1, len(cameras)) :
@@ -317,11 +319,16 @@ class Colmap(object) :
             view1_name = get_viewname(cameras[i-1].view.name, ext)
             # view2_name = get_viewname(cameras[i].view.name, ext)
             # homo_answer, _ = cv2.findHomography(answer[view1_name], answer[view2_name], 1)
+            print("prior pts : ", cameras[i-1].pts) 
+            print("prior answer ", answer[view1_name])
+            print("input pts : " , np.array(cameras[i-1].pts))
+            print("input answer : ", np.array(answer[view1_name]))
+                       
+            new_view1 = np.array([cameras[i-1].pts])
 
-            new_view1 = np.array([answer[view1_name]])
             repro_points = cv2.perspectiveTransform(src=new_view1, m=homo)[0]
-            cameras.pts = repro_points
-            print("repro_points : ", cameras.pts)
+            cameras[i].pts = repro_points
+            print("repro_points : ", cameras[i].pts)
             
         return 0
     

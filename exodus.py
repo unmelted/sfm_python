@@ -93,7 +93,7 @@ def analysis_mode(job_id) :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    # preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.export(os.path.join(root_path, 'output'), job_id)
     # preset1.save_answer_image()
     return 0
 
