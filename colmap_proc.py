@@ -104,7 +104,16 @@ class Colmap(object) :
         result = 0
         l.get().w.info("Colmap : Mapper Done")
         
+        result = self.check_soulution()
         return result
+
+    def check_solution(self) :
+        model = glob.lob(os.path.join(self.root_path, 'sparse'))
+        if len(model) == 0 :
+            return -146
+        elif len(model) > 1 :
+            return -147
+
 
     def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')
