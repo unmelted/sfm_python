@@ -120,7 +120,8 @@ class Colmap(object) :
             cursur.execute(q)
             rows = cursur.fetchall()
 
-            if len(rows) == cam_count :
+            if len(rows) != cam_count :
+                l.get().w.error("Colmap solution cam count is not match with images")
                 return -148
             else :
                 return 0
