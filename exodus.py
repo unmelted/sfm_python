@@ -45,7 +45,7 @@ class Commander(object) :
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
         DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query.upper())
 
-        if query == df.TaskCategory.AUTOCALIB_STATUS :
+        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
             status, result = DbManager.getInstance().getJobStatus(obj[0])
 
         elif query.upper() == df.TaskCategory.VISUALIZE.name :

@@ -51,7 +51,7 @@ def get_err_msg(err_code) :
         -144 : "No pair data in db",
         -145 : "Pair data is odd",
         -146 : "No solution",
-        -147 : "Multiple soulution "
+        -147 : "Multiple soulution ",
 
         -201 : "Query job_is is ambigous",
 
