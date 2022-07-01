@@ -320,9 +320,9 @@ class Colmap(object) :
 
             new_view1 = np.array([answer[view1_name]])
             repro_points = cv2.perspectiveTransform(src=new_view1, m=homo)[0]
-            print("repro_points : ", repro_points)
-
-
+            cameras.pts = repro_points
+            print("repro_points : ", cameras.pts)
+            
         return 0
     
     

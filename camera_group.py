@@ -214,11 +214,11 @@ class Group(object):
                 self.adjust.backprojection(self.cameras[i])
 
                 if i > 0 :
-                    # if i == 1 : 
-                    self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
-                    # else :
-                        # self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
-                    # 
+                    if i == 1 : 
+                        self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                    else :
+                        self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+
                     # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
                     # self.adjust.check_normal(self.cameras[i])
                     # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
