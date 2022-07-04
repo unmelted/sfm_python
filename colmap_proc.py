@@ -353,6 +353,7 @@ class Colmap(object) :
             cameras[i].pts = repro_points
             print("repro_points : ", cameras[i].pts)
             
+        conn.close()            
         return 0
     
     
@@ -381,4 +382,20 @@ class Colmap(object) :
         else:
             return np.frombuffer(blob, dtype=dtype).reshape(*shape)
 
-    
+
+    def getImagNamebyId(self, id) :
+        img_name = None
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()
+        q = ('SELECT name FROM images  WHERE image_id =  ' + str(id))
+        print(q)
+        cursur.execute(q)
+        row = cursur.fetchone()
+
+        if row == None:
+            l.get().w.error('no image name by image id')
+            return -149, None
+        print("image name {} by id {} ".format(row[0], id))
+
+        conn.close()
+        return 0, row[0]
