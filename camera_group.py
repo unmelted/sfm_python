@@ -152,7 +152,7 @@ class Group(object):
                 if self.limit != 0 and i == self.limit :
                     break
         
-        self.colmap.modify_pair_table()  #test
+        # self.colmap.modify_pair_table()  #test
 
         return 0
     
@@ -164,7 +164,7 @@ class Group(object):
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
-            self.colmap.modify_pair_table()
+            # self.colmap.modify_pair_table()
 
             return result
 
@@ -207,7 +207,7 @@ class Group(object):
         for i, cam in enumerate(self.cameras):
             cam_view = get_viewname(self.cameras[i].view.name, self.ext)
             if cam_view == viewname :
-                return 0, cam[i]
+                return 0, cam
             
         return -150, None
         
@@ -246,11 +246,11 @@ class Group(object):
 
             view_name1 = get_viewname(image_name1, self.ext)
             view_name2 = get_viewname(image_name2, self.ext)
-            err, c0 = self.get_camemra_byView(view_name1)
+            err, c0 = self.get_camera_byView(view_name1)
             if err < 0 :
                 return err
 
-            err, c1 = self.get_camemra_byView(view_name2)
+            err, c1 = self.get_camera_byView(view_name2)
             if err < 0 :
                 return err
 
@@ -261,9 +261,9 @@ class Group(object):
             for i, cam in enumerate(self.cameras):
                 viewname = get_viewname(self.cameras[i].view.name, self.ext)
                 if viewname != view_name1 and viewname != view_name2 :
-                    self.adjust.reporject_3D(base_3d, self.cameras[i])
+                    self.adjust.reproject_3D(base_3d, self.cameras[i])
 
-
+       
         else : 
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
@@ -291,6 +291,7 @@ class Group(object):
 
                 if self.limit != 0 and i == self.limit :
                     break                
+        return 0
 
 
     def calculate_real_error(self) :
