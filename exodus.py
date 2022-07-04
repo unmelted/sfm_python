@@ -75,7 +75,11 @@ class Commander(object) :
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
-    root_path = DbManager.getInstance().getRootPath(job_id)
+    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    if result < 0 :
+        l.get().w.error("visualize err: {} ".format(df.get_err_msg(result)))
+        return 0
+
     colmap = Colmap(root_path)
     colmap.visualize_colmap_model()
     return 0
