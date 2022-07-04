@@ -55,6 +55,7 @@ def get_err_msg(err_code) :
         -148 : "Camera in solution is partaily missed",
         -149 : "No image name by image id",
         -150 : "No camera by viewname",
+        -151 : "Job id is strange. No information",
         
         -201 : "Query job_is is ambigous",
 
