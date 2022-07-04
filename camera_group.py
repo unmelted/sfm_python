@@ -40,6 +40,8 @@ class Group(object):
         self.colmap = None
         self.ext = None
 
+        self.cam_count = 0
+
     def create_group(self, root_path, run_mode, list_from='pts_file'):
         self.root_path = root_path
         self.run_mode = run_mode
@@ -99,6 +101,7 @@ class Group(object):
                 break 
 
             index += 1            
+        self.cam_count = len(self.cameras)
 
         return 0
 
@@ -155,7 +158,7 @@ class Group(object):
     
     def run_sfm(self) :
         if self.run_mode == 'colmap' :
-            result = self.colmap.recon_command()
+            result = self.colmap.recon_command(self.cam_count)
             if result < 0 :
                 l.get().w.error("Recon command error : {}".format(result))
                 return result 
@@ -199,7 +202,17 @@ class Group(object):
             pair_obj.check_points_3d()
             break
 
+    def get_camera_byView(self, viewname) :
+        cam = None
+        for i, cam in enumerate(self.cameras):
+            cam_view = get_viewname(self.cameras[i].view.name, self.ext)
+            if cam_view == viewname :
+                return 0, cam[i]
+            
+        return -150, None
+        
     def generate_points(self, mode='colmap', answer='seed') :
+        '''
         if mode == 'colmap' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
@@ -216,13 +229,40 @@ class Group(object):
 
                 if i > 0 :
                     if i == 1 : 
-                        self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                        self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     else :
                         self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+        '''
+        if mode == 'colmap' :
+            #initial guess 
+            img_id1 = 2
+            img_id2 = 33
+            err, image_name1 = self.colmap.getImagNamebyId(img_id1)
+            if err < 0 :
+                return err
+            err, image_name2 = self.colmap.getImagNamebyId(img_id2)
+            if err < 0 :
+                return err
 
-                    # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
-                    # self.adjust.check_normal(self.cameras[i])
-                    # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
+            view_name1 = get_viewname(image_name1, self.ext)
+            view_name2 = get_viewname(image_name2, self.ext)
+            err, c0 = self.get_camemra_byView(view_name1)
+            if err < 0 :
+                return err
+
+            err, c1 = self.get_camemra_byView(view_name2)
+            if err < 0 :
+                return err
+
+            c0.pts = self.answer[view_name1]
+            c1.pts = self.answer[view_name2]
+
+            base_3d = self.adjust.make_3D(c0, c1)
+            for i, cam in enumerate(self.cameras):
+                viewname = get_viewname(self.cameras[i].view.name, self.ext)
+                if viewname != view_name1 and viewname != view_name2 :
+                    self.adjust.reporject_3D(base_3d, self.cameras[i])
+
 
         else : 
             for i, cam in enumerate(self.cameras):
@@ -234,14 +274,14 @@ class Group(object):
                     cam.pts = pts
                 
                 if i > 1 : 
-                    self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                    self.adjust.reproject_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     # if i == 2 : 
                     #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
                 self.adjust.backprojection(self.cameras[i])
 
                 if i > 0 :
                     # if i == 1 : 
-                    self.adjust.make_3D(self.cameras[i - 1], self.cameras[i])
+                    self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     # else :
                     #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
                     # # 

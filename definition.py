@@ -52,7 +52,11 @@ def get_err_msg(err_code) :
         -145 : "Pair data is odd",
         -146 : "No solution",
         -147 : "Multiple soulution ",
-
+        -148 : "Camera in solution is partaily missed",
+        -149 : "No image name by image id",
+        -150 : "No camera by viewname",
+        -151 : "Job id is strange. No information",
+        
         -201 : "Query job_is is ambigous",
 
         -301 : "There is no answer for err calculatiion"

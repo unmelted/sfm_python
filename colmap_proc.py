@@ -82,7 +82,7 @@ class Colmap(object) :
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
 
-    def recon_command(self) :
+    def recon_command(self, cam_count) :
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
         cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
@@ -104,17 +104,29 @@ class Colmap(object) :
         result = 0
         l.get().w.info("Colmap : Mapper Done")
         
-        result = self.check_solution()
+        result = self.check_solution(cam_count)
         return result
 
-    def check_solution(self) :
+    def check_solution(self, cam_count) :
         model = glob.glob(os.path.join(self.root_path, 'sparse'))
         if len(model) == 0 :
             return -146
         elif len(model) > 1 :
             return -147
         else :
-            return 0
+            conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+            cursur = conn.cursor()    
+            q = ('SELECT camera_id FROM cameras')
+            cursur.execute(q)
+            rows = cursur.fetchall()
+
+            if len(rows) != cam_count :
+                l.get().w.error("Colmap solution cam count is not match with images")
+                return -148
+            else :
+                return 0
+
+        return 0
 
 
     def cvt_colmap_model(self, ext):
@@ -341,6 +353,7 @@ class Colmap(object) :
             cameras[i].pts = repro_points
             print("repro_points : ", cameras[i].pts)
             
+        conn.close()            
         return 0
     
     
@@ -369,4 +382,20 @@ class Colmap(object) :
         else:
             return np.frombuffer(blob, dtype=dtype).reshape(*shape)
 
-    
+
+    def getImagNamebyId(self, id) :
+        img_name = None
+        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        cursur = conn.cursor()
+        q = ('SELECT name FROM images  WHERE image_id =  ' + str(id))
+        print(q)
+        cursur.execute(q)
+        row = cursur.fetchone()
+
+        if row == None:
+            l.get().w.error('no image name by image id')
+            return -149, None
+        print("image name {} by id {} ".format(row[0], id))
+
+        conn.close()
+        return 0, row[0]

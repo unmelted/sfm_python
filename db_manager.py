@@ -71,8 +71,10 @@ class DbManager(object) :
         q = self.sql_list['query_root_path'] + str(id) + self.sql_list['query_root_path_ex']
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
+        if rows == None:
+            return -151, None
                 
-        return rows[0][0]
+        return 0, rows[0][0]
 
     def getJobIndex(self) :
         index = 0

@@ -75,7 +75,11 @@ class Commander(object) :
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
-    root_path = DbManager.getInstance().getRootPath(job_id)
+    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    if result < 0 :
+        l.get().w.error("visualize err: {} ".format(df.get_err_msg(result)))
+        return 0
+
     colmap = Colmap(root_path)
     colmap.visualize_colmap_model()
     return 0
@@ -83,11 +87,19 @@ def visualize_mode(job_id) :
 def analysis_mode(job_id) :
     l.get().w.info("analysis  start : {} ".format(job_id))    
     preset1 = Group()
-    root_path = DbManager.getInstance().getRootPath(job_id)
+    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
     ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     preset1.read_cameras()
-    # preset1.generate_points(answer='full')
-    preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
+    result = preset1.generate_points(answer='full')
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     result = preset1.calculate_real_error()
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
@@ -136,7 +148,7 @@ class autocalib(object) :
         if( ret < 0 ):
             return finish(self.job_id, ret)
 
-        preset1.generate_points(answer='full')    
+        preset1.generate_points(answer='seed')    
         status_update(self.job_id, 90)            
         preset1.export(self.input_dir, self.job_id)
         status_update(self.job_id, 100)
