@@ -235,8 +235,10 @@ class Group(object):
         '''
         if mode == 'colmap' :
             #initial guess 
-            img_id1 = 2
-            img_id2 = 33
+            err, img_id1, img_id2 = get_initpair(self.root_path)
+            if err < 0 :
+                return err
+
             err, image_name1 = self.colmap.getImagNamebyId(img_id1)
             if err < 0 :
                 return err
