@@ -60,10 +60,10 @@ class Group(object):
 
         filename = os.path.join(self.root_path, 'images', df.pts_file_name)
 
-        if list_from == 'colmap_db':
-            self.answer = import_answer(filename, 0)
-        else :
-            self.answer = import_answer(filename, 2)
+        # if list_from == 'colmap_db': ## shoud block those after using init pari of colmap
+        self.answer = import_answer(filename, 0) 
+        # else :
+        #     self.answer = import_answer(filename, 2)
 
 
         return 0
@@ -211,9 +211,9 @@ class Group(object):
             
         return -150, None
         
-    def generate_points(self, mode='colmap', answer='seed') :
-        '''
-        if mode == 'colmap' :
+    def generate_points(self, mode='colmap_zero') :
+        
+        if mode == 'colmap_zero' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
                     viewname = get_viewname(self.cameras[i].view.name, self.ext)                   
@@ -232,9 +232,9 @@ class Group(object):
                         self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     else :
                         self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
-        '''
-        if mode == 'colmap' :
-            #initial guess 
+
+        elif mode == 'colmap_pair' :
+
             err, img_id1, img_id2 = get_initpair(self.root_path)
             if err < 0 :
                 return err

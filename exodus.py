@@ -92,9 +92,13 @@ def analysis_mode(job_id) :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    ret = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
+    result = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
     preset1.read_cameras()
-    result = preset1.generate_points(answer='full')
+    result = preset1.generate_points(mode='colmap_pair')
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
@@ -148,7 +152,7 @@ class autocalib(object) :
         if( ret < 0 ):
             return finish(self.job_id, ret)
 
-        preset1.generate_points(answer='seed')    
+        preset1.generate_points(mode='colmap_zero')    
         status_update(self.job_id, 90)            
         preset1.export(self.input_dir, self.job_id)
         status_update(self.job_id, 100)
