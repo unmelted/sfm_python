@@ -61,7 +61,7 @@ def get_err_msg(err_code) :
 
         -201 : "Query job_is is ambigous",
 
-        -301 : "There is no answer for err calculatiion"
+        -301 : "There is no answer for err calculation"
     }
 
     if err_code in msg_pair : 

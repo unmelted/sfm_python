@@ -293,6 +293,7 @@ class Colmap(object) :
             colms = ['image1 TEXT', 'image2 TEXT']
             for i, col in enumerate(colms) : 
                 cursur.execute('ALTER TABLE two_view_geometries ADD COLUMN ' + col)
+                cursur.execute('ALTER TABLE matches ADD COLUMN ' + col)                
         
         q = ('SELECT pair_id FROM two_view_geometries')
         cursur.execute(q)
@@ -303,7 +304,7 @@ class Colmap(object) :
             img1_id, img2_id = self.pair_id_to_image_ids(pair_id)
             img1_id = (int(img1_id))
             img2_id = (int(img2_id))
-            print("image id : ", img1_id , img2_id)
+            # print("image id : ", img1_id , img2_id)
             cursur.execute('SELECT name FROM images WHERE image_id = ?', (img1_id,))
             row = cursur.fetchone()
             img1 = row[0]
@@ -313,6 +314,8 @@ class Colmap(object) :
 
             q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
             cursur.execute(q, (img1, img2, pair_id))
+            q = ('UPDATE matches SET image1 = ?, image2 = ? WHERE pair_id = ?')            
+            cursur.execute(q, (img1, img2, pair_id))            
             l.get().w.debug("pair_id {}  update 2 : {} {}".format(row[0], img1, img2))
 
         conn.close()

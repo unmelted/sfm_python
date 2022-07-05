@@ -152,7 +152,7 @@ class Group(object):
                 if self.limit != 0 and i == self.limit :
                     break
         
-        # self.colmap.modify_pair_table()  #test
+        self.colmap.modify_pair_table()  #test
 
         return 0
     
@@ -222,7 +222,7 @@ class Group(object):
                     cam.pts = pts
                 
                 if i > 1 : 
-                    self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                    self.adjust.reproject_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     # if i == 2 : 
                     #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
                 self.adjust.backprojection(self.cameras[i])
@@ -258,11 +258,15 @@ class Group(object):
 
             c0.pts = self.answer[view_name1]
             c1.pts = self.answer[view_name2]
-
             base_3d = self.adjust.make_3D(c0, c1)
+            c0.pts_3D = base_3d
+            c1.pts_3D = base_3d
+
             for i, cam in enumerate(self.cameras):
                 viewname = get_viewname(self.cameras[i].view.name, self.ext)
-                if viewname != view_name1 and viewname != view_name2 :
+                if viewname == view_name1 or viewname == view_name2 :
+                    continue
+                else :
                     self.adjust.reproject_3D(base_3d, self.cameras[i])
 
        
@@ -307,8 +311,6 @@ class Group(object):
             return -301
 
         for i in range(len(self.cameras)) :
-            if i < 2 : 
-                continue
             s_error = 0
             viewname = get_viewname(self.cameras[i].view.name, self.ext)
 
