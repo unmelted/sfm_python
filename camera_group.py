@@ -258,11 +258,15 @@ class Group(object):
 
             c0.pts = self.answer[view_name1]
             c1.pts = self.answer[view_name2]
-
             base_3d = self.adjust.make_3D(c0, c1)
+            c0.pts_3D = base_3d
+            c1.pts_3D = base_3d
+
             for i, cam in enumerate(self.cameras):
                 viewname = get_viewname(self.cameras[i].view.name, self.ext)
-                if viewname != view_name1 and viewname != view_name2 :
+                if viewname == view_name1 or viewname == view_name2 :
+                    continue
+                else :
                     self.adjust.reproject_3D(base_3d, self.cameras[i])
 
        
