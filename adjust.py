@@ -226,9 +226,7 @@ class Adjust(object):
 
         for i in range(len(pts_3d)) :
             cv_pts = np.array(pts_3d[i]).T
-            print(cv_pts, cv_pts.shape)
             cv_pts = np.vstack([cv_pts, 1])
-            # cv_pts = cv_pts.reshape((4,1))
             reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
