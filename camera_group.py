@@ -222,7 +222,7 @@ class Group(object):
                     cam.pts = pts
                 
                 if i > 1 : 
-                    self.adjust.reproject_3D(self.cameras[i - 1], self.cameras[i])
+                    self.adjust.reproject_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     # if i == 2 : 
                     #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
                 self.adjust.backprojection(self.cameras[i])
