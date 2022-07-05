@@ -307,8 +307,6 @@ class Group(object):
             return -301
 
         for i in range(len(self.cameras)) :
-            if i < 2 : 
-                continue
             s_error = 0
             viewname = get_viewname(self.cameras[i].view.name, self.ext)
 

@@ -98,15 +98,15 @@ def analysis_mode(job_id) :
         return 0
 
     preset1.read_cameras()
-    result = preset1.generate_points(mode='colmap_zero')
-    if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
+    # result = preset1.generate_points(mode='colmap_zero')
+    # if result < 0 :
+    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+    #     return 0
 
-    result = preset1.calculate_real_error()
-    if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
+    # result = preset1.calculate_real_error()
+    # if result < 0 :
+    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+    #     return 0
 
     result = preset1.generate_points(mode='colmap_pair')
     if result < 0 :

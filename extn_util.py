@@ -377,13 +377,11 @@ def get_initpair(root_path) :
 
     initpair = open(filename, 'r')
     line = initpair.readlines()[0]
-    print(line)
     ids = line.split()
     print(ids)    
     if len(ids) < 2 :
         return -153, id1, id2
-        
-    print(ids)
+
     id1 = ids[0]
     id2 = ids[1]
     return 0, id1, id2
