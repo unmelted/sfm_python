@@ -42,25 +42,25 @@ jobid = api.model('jobid' , {
     'job_id' : fields.Integer,
 })
 
-@api.route('/exodus/autocalib/status')
+@api.route('/exodus/autocalib/status/<int:jobid>')
 @api.doc()
 class calib_status(Resource) : 
-    @api.expect(jobid)
-    def get(self, jid=jobid):
+    @api.expect()
+    def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor " , ip_addr)
 
-        parser = reqparse.RequestParser()
-        parser.add_argument('job_id', type=int)
-        args = parser.parse_args()
+        # parser = reqparse.RequestParser()
+        # parser.add_argument('job_id', type=int)
+        # args = parser.parse_args()
         
-        print(args['job_id'])
-        print("calib status  .. : " ,Commander.getInstance())        
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS.name, (args['job_id'], ip_addr))
+        print(jobid)
+        # print("calib status  .. : " ,Commander.getInstance())        
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS.name, (jobid, ip_addr))
         msg = df.get_err_msg(result)
 
         result = {
-            'job_id': args['job_id'],
+            'job_id': jobid,
             'status' : status,
             'result' : result,
             'message': msg,
