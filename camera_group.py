@@ -60,10 +60,10 @@ class Group(object):
 
         filename = os.path.join(self.root_path, 'images', df.pts_file_name)
 
-        if list_from == 'colmap_db':
-            self.answer = import_answer(filename, 0)
-        else :
-            self.answer = import_answer(filename, 2)
+        # if list_from == 'colmap_db': ## shoud block those after using init pari of colmap
+        self.answer = import_answer(filename, 0) 
+        # else :
+        #     self.answer = import_answer(filename, 2)
 
 
         return 0
@@ -152,7 +152,7 @@ class Group(object):
                 if self.limit != 0 and i == self.limit :
                     break
         
-        self.colmap.modify_pair_table()  #test
+        # self.colmap.modify_pair_table()  #test
 
         return 0
     
@@ -164,7 +164,7 @@ class Group(object):
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
-            self.colmap.modify_pair_table()
+            # self.colmap.modify_pair_table()
 
             return result
 
@@ -207,13 +207,13 @@ class Group(object):
         for i, cam in enumerate(self.cameras):
             cam_view = get_viewname(self.cameras[i].view.name, self.ext)
             if cam_view == viewname :
-                return 0, cam[i]
+                return 0, cam
             
         return -150, None
         
-    def generate_points(self, mode='colmap', answer='seed') :
-        '''
-        if mode == 'colmap' :
+    def generate_points(self, mode='colmap_zero') :
+        
+        if mode == 'colmap_zero' :
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
                     viewname = get_viewname(self.cameras[i].view.name, self.ext)                   
@@ -232,11 +232,13 @@ class Group(object):
                         self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
                     else :
                         self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
-        '''
-        if mode == 'colmap' :
-            #initial guess 
-            img_id1 = 2
-            img_id2 = 33
+
+        elif mode == 'colmap_pair' :
+
+            err, img_id1, img_id2 = get_initpair(self.root_path)
+            if err < 0 :
+                return err
+
             err, image_name1 = self.colmap.getImagNamebyId(img_id1)
             if err < 0 :
                 return err
@@ -246,11 +248,11 @@ class Group(object):
 
             view_name1 = get_viewname(image_name1, self.ext)
             view_name2 = get_viewname(image_name2, self.ext)
-            err, c0 = self.get_camemra_byView(view_name1)
+            err, c0 = self.get_camera_byView(view_name1)
             if err < 0 :
                 return err
 
-            err, c1 = self.get_camemra_byView(view_name2)
+            err, c1 = self.get_camera_byView(view_name2)
             if err < 0 :
                 return err
 
@@ -261,9 +263,9 @@ class Group(object):
             for i, cam in enumerate(self.cameras):
                 viewname = get_viewname(self.cameras[i].view.name, self.ext)
                 if viewname != view_name1 and viewname != view_name2 :
-                    self.adjust.reporject_3D(base_3d, self.cameras[i])
+                    self.adjust.reproject_3D(base_3d, self.cameras[i])
 
-
+       
         else : 
             for i, cam in enumerate(self.cameras):
                 if i == 0 or i == 1 :
@@ -291,6 +293,7 @@ class Group(object):
 
                 if self.limit != 0 and i == self.limit :
                     break                
+        return 0
 
 
     def calculate_real_error(self) :

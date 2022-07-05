@@ -365,3 +365,25 @@ def get_info(from_path, group_id, ext) :
     #result = get_caemra_info(cam_ids)
 
     return 0, image_names
+
+
+def get_initpair(root_path) :
+    id1 = -1
+    id2 = -1
+
+    filename = os.path.join(root_path, df.initpair_file)
+    if not os.path.exists(filename) :
+        return -152, id1, id2
+
+    initpair = open(filename, 'r')
+    line = initpair.readlines()[0]
+    print(line)
+    ids = line.split()
+    print(ids)    
+    if len(ids) < 2 :
+        return -153, id1, id2
+        
+    print(ids)
+    id1 = ids[0]
+    id2 = ids[1]
+    return 0, id1, id2

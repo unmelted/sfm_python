@@ -56,7 +56,9 @@ def get_err_msg(err_code) :
         -149 : "No image name by image id",
         -150 : "No camera by viewname",
         -151 : "Job id is strange. No information",
-        
+        -152 : "No initial pair info file",
+        -153 : "Initial pair info is not correct",
+
         -201 : "Query job_is is ambigous",
 
         -301 : "There is no answer for err calculatiion"
@@ -92,5 +94,6 @@ class DEFINITION(object) :
     matcher_ini = 'colmap_matcher.ini'    
     mapper_ini = 'colmap_mapper.ini'
 
+    initpair_file = 'init_pair.txt'
 
 

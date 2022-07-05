@@ -46,7 +46,7 @@ jobid = api.model('jobid' , {
 @api.doc()
 class calib_status(Resource) : 
     @api.expect(jobid)
-    def post(self, jid=jobid):
+    def get(self, jid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor " , ip_addr)
 

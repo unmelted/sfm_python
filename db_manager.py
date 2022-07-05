@@ -71,7 +71,8 @@ class DbManager(object) :
         q = self.sql_list['query_root_path'] + str(id) + self.sql_list['query_root_path_ex']
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
-        if rows == None:
+        print(rows)
+        if rows == None or len(rows) == 0:
             return -151, None
                 
         return 0, rows[0][0]
