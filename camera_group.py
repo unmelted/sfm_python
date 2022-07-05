@@ -152,7 +152,7 @@ class Group(object):
                 if self.limit != 0 and i == self.limit :
                     break
         
-        # self.colmap.modify_pair_table()  #test
+        self.colmap.modify_pair_table()  #test
 
         return 0
     
