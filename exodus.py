@@ -58,8 +58,8 @@ class Commander(object) :
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info("{} Task Generate start obj : {} {} ".format(self.index, obj[0], obj[1]))
-            print(obj[2])
-            print("data check!! ")
+            print("data check : ", obj[2])
+            generate_pts(obj[0], obj[1], obj[2])
 
         return status, result
 
@@ -90,7 +90,7 @@ def visualize_mode(job_id) :
     colmap.visualize_colmap_model()
     return 0
 
-def generate_pts(job_id) :
+def generate_pts(job_id, type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))    
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -109,13 +109,9 @@ def generate_pts(job_id) :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    result = preset1.calculate_real_error()
-    if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
-
     preset1.export(os.path.join(root_path, 'output'), job_id)
-    # preset1.save_answer_image()
+    status_update(job_id, 200)
+
     return 0
 
 def analysis_mode(job_id) :
@@ -192,14 +188,14 @@ class autocalib(object) :
             return finish(self.job_id, -101)
         status_update(self.job_id, 50)
 
-        ret = preset1.read_cameras()
-        if( ret < 0 ):
-            return finish(self.job_id, ret)
+        # ret = preset1.read_cameras()
+        # if( ret < 0 ):
+        #     return finish(self.job_id, ret)
 
-        preset1.generate_points(mode='colmap_zero')    
-        status_update(self.job_id, 90)            
-        preset1.export(self.input_dir, self.job_id)
-        status_update(self.job_id, 100)
+        # preset1.generate_points(mode='colmap_zero')    
+        # status_update(self.job_id, 90)            
+        # preset1.export(self.input_dir, self.job_id)
+        # status_update(self.job_id, 100)
 
         time_eg = time.time() - time_e1
         l.get().w.critical("Spending time of post matching (sec) : {}".format(time_eg))

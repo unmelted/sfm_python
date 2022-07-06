@@ -211,6 +211,44 @@ class Group(object):
             
         return -150, None
         
+    def generate_points_withbase(self, base_pts) :
+        if len(base_pts) < 8 :
+            return -301
+
+        err, img_id1, img_id2 = get_initpair(self.root_path)
+        if err < 0 :
+            return err
+
+        err, image_name1 = self.colmap.getImagNamebyId(img_id1)
+        if err < 0 :
+            return err
+        err, image_name2 = self.colmap.getImagNamebyId(img_id2)
+        if err < 0 :
+            return err
+
+        view_name1 = get_viewname(image_name1, self.ext)
+        view_name2 = get_viewname(image_name2, self.ext)
+        err, c0 = self.get_camera_byView(view_name1)
+        if err < 0 :
+            return err
+
+        err, c1 = self.get_camera_byView(view_name2)
+        if err < 0 :
+            return err
+
+        c0.pts = self.answer[view_name1]
+        c1.pts = self.answer[view_name2]
+        base_3d = self.adjust.make_3D(c0, c1)
+        c0.pts_3D = base_3d
+        c1.pts_3D = base_3d
+
+        for i, cam in enumerate(self.cameras):
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)
+            if viewname == view_name1 or viewname == view_name2 :
+                continue
+            else :
+                self.adjust.reproject_3D(base_3d, self.cameras[i])
+        
     def generate_points(self, mode='colmap_zero') :
         
         if mode == 'colmap_zero' :
@@ -308,7 +346,7 @@ class Group(object):
         t_error = 0
 
         if len(self.answer) < 3 :
-            return -301
+            return -501
 
         for i in range(len(self.cameras)) :
             s_error = 0
