@@ -43,18 +43,23 @@ class Commander(object) :
             return finish(obj, -21)                
 
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
-        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query.upper())
+        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query)
 
-        if query.upper() == df.TaskCategory.AUTOCALIB_STATUS.name :
+        if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj[0])
 
-        elif query.upper() == df.TaskCategory.VISUALIZE.name :
+        elif query == df.TaskCategory.VISUALIZE :
             status = 100
             result = visualize_mode(obj[0])
 
-        elif query.upper() == df.TaskCategory.ANALYSIS.name :
+        elif query == df.TaskCategory.ANALYSIS :
             status = 100
             result = analysis_mode(obj[0])
+
+        elif query == df.TaskCategory.GENERATE_PTS :
+            l.get().w.info("{} Task Generate start obj : {} {} ".format(self.index, obj[0], obj[1]))
+            print(obj[2])
+            print("data check!! ")
 
         return status, result
 
@@ -67,11 +72,12 @@ class Commander(object) :
         return self.index
 
     def processor(self, task, obj) :
+        l.get().w.info("Task Proc start : {} ".format(self.index))        
         if task == df.TaskCategory.AUTOCALIB :
-            l.get().w.info("Task Proc start : {} ".format(self.index))
-            l.get().w.info("Task Proc start obj : {} {} ".format(self.index, obj[0], obj[1]))
+            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
             ac = autocalib(obj[0], self.index, obj[1])
-            ac.run()
+            ac.run()         
+
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
@@ -82,6 +88,34 @@ def visualize_mode(job_id) :
 
     colmap = Colmap(root_path)
     colmap.visualize_colmap_model()
+    return 0
+
+def generate_pts(job_id) :
+    l.get().w.info("Generate pst start : {} ".format(job_id))    
+    preset1 = Group()
+    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    result = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    preset1.read_cameras()
+    result = preset1.generate_points(mode='colmap_pair')
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    result = preset1.calculate_real_error()
+    if result < 0 :
+        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        return 0
+
+    preset1.export(os.path.join(root_path, 'output'), job_id)
+    # preset1.save_answer_image()
     return 0
 
 def analysis_mode(job_id) :
