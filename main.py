@@ -2,7 +2,7 @@ import os
 from multiprocessing.dummy import Process
 from flask import Flask
 from flask import request, jsonify
-from flask_restx import fields, Resource, Api, reqparse
+from flask_restx import fields, Resource, Api, reqparse, marshal
 import json
 import definition as df
 from exodus import *
@@ -38,6 +38,42 @@ class calib_run(Resource) :
 
         return result
 
+
+gen_args = api.model('gen_args' , {
+    "job_id" : fields.Integer,
+    "type" : fields.String,    
+    "pts" : fields.List(fields.Float)
+})
+
+@api.route('/exodus/generate')
+@api.doc()
+class generate_points(Resource) :
+    @api.expect(gen_args)
+    # @api.marshal_with(gen_args)
+    def post(self, model=gen_args):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('job_id', type=int)
+        parser.add_argument('type', type=str)        
+        parser.add_argument('pts', default=list, action='append')
+        args = parser.parse_args()
+        job_id = args['job_id']
+        print(args['type'])
+        print(args['pts'])
+
+        status, result = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+
+        result = {
+            'job_id': job_id,
+            'status' : status,
+            'result' : result
+        }
+
+        return result
+
+
 jobid = api.model('jobid' , {
     'job_id' : fields.Integer,
 })
@@ -56,7 +92,7 @@ class calib_status(Resource) :
         
         print(jobid)
         # print("calib status  .. : " ,Commander.getInstance())        
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS.name, (jobid, ip_addr))
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
         msg = df.get_err_msg(result)
 
         result = {

@@ -7,8 +7,9 @@ class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
-    VISUALIZE               = 300
-    ANALYSIS                = 400
+    GENERATE_PTS            = 300
+    VISUALIZE               = 400
+    ANALYSIS                = 500
     FINISH                  = 1
 
 class CommandMode(Enum):
@@ -61,7 +62,9 @@ def get_err_msg(err_code) :
 
         -201 : "Query job_is is ambigous",
 
-        -301 : "There is no answer for err calculation"
+        -301 : "Base points should be inserted over 8",
+
+        -501 : "There is no answer for err calculation"
     }
 
     if err_code in msg_pair : 
