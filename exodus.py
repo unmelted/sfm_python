@@ -76,7 +76,6 @@ class Commander(object) :
         self.cmd_que.put((task, obj))
         self.index = DbManager.getInstance().getJobIndex() + 1
         l.get().w.info("Alloc job id {} ".format(self.index))
-        DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
 
         return self.index
 
@@ -87,6 +86,7 @@ class Commander(object) :
             ac = autocalib(obj[0], self.index, obj[1])
             ac.run()         
 
+            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
@@ -106,22 +106,27 @@ def get_pair(job_id) :
 
 
 def generate_pts(job_id, type, base_pts) :
-    l.get().w.info("Generate pst start : {} ".format(job_id))    
+    l.get().w.info("Generate pst start : {} ".format(job_id))
+    if len(base_pts) < 16 :
+        return finish_query(job_id, -301)
+    else :
+        for val in base_pts :
+            if val < 0 :
+                return finish_query(job_id, -302)
+                
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0 :
-        return finish(job_id, result, 2)
+        return finish_query(job_id, result)
 
     result = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return result
+        return finish_query(job_id, result)
 
     preset1.read_cameras()
     result = preset1.generate_points(base_pts=None)
     if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return result
+        return finish_query(job_id, result)                
 
     preset1.export(os.path.join(root_path, 'output'), job_id)
     status_update(job_id, 200)

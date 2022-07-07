@@ -62,8 +62,8 @@ def get_err_msg(err_code) :
 
         -201 : "Query job_is is ambigous",
 
-        -301 : "Base points should be inserted over 8",
-
+        -301 : "Base points should be inserted 16 points",
+        -301 : "Base points should be greater than 0",
         -501 : "There is no answer for err calculation"
     }
 

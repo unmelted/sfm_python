@@ -218,7 +218,7 @@ class Group(object):
         if err < 0 :
             return err
 
-        for i, cam in enumerate(self.cameras):
+        for i in range(self.cameras):
             viewname = get_viewname(self.cameras[i].view.name, self.ext)            
             if viewname == viewname1 or viewname == viewname2 :
                 continue
@@ -268,8 +268,10 @@ class Group(object):
             pts1 = self.answer[viewname1]
             pts2 = self.answer[viewname2]
         elif answer_from == 'input' :
-            pts1 = base_pts
-            pts2 = base_pts
+            base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
+            base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
+            pts1 = np.array(base1)
+            pts2 = np.array(base2)
 
         c0.pts = pts1
         c1.pts = pts2
