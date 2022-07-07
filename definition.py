@@ -2,14 +2,17 @@ import os
 from enum import Enum
 import logging
 
+from extn_util import get_initpair
+
 
 class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
     GENERATE_PTS            = 300
-    VISUALIZE               = 400
-    ANALYSIS                = 500
+    GET_PAIR                = 400
+    VISUALIZE               = 500
+    ANALYSIS                = 600
     FINISH                  = 1
 
 class CommandMode(Enum):

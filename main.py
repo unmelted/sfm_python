@@ -85,10 +85,6 @@ class calib_status(Resource) :
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor " , ip_addr)
-
-        # parser = reqparse.RequestParser()
-        # parser.add_argument('job_id', type=int)
-        # args = parser.parse_args()
         
         print(jobid)
         # print("calib status  .. : " ,Commander.getInstance())        
@@ -104,6 +100,27 @@ class calib_status(Resource) :
 
         return result
 
+
+@api.route('/exodus/autocalib/getpair/<int:jobid>')
+@api.doc()
+class get_pair(Resource) : 
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
+        
+        print(jobid)
+        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
+            'status' : status,
+            'result' : result,
+            'message': msg,
+        }
+
+        return result
 
 analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
