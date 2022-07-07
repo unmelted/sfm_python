@@ -211,132 +211,71 @@ class Group(object):
             
         return -150, None
         
-    def generate_points_withbase(self, base_pts) :
-        if len(base_pts) < 8 :
-            return -301
+        
+    def generate_points(self, base_pts=None, mode='zero') :
 
-        err, img_id1, img_id2 = get_initpair(self.root_path)
+        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(pair_type=df.DEFINITION.init_pair_mode, answer_from=df.DEFINITION.answer_from, base_pts=base_pts)
+
         if err < 0 :
             return err
-
-        err, image_name1 = self.colmap.getImagNamebyId(img_id1)
-        if err < 0 :
-            return err
-        err, image_name2 = self.colmap.getImagNamebyId(img_id2)
-        if err < 0 :
-            return err
-
-        view_name1 = get_viewname(image_name1, self.ext)
-        view_name2 = get_viewname(image_name2, self.ext)
-        err, c0 = self.get_camera_byView(view_name1)
-        if err < 0 :
-            return err
-
-        err, c1 = self.get_camera_byView(view_name2)
-        if err < 0 :
-            return err
-
-        c0.pts = self.answer[view_name1]
-        c1.pts = self.answer[view_name2]
-        base_3d = self.adjust.make_3D(c0, c1)
-        c0.pts_3D = base_3d
-        c1.pts_3D = base_3d
 
         for i, cam in enumerate(self.cameras):
-            viewname = get_viewname(self.cameras[i].view.name, self.ext)
-            if viewname == view_name1 or viewname == view_name2 :
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
+            if viewname == viewname1 or viewname == viewname2 :
                 continue
             else :
-                self.adjust.reproject_3D(base_3d, self.cameras[i])
-        
-    def generate_points(self, mode='colmap_zero') :
-        
-        if mode == 'colmap_zero' :
-            for i, cam in enumerate(self.cameras):
-                if i == 0 or i == 1 :
-                    viewname = get_viewname(self.cameras[i].view.name, self.ext)                   
-                    pts = self.answer[viewname]
-                    l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
-                    cam.pts = pts
-                
-                if i > 1 : 
-                    self.adjust.reproject_3D_byCam(self.cameras[i - 1], self.cameras[i])
-                    # if i == 2 : 
-                    #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
-                self.adjust.backprojection(self.cameras[i])
+                self.adjust.reproject_3D(pts_3d, self.cameras[i])
 
-                if i > 0 :
-                    if i == 1 : 
-                        self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
-                    else :
-                        self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
+        return 0
 
-        elif mode == 'colmap_pair' :
+    def make_seed_answer(self, pair_type='zero', answer_from='pts', base_pts= None) :
+        viewname1 = None
+        viewname2 = None
+        c0 = None
+        c1 = None
+        err = 0
+        _3d = None
 
+        if type == 'zero' :
+            viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
+            viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
+            c0 = self.cameras[0]
+            c1 = self.cameras[1]
+        elif type == 'pair' :
             err, img_id1, img_id2 = get_initpair(self.root_path)
             if err < 0 :
-                return err
+                return err, None, None, None
 
             err, image_name1 = self.colmap.getImagNamebyId(img_id1)
             if err < 0 :
-                return err
+                return err, None
             err, image_name2 = self.colmap.getImagNamebyId(img_id2)
             if err < 0 :
-                return err
+                return err, None, None, None
 
             view_name1 = get_viewname(image_name1, self.ext)
             view_name2 = get_viewname(image_name2, self.ext)
             err, c0 = self.get_camera_byView(view_name1)
             if err < 0 :
-                return err
+                return err, None, None, None
 
             err, c1 = self.get_camera_byView(view_name2)
             if err < 0 :
-                return err
+                return err, None, None, None
 
-            c0.pts = self.answer[view_name1]
-            c1.pts = self.answer[view_name2]
-            base_3d = self.adjust.make_3D(c0, c1)
-            c0.pts_3D = base_3d
-            c1.pts_3D = base_3d
 
-            for i, cam in enumerate(self.cameras):
-                viewname = get_viewname(self.cameras[i].view.name, self.ext)
-                if viewname == view_name1 or viewname == view_name2 :
-                    continue
-                else :
-                    self.adjust.reproject_3D(base_3d, self.cameras[i])
+        if answer_from == 'pts' :
+            pts1 = self.answer[viewname1]
+            pts2 = self.answer[viewname1]
+        elif answer_from == 'input' :
+            pts1 = base_pts
+            pts2 = base_pts
 
-       
-        else : 
-            for i, cam in enumerate(self.cameras):
-                if i == 0 or i == 1 :
-                    viewname = get_viewname(self.cameras[i].view.name, self.ext)
+        c0.pts = pts1
+        c1.pts = pts2
+        _3d = self.adjust.make_3D(c0, c1)
 
-                    pts = self.answer[viewname]
-                    l.get().w.debug(" generate_points name {} \n {} ".format(self.cameras[i].view.name, pts))
-                    cam.pts = pts
-                
-                if i > 1 : 
-                    self.adjust.reproject_3D_byCam(self.cameras[i - 1], self.cameras[i])
-                    # if i == 2 : 
-                    #     self.adjust.find_homography(self.answer[self.cameras[i].view.name], self.cameras[i])
-                self.adjust.backprojection(self.cameras[i])
-
-                if i > 0 :
-                    # if i == 1 : 
-                    self.adjust.make_3D_byCam(self.cameras[i - 1], self.cameras[i])
-                    # else :
-                    #     self.cameras[i].pts_3D = self.cameras[i - 1].pts_3D
-                    # # 
-                    # self.adjust.reproject_3D_only(self.cameras[i -1], self.cameras[i])                
-                    # self.adjust.check_normal(self.cameras[i])
-                    # self.adjust.backprojection(self.cameras[i - 1], self.cameras[i])
-
-                if self.limit != 0 and i == self.limit :
-                    break                
-        return 0
-
+        return err, _3d, viewname1, viewname2
 
     def calculate_real_error(self) :
 

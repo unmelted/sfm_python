@@ -80,7 +80,10 @@ class DEFINITION(object) :
     base_index = 1000
     run_mode = 'colmap'
     cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
-    
+
+    init_pair_mode = 'pair' # zero : just #0, #1 camera, pair : selected camera by colmap
+    answer_from = 'pts' # pts : UserPointData.pts , input : UserInput through web    
+
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
     main_db_name = 'autocalib.db'
