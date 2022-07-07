@@ -206,6 +206,8 @@ class Adjust(object):
             # print("error " , error1, error2)
             pts_3d.append(np.array(_3d).T)        
 
+        c0.pts_3D = pts_3d
+        c1.pts_3D = pts_3d        
         print(pts_3d)
         return pts_3d
 

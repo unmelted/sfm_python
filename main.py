@@ -63,12 +63,12 @@ class generate_points(Resource) :
         print(args['type'])
         print(args['pts'])
 
-        status, result = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        status, err, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
 
         result = {
             'job_id': job_id,
             'status' : status,
-            'result' : result
+            'result' : err
         }
 
         return result
@@ -85,14 +85,10 @@ class calib_status(Resource) :
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor " , ip_addr)
-
-        # parser = reqparse.RequestParser()
-        # parser.add_argument('job_id', type=int)
-        # args = parser.parse_args()
         
         print(jobid)
         # print("calib status  .. : " ,Commander.getInstance())        
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
         msg = df.get_err_msg(result)
 
         result = {
@@ -104,6 +100,35 @@ class calib_status(Resource) :
 
         return result
 
+
+@api.route('/exodus/autocalib/getpair/<int:jobid>')
+@api.doc()
+class get_pair(Resource) : 
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)        
+        print(jobid)
+
+        pair1 = None
+        pair2 = None
+
+        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, (jobid, ip_addr))
+        msg = df.get_err_msg(status)
+        if result == 0 :
+            pair1 = contents[0]
+            pair2 = contents[1]
+            print("returned pair image : ", pair1, pair2)
+
+        result = {
+            'job_id': jobid,
+            'result' : result,
+            'message': msg,
+            'first_image' : pair1,
+            'second_image' : pair2,
+        }
+
+        return result
 
 analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
@@ -125,7 +150,7 @@ class calib_analysis(Resource) :
         
         print(args['job_id'])
         print(args['mode'])
-        result = Commander.getInstance().send_query( args['mode'], (args['job_id'], ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr))
 
         msg = df.get_err_msg(result)
         result = {
@@ -154,7 +179,7 @@ class read_config(Resource) :
         args = parser.parse_args()
         
         print(args['config_file'])
-        result = Commander.getInstance().send_query(args['config_file'], ip_addr)
+        status, result, _ = Commander.getInstance().send_query(args['config_file'], ip_addr)
 
         result = {
             'result' : result,

@@ -2,14 +2,14 @@ import os
 from enum import Enum
 import logging
 
-
 class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
     AUTOCALIB_STATUS        = 200
     GENERATE_PTS            = 300
-    VISUALIZE               = 400
-    ANALYSIS                = 500
+    GET_PAIR                = 400
+    VISUALIZE               = 500
+    ANALYSIS                = 600
     FINISH                  = 1
 
 class CommandMode(Enum):
@@ -62,8 +62,10 @@ def get_err_msg(err_code) :
 
         -201 : "Query job_is is ambigous",
 
-        -301 : "Base points should be inserted over 8",
-
+        -301 : "Base points should be inserted 16 points",
+        -302 : "Base points should be greater than 0",
+        -303 : "Answer pts can't refer (no answer pts)",
+        
         -501 : "There is no answer for err calculation"
     }
 
@@ -80,7 +82,10 @@ class DEFINITION(object) :
     base_index = 1000
     run_mode = 'colmap'
     cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
-    
+
+    init_pair_mode = 'pair' # zero : just #0, #1 camera, pair : selected camera by colmap
+    answer_from = 'input' # pts : UserPointData.pts , input : UserInput through web    
+
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'
     main_db_name = 'autocalib.db'
