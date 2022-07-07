@@ -214,12 +214,18 @@ class Group(object):
         
     def generate_points(self, job_id, base_pts=None) :
 
+        if df.answer_from == 'input' and base_pts == None :
+            df.answer_from = 'pts' #for analysis mode
+        
+        if df.answer_from == 'pts' and self.answer == None:
+            return -303
+            
         err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
             return err
 
-        for i in range(self.cameras):
+        for i in range(len(self.cameras)):
             viewname = get_viewname(self.cameras[i].view.name, self.ext)            
             if viewname == viewname1 or viewname == viewname2 :
                 continue

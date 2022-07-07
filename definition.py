@@ -63,7 +63,9 @@ def get_err_msg(err_code) :
         -201 : "Query job_is is ambigous",
 
         -301 : "Base points should be inserted 16 points",
-        -301 : "Base points should be greater than 0",
+        -302 : "Base points should be greater than 0",
+        -303 : "Answer pts can't refer (no answer pts)",
+        
         -501 : "There is no answer for err calculation"
     }
 
@@ -82,7 +84,7 @@ class DEFINITION(object) :
     cam_list = 'image_folder'     #list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']    
 
     init_pair_mode = 'pair' # zero : just #0, #1 camera, pair : selected camera by colmap
-    answer_from = 'pts' # pts : UserPointData.pts , input : UserInput through web    
+    answer_from = 'input' # pts : UserPointData.pts , input : UserInput through web    
 
     pts_file_name = 'UserPointData.pts'
     calib_sql_file = 'calib_sql.json'

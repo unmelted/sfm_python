@@ -102,12 +102,15 @@ def visualize_mode(job_id) :
 
 def generate_pts(job_id, type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))
+    float_base = []
     if len(base_pts) < 16 :
         return finish_query(job_id, -301)
     else :
-        for val in base_pts :
-            if val < 0 :
+        for val in base_pts :            
+            if float(val) < 0 :
                 return finish_query(job_id, -302)
+            else :
+                float_base.append(float(val))
 
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -119,7 +122,7 @@ def generate_pts(job_id, type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, base_pts=None)
+    result = preset1.generate_points(job_id, base_pts=float_base)
     if result < 0 :
         return finish_query(job_id, result)                
 
@@ -152,7 +155,7 @@ def analysis_mode(job_id) :
     #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
     #     return 0
 
-    result = preset1.generate_points()
+    result = preset1.generate_points(job_id)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
@@ -239,7 +242,8 @@ class autocalib(object) :
         l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
         DbManager.getInstance().update('command', image_pair1=image1, image_pair2=image2, job_id=self.job_id)
     
-
+        return 0
+        
     def checkDataValidity(self) :
         if self.mode == df.CommandMode.VISUALIZE or  \
             self.mode == 'visualize' or \
