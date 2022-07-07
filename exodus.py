@@ -104,7 +104,7 @@ def generate_pts(job_id, type, base_pts) :
         return 0
 
     preset1.read_cameras()
-    result = preset1.generate_points(mode='colmap_pair')
+    result = preset1.generate_points(base_pts=None, mode='pair')
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
