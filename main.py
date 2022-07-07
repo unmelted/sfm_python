@@ -63,7 +63,7 @@ class generate_points(Resource) :
         print(args['type'])
         print(args['pts'])
 
-        status, err = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        status, err, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
 
         result = {
             'job_id': job_id,
@@ -150,7 +150,7 @@ class calib_analysis(Resource) :
         
         print(args['job_id'])
         print(args['mode'])
-        result = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr))
 
         msg = df.get_err_msg(result)
         result = {
@@ -179,7 +179,7 @@ class read_config(Resource) :
         args = parser.parse_args()
         
         print(args['config_file'])
-        result = Commander.getInstance().send_query(args['config_file'], ip_addr)
+        status, result, _ = Commander.getInstance().send_query(args['config_file'], ip_addr)
 
         result = {
             'result' : result,
