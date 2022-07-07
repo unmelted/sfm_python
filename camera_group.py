@@ -58,14 +58,6 @@ class Group(object):
             self.pairs = Pair.create_pair(self.cameras)
             self.sfm = SFM(self.views, self.pairs)
 
-        filename = os.path.join(self.root_path, 'images', df.pts_file_name)
-
-        # if list_from == 'colmap_db': ## shoud block those after using init pari of colmap
-        self.answer = import_answer(filename, 0) 
-        # else :
-        #     self.answer = import_answer(filename, 2)
-
-
         return 0
 
     def prepare_camera_list(self, list_from, group_id = 'Group1'):
@@ -219,7 +211,7 @@ class Group(object):
         
         if df.answer_from == 'pts' and self.answer == None:
             return -303
-            
+
         err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
@@ -263,8 +255,11 @@ class Group(object):
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
         if answer_from == 'pts' :
+            filename = os.path.join(self.root_path, 'images', df.pts_file_name)
+            self.answer = import_answer(filename, 0) 
             pts1 = self.answer[viewname1]
             pts2 = self.answer[viewname2]
+            
         elif answer_from == 'input' :
             base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
             base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
