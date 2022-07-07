@@ -214,7 +214,7 @@ class Group(object):
         
     def generate_points(self, base_pts=None, mode='zero') :
 
-        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(pair_type=df.DEFINITION.init_pair_mode, answer_from=df.DEFINITION.answer_from, base_pts=base_pts)
+        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
             return err
@@ -236,12 +236,12 @@ class Group(object):
         err = 0
         _3d = None
 
-        if type == 'zero' :
+        if pair_type == 'zero' :
             viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
             viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
             c0 = self.cameras[0]
             c1 = self.cameras[1]
-        elif type == 'pair' :
+        elif pair_type == 'pair' :
             err, img_id1, img_id2 = get_initpair(self.root_path)
             if err < 0 :
                 return err, None, None, None
@@ -252,17 +252,18 @@ class Group(object):
             err, image_name2 = self.colmap.getImagNamebyId(img_id2)
             if err < 0 :
                 return err, None, None, None
-
-            view_name1 = get_viewname(image_name1, self.ext)
-            view_name2 = get_viewname(image_name2, self.ext)
-            err, c0 = self.get_camera_byView(view_name1)
+            print(image_name1, image_name2)
+            viewname1 = get_viewname(image_name1, self.ext)
+            viewname2 = get_viewname(image_name2, self.ext)
+            err, c0 = self.get_camera_byView(viewname1)
             if err < 0 :
                 return err, None, None, None
 
-            err, c1 = self.get_camera_byView(view_name2)
+            err, c1 = self.get_camera_byView(viewname2)
             if err < 0 :
                 return err, None, None, None
 
+        l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
         if answer_from == 'pts' :
             pts1 = self.answer[viewname1]
