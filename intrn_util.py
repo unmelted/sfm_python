@@ -35,10 +35,15 @@ def finish(job_id, result) :
     DbManager.getInstance().update('command', status=100, result_msg=msg, result_id=result, job_id=job_id)
     return result
 
-def init_pair_update(job_id, image1, image2) :
-    l.get().w.info("JOB_ID: {} update initial pair {} {}".format(job_id, image1, image2))
-    DbManager.getInstance().update('command', image_pair1=image1, image_pair2=image2, job_id=job_id)
-
+def get_pair(job_id) :
+    l.get().w.info("GetPair start : {} ".format(job_id))    
+    result, image_name1, image_name2 = DbManager.getInstance().getPair(job_id)
+    if result < 0 :
+        return finish_querys(job_id, result, 2)
+    else : 
+        return 0, image_name1, image_name2
+    
+    i
 def check_image_format(path) :
     flist = glob.glob(os.path.join(path, 'images', '*'))
     for i in flist :

@@ -165,6 +165,7 @@ class Group(object):
             if result < 0 :
                 return result
 
+            self.colmap.modify_pair_table()
             return result
 
         elif self.run_mode == 'off' : 
@@ -211,9 +212,9 @@ class Group(object):
         return -150, None
         
         
-    def generate_points(self, base_pts=None) :
+    def generate_points(self, job_id, base_pts=None) :
 
-        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
+        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
             return err
@@ -227,7 +228,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, pair_type='zero', answer_from='pts', base_pts= None) :
+    def make_seed_answer(self, job_id, pair_type='zero', answer_from='pts', base_pts= None) :
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -241,17 +242,8 @@ class Group(object):
             c0 = self.cameras[0]
             c1 = self.cameras[1]
         elif pair_type == 'pair' :
-            err, img_id1, img_id2 = get_initpair(self.root_path)
-            if err < 0 :
-                return err, None, None, None
-
-            err, image_name1 = self.colmap.getImagNamebyId(img_id1)
-            if err < 0 :
-                return err, None
-            err, image_name2 = self.colmap.getImagNamebyId(img_id2)
-            if err < 0 :
-                return err, None, None, None
-            print(image_name1, image_name2)
+            result, image_name1, image_name2 = get_pair(job_id)
+            
             viewname1 = get_viewname(image_name1, self.ext)
             viewname2 = get_viewname(image_name2, self.ext)
             err, c0 = self.get_camera_byView(viewname1)

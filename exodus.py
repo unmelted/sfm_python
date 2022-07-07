@@ -99,11 +99,6 @@ def visualize_mode(job_id) :
     colmap.visualize_colmap_model()
     return 0
 
-def get_pair(job_id) :
-    l.get().w.info("GetPair start : {} ".format(job_id))    
-    result, image_name1, image_name2 = DbManager.getInstance().getPair(job_id)
-    return 0, image_name1, image_name2
-
 
 def generate_pts(job_id, type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))
@@ -113,7 +108,7 @@ def generate_pts(job_id, type, base_pts) :
         for val in base_pts :
             if val < 0 :
                 return finish_query(job_id, -302)
-                
+
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0 :
@@ -124,7 +119,7 @@ def generate_pts(job_id, type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(base_pts=None)
+    result = preset1.generate_points(job_id, base_pts=None)
     if result < 0 :
         return finish_query(job_id, result)                
 
@@ -207,8 +202,9 @@ class autocalib(object) :
             return finish(self.job_id, -101)
         status_update(self.job_id, 80)
 
-        img1, img2 = preset1.colmap.modify_pair_table()
-        init_pair_update(self.job_id, img1, img2)
+        ret = self.init_pair_update(preset1.colmap)
+        if( ret < 0 ):
+            return finish(self.job_id, ret)
         status_update(self.job_id, 100)
 
         # ret = preset1.read_cameras()
@@ -227,6 +223,22 @@ class autocalib(object) :
 
         return 0
 
+
+    def init_pair_update(self, cm) :
+        err, img_id1, img_id2 = get_initpair(self.root_dir)
+        if err < 0 :
+            return err
+
+        err, image1 = cm.getImagNamebyId(img_id1)
+        if err < 0 :
+            return err
+        err, image2 = cm.getImagNamebyId(img_id2)
+        if err < 0 :
+            return err
+            
+        l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
+        DbManager.getInstance().update('command', image_pair1=image1, image_pair2=image2, job_id=self.job_id)
+    
 
     def checkDataValidity(self) :
         if self.mode == df.CommandMode.VISUALIZE or  \
