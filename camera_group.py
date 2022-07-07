@@ -52,7 +52,7 @@ class Group(object):
             return result
 
         if self.run_mode == 'colmap':
-            self.colmap = Colmap(self.root_path)            
+            self.colmap = Colmap(self.root_path)
         else :
             self.K = np.loadtxt(os.path.join(self.root_path, 'images', 'K.txt'))
             self.pairs = Pair.create_pair(self.cameras)
@@ -152,8 +152,6 @@ class Group(object):
                 if self.limit != 0 and i == self.limit :
                     break
         
-        self.colmap.modify_pair_table()  #test
-
         return 0
     
     def run_sfm(self) :
@@ -164,7 +162,8 @@ class Group(object):
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
-            # self.colmap.modify_pair_table()
+            if result < 0 :
+                return result
 
             return result
 

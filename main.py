@@ -63,12 +63,12 @@ class generate_points(Resource) :
         print(args['type'])
         print(args['pts'])
 
-        status, result = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        status, err = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
 
         result = {
             'job_id': job_id,
             'status' : status,
-            'result' : result
+            'result' : err
         }
 
         return result
@@ -107,17 +107,25 @@ class get_pair(Resource) :
     @api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
-        
+        print("ip of requestor " , ip_addr)        
         print(jobid)
-        status, result = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
-        msg = df.get_err_msg(result)
+
+        pair1 = None
+        pair2 = None
+
+        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, (jobid, ip_addr))
+        msg = df.get_err_msg(status)
+        if result == 0 :
+            pair1 = contents[0]
+            pair2 = contents[1]
+            print("returned pair image : ", pair1, pair2)
 
         result = {
             'job_id': jobid,
-            'status' : status,
             'result' : result,
             'message': msg,
+            'first_image' : pair1,
+            'second_image' : pair2,
         }
 
         return result

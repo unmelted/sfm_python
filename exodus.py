@@ -39,11 +39,11 @@ class Commander(object) :
     def send_query(self, query, obj) :
         result = 0 
         status = 0
+        contents = []
         if obj == None :
             return finish(obj, -21)                
 
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
-        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query)
 
         if query == df.TaskCategory.AUTOCALIB_STATUS :
             status, result = DbManager.getInstance().getJobStatus(obj[0])
@@ -57,11 +57,20 @@ class Commander(object) :
             result = analysis_mode(obj[0])
 
         elif query == df.TaskCategory.GENERATE_PTS :
-            l.get().w.info("{} Task Generate start obj : {} {} ".format(self.index, obj[0], obj[1]))
+            l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
             print("data check : ", obj[2])
-            generate_pts(obj[0], obj[1], obj[2])
+            result = generate_pts(obj[0], obj[2]['type'], obj[2]['pts'])
+            status = 100
 
-        return status, result
+        elif query == df.TaskCategory.GET_PAIR :
+            result, image1, image2 = get_pair(obj[0])
+            status = 100
+            if result == 0 :
+                contents.append(image1)
+                contents.append(image2)
+
+        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query, result=result)
+        return status, result, contents
 
     def add_task(self, task, obj) :
         self.cmd_que.put((task, obj))
@@ -90,24 +99,29 @@ def visualize_mode(job_id) :
     colmap.visualize_colmap_model()
     return 0
 
+def get_pair(job_id) :
+    l.get().w.info("GetPair start : {} ".format(job_id))    
+    result, image_name1, image_name2 = DbManager.getInstance().getPair(job_id)
+    return 0, image_name1, image_name2
+
+
 def generate_pts(job_id, type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))    
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
+        return finish(job_id, result, 2)
 
     result = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
+        return result
 
     preset1.read_cameras()
     result = preset1.generate_points(base_pts=None)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
+        return result
 
     preset1.export(os.path.join(root_path, 'output'), job_id)
     status_update(job_id, 200)
@@ -179,14 +193,18 @@ class autocalib(object) :
 
         if( ret < 0 ):
             return finish(self.job_id, -101)
-        status_update(self.job_id, 20)
+        status_update(self.job_id, 30)
         time_e1 = time.time()
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1 - time_s))
 
         ret = preset1.run_sfm()
         if( ret < 0 ):
             return finish(self.job_id, -101)
-        status_update(self.job_id, 50)
+        status_update(self.job_id, 80)
+
+        img1, img2 = preset1.colmap.modify_pair_table()
+        init_pair_update(self.job_id, img1, img2)
+        status_update(self.job_id, 100)
 
         # ret = preset1.read_cameras()
         # if( ret < 0 ):

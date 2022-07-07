@@ -319,7 +319,7 @@ class Colmap(object) :
             l.get().w.debug("pair_id {}  update 2 : {} {}".format(row[0], img1, img2))
 
         conn.close()
-        return 0            
+        return img1, img20            
 
     def make_sequential_homography(self, cameras, answer, ext) :
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)

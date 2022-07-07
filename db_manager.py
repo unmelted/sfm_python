@@ -96,8 +96,22 @@ class DbManager(object) :
         rows = self.cursur.fetchall()
         
         if len(rows) > 1 :
-            return -201
+            return -201, 0
         else : 
             print(rows[0][0], rows[0][1])
                 
         return rows[0][0], rows[0][1]
+
+
+    def getPair(self, id):
+        q = self.sql_list['query_getpair'] + str(id)
+        l.get().w.info("Get Pair Query: {} ".format(q))
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+        
+        if len(rows) > 1 :
+            return -201, None, None
+        else : 
+            l.get().w.info("Get Pair success : {} {}".format(rows[0][0], rows[0][1]))
+                
+        return 0, rows[0][0], rows[0][1]

@@ -12,6 +12,23 @@ def status_update(job_id, status) :
     if status == 100 :
         finish(job_id, 100)
 
+def finish_querys(job_id, result, count) :
+    if count == 0 :
+        return finish_query(job_id, result)        
+    elif count == 1 :
+        return finish_query(job_id, result), None
+    elif count == 2 :
+        return finish_query(job_id, result), None, None
+    elif count == 3 :
+        return finish_query(job_id, result), None, None, None
+
+
+def finish_query(job_id, result) :
+    msg = df.get_err_msg(result)
+    l.get().w.warning("JOB_ID: {} Result: {} Message: {}".format(job_id, result, msg))
+    return result
+
+
 def finish(job_id, result) :
     msg = df.get_err_msg(result)
     l.get().w.warning("JOB_ID: {} Result: {} Message: {}".format(job_id, result, msg))

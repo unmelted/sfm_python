@@ -2,9 +2,6 @@ import os
 from enum import Enum
 import logging
 
-from extn_util import get_initpair
-
-
 class TaskCategory(Enum):
     INIT                    = 0 
     AUTOCALIB               = 100
