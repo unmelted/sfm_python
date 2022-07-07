@@ -212,7 +212,7 @@ class Group(object):
         return -150, None
         
         
-    def generate_points(self, base_pts=None, mode='zero') :
+    def generate_points(self, base_pts=None) :
 
         err, pts_3d, viewname1, viewname2 = self.make_seed_answer(pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
@@ -267,7 +267,7 @@ class Group(object):
 
         if answer_from == 'pts' :
             pts1 = self.answer[viewname1]
-            pts2 = self.answer[viewname1]
+            pts2 = self.answer[viewname2]
         elif answer_from == 'input' :
             pts1 = base_pts
             pts2 = base_pts

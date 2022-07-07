@@ -125,7 +125,7 @@ class calib_analysis(Resource) :
         
         print(args['job_id'])
         print(args['mode'])
-        result = Commander.getInstance().send_query( args['mode'], (args['job_id'], ip_addr))
+        result = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr))
 
         msg = df.get_err_msg(result)
         result = {
