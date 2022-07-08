@@ -83,8 +83,8 @@ class Group(object):
             file_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))            
             t_colmap = Colmap(self.root_path)
             result, image_names = t_colmap.import_colmap_cameras(file_names)
-            if result < 0
-            return result
+            if result < 0 : 
+                return result
 
         index = 0
         for image_name in image_names:
