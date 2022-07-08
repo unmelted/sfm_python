@@ -17,9 +17,9 @@ def prepare_job(from_path, root_path, type) :
     setup_proj_ini(root_path)
 
     if type == 'video_folder' :
-        prepare_video_job(from_path, to_path)
-    elif type == 'imaage_folder' or type == 'pts_file':
-        prepare_image_job(from_path, to_path)
+        return prepare_video_job(from_path, to_path)
+    elif type == 'image_folder' or type == 'pts_file':
+        return prepare_image_job(from_path, to_path)
 
 
 def prepare_video_job(from_path, to_path) :
