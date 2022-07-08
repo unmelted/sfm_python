@@ -273,21 +273,9 @@ class autocalib(object) :
             if not os.path.exists(os.path.join(self.root_dir, 'images')) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            if self.list_from == 'image_folder':
-                result = prepare_image_job(self.input_dir, self.root_dir)
-
-            elif self.list_from == 'video_folder' :
-                video_files = 0
-                video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
-
-                if len(video_files) < 3 :
-                    return -102
-
-                result = prepare_video_job(self.input_dir, self.root_dir)
+            prepare_job(self.input_dir, self.root_dir, self.list_from)
+            if self.list_from == 'video_folder' :
                 self.list_from = 'image_folder'                
-
-            elif self.list_from == 'pts_file' :
-                result = prepare_image_job(self.input_dir, self.root_dir)
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
             DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
