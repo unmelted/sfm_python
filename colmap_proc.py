@@ -252,7 +252,7 @@ class Colmap(object) :
 
         result = self.check_solution(len(file_names), True)
         if result < 0 :
-            result, None
+            return result, None
 
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()
