@@ -12,7 +12,8 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String
+    'input_dir' : fields.String,
+    'group' : fields.String
 })
 
 @api.route('/exodus/autocalib')
@@ -25,6 +26,7 @@ class calib_run(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
+        parser.add_argument('group', type=str)        
         args = parser.parse_args()
         
         print(args['input_dir'])

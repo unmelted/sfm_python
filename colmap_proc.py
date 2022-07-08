@@ -107,7 +107,7 @@ class Colmap(object) :
         result = self.check_solution(cam_count)
         return result
 
-    def check_solution(self, cam_count) :
+    def check_solution(self, cam_count, nullcheck=False) :
         model = glob.glob(os.path.join(self.root_path, 'sparse'))
         if len(model) == 0 :
             return -146
@@ -116,7 +116,10 @@ class Colmap(object) :
         else :
             conn = sqlite3.connect(self.coldb_path, isolation_level = None)
             cursur = conn.cursor()    
-            q = ('SELECT camera_id FROM cameras WHERE image IS NOT NULL')
+            if nullcheck == False :
+                q = ('SELECT camera_id FROM cameras')
+            else :
+                q = ('SELECT camera_id FROM cameras WHERE image IS NOT NULL')
             cursur.execute(q)
             rows = cursur.fetchall()
 
@@ -247,7 +250,7 @@ class Colmap(object) :
 
     def import_colmap_cameras(self, file_names) :
 
-        result = self.check_solution(len(file_names))
+        result = self.check_solution(len(file_names), True)
         if result < 0 :
             result, None
 
