@@ -105,4 +105,4 @@ class DEFINITION(object) :
 
     initpair_file = 'init_pair.txt'
 
-
+    feature_minimum = 500

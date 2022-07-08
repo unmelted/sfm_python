@@ -141,9 +141,11 @@ class Colmap(object) :
         
         min =  rows[0]
         max = rows[len(rows) - 1]        
-        print("check keypoints : ", min, max)
-        
-        return result 
+        # print("check keypoints : ", min, max)
+        if min < df.feature_minimum :
+            return -154
+
+        return 0
 
     def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')

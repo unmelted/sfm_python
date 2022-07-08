@@ -132,7 +132,7 @@ def generate_pts(job_id, type, base_pts) :
 
     preset1.export(os.path.join(root_path, 'output'), job_id)
     status_update(job_id, 200)
-    
+
     return 0
 
 def analysis_mode(job_id) :
@@ -278,7 +278,10 @@ class autocalib(object) :
             if not os.path.exists(os.path.join(self.root_dir, 'images')) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            prepare_job(self.input_dir, self.root_dir, self.list_from)
+            result = prepare_job(self.input_dir, self.root_dir, self.list_from)
+            if result < 0 :
+                return result 
+                
             if self.list_from == 'video_folder' :
                 self.list_from = 'image_folder'                
 
