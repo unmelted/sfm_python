@@ -42,12 +42,12 @@ class Group(object):
 
         self.cam_count = 0
 
-    def create_group(self, root_path, run_mode, list_from='pts_file'):
+    def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
 
         l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))        
-        result = self.prepare_camera_list(list_from)
+        result = self.prepare_camera_list(list_from, group)
         if result < 0 :
             return result
 
@@ -60,7 +60,7 @@ class Group(object):
 
         return 0
 
-    def prepare_camera_list(self, list_from, group_id = 'Group1'):
+    def prepare_camera_list(self, list_from, group_id ='Group1'):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         self.ext = check_image_format(self.root_path)        

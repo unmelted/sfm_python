@@ -83,10 +83,10 @@ class Commander(object) :
         l.get().w.info("Task Proc start : {} ".format(self.index))        
         if task == df.TaskCategory.AUTOCALIB :
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
-            ac = autocalib(obj[0], self.index, obj[1])
+            ac = autocalib(obj[0], self.index, obj[1], obj[2])
             ac.run()         
 
-            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
+            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], desc=task)
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
@@ -102,6 +102,7 @@ def visualize_mode(job_id) :
 
 def generate_pts(job_id, type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))
+    time_s = time.time()                    
     float_base = []
     if len(base_pts) < 16 :
         return finish_query(job_id, -301)
@@ -124,11 +125,14 @@ def generate_pts(job_id, type, base_pts) :
     preset1.read_cameras()
     result = preset1.generate_points(job_id, base_pts=float_base)
     if result < 0 :
-        return finish_query(job_id, result)                
+        return finish_query(job_id, result)     
+
+    time_e = time.time() - time_s
+    l.get().w.critical("Spending time total (sec) : {}".format(time_e))
 
     preset1.export(os.path.join(root_path, 'output'), job_id)
     status_update(job_id, 200)
-
+    
     return 0
 
 def analysis_mode(job_id) :
@@ -172,7 +176,7 @@ def analysis_mode(job_id) :
 
 class autocalib(object) :
 
-    def __init__ (self, input_dir, job_id, ip) :
+    def __init__ (self, input_dir, job_id, group, ip) :
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
@@ -180,6 +184,7 @@ class autocalib(object) :
         self.mode = 0 #mode
         self.job_id = job_id
         self.ip = ip
+        self.group = group
 
     def run(self) :
         DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
@@ -192,7 +197,7 @@ class autocalib(object) :
         status_update(self.job_id, 10)
 
         l.get().w.error("list from type : {} ".format(self.list_from))        
-        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from)
+        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from, self.group)
 
         if( ret < 0 ):
             return finish(self.job_id, -101)

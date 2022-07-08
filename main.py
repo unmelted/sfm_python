@@ -30,7 +30,7 @@ class calib_run(Resource) :
         args = parser.parse_args()
         
         print(args['input_dir'])
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], ip_addr))
+        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['group'], ip_addr))
 
         result = {
             'status': 0,

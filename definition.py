@@ -59,6 +59,7 @@ def get_err_msg(err_code) :
         -151 : "Job id is strange. No information",
         -152 : "No initial pair info file",
         -153 : "Initial pair info is not correct",
+        -154 : "Keypoints from image is not general. Please check the images",
 
         -201 : "Query job_is is ambigous",
 

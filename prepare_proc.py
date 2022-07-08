@@ -25,7 +25,7 @@ def prepare_job(from_path, root_path, type) :
 def prepare_video_job(from_path, to_path) :
     
     video_files = sorted(glob.glob(os.path.join(from_path,'*.mp4')))
-    pick_frame = 5
+    pick_frame = 1
     if len(video_files) < 5 :
         return -102
 
