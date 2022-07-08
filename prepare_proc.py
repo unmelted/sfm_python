@@ -18,7 +18,7 @@ def prepare_job(from_path, root_path, type) :
 
     if type == 'video_folder' :
         return prepare_video_job(from_path, to_path)
-    elif type == 'imaage_folder' or type == 'pts_file':
+    elif type == 'image_folder' or type == 'pts_file':
         return prepare_image_job(from_path, to_path)
 
 

@@ -207,13 +207,14 @@ class Group(object):
         
         
     def generate_points(self, job_id, base_pts=None) :
-
+        
         if df.answer_from == 'input' and base_pts == None :
             df.answer_from = 'pts' #for analysis mode
         
         if df.answer_from == 'pts' and self.answer == None:
             return -303
 
+        l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
@@ -261,12 +262,14 @@ class Group(object):
             self.answer = import_answer(filename, 0) 
             pts1 = self.answer[viewname1]
             pts2 = self.answer[viewname2]
+            l.get().w.debug("maker seed  answer from pts file  \n{} {}".format(pts1, pts2))
             
         elif answer_from == 'input' :
             base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
             base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
             pts1 = np.array(base1)
             pts2 = np.array(base2)
+            l.get().w.debug("maker seed  answer from base \n{} {}".format(pts1, pts2))
 
         c0.pts = pts1
         c1.pts = pts2
