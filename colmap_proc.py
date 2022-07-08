@@ -116,7 +116,7 @@ class Colmap(object) :
         else :
             conn = sqlite3.connect(self.coldb_path, isolation_level = None)
             cursur = conn.cursor()    
-            q = ('SELECT camera_id FROM cameras')
+            q = ('SELECT camera_id FROM cameras WHERE image IS NOT NULL')
             cursur.execute(q)
             rows = cursur.fetchall()
 
@@ -125,9 +125,6 @@ class Colmap(object) :
                 return -148
             else :
                 return 0
-
-        return 0
-
 
     def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')
@@ -249,6 +246,11 @@ class Colmap(object) :
         return 0      
 
     def import_colmap_cameras(self, file_names) :
+
+        result = self.check_solution(len(file_names))
+        if result < 0 :
+            result, None
+
         conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         cursur = conn.cursor()
         image_names = []
@@ -259,18 +261,18 @@ class Colmap(object) :
 
         if rows == None:
             l.get().w.error('no cameras in db')
-            return -142
+            return -142, None
 
-        file_list = []
+
         for file in file_names :
-            file_name = file[file.rfind('/'):]
+            file_name = file[file.rfind('/')+1:]
             print(file_name)
             for row in rows : 
                 if row[0] in file_name : 
                     image_names.append(file)
+                    break
 
-        print(image_names)
-        return image_names
+        return 0, image_names
 
     def visualize_colmap_model(self):
         l.get().w.info('visualize colmap model')

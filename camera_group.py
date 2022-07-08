@@ -82,7 +82,9 @@ class Group(object):
         elif list_from == 'colmap_db' :
             file_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))            
             t_colmap = Colmap(self.root_path)
-            image_names = t_colmap.import_colmap_cameras(file_names)
+            result, image_names = t_colmap.import_colmap_cameras(file_names)
+            if result < 0
+            return result
 
         index = 0
         for image_name in image_names:
