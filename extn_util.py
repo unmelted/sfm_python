@@ -51,10 +51,10 @@ def export_points_mct(preset, cal_type) :
             _json['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
             _json['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
         else :
-            _json['pts_2d']['Upper']['X'] = preset.cameras[i].pts[0][0]
-            _json['pts_2d']['Upper']['Y'] = preset.cameras[i].pts[0][1]
-            _json['pts_2d']['Middle']['X'] = preset.cameras[i].pts[1][0]
-            _json['pts_2d']['Middle']['Y'] = preset.cameras[i].pts[1][1]
+            _json['pts_2d']['UpperPosX'] = preset.cameras[i].pts[0][0]
+            _json['pts_2d']['UpperPosY'] = preset.cameras[i].pts[0][1]
+            _json['pts_2d']['MiddlePosX'] = preset.cameras[i].pts[1][0]
+            _json['pts_2d']['MiddlePosY'] = preset.cameras[i].pts[1][1]
 
         
         _json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
