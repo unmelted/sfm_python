@@ -59,7 +59,8 @@ class Commander(object) :
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
             print("data check : ", obj[2])
-            result = generate_pts(obj[0], obj[2]['type'], obj[2]['pts'])
+            cal_type = obj[2]['type'].upper()
+            result = generate_pts(obj[0], cal_type, obj[2]['pts'])
             status = 100
 
         elif query == df.TaskCategory.GET_PAIR :
@@ -101,19 +102,19 @@ def visualize_mode(job_id) :
 
 
 def generate_pts(job_id, cal_type, base_pts) :
-    l.get().w.info("Generate pst start : {} ".format(job_id))
+    l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     time_s = time.time()                    
     float_base = []
-    if cal_type.upper() == '3D' and len(base_pts) < 16 :
+    if cal_type == '3D' and len(base_pts) < 16 :
         return finish_query(job_id, -301)
-    elif cal_type.upper() == '2D' and len(base_pts) < 8:
+    elif cal_type == '2D' and len(base_pts) < 8:
         return finish_query(job_id, -301)        
-    else :
-        for val in base_pts :            
-            if float(val) < 0 :
-                return finish_query(job_id, -302)
-            else :
-                float_base.append(float(val))
+
+    for val in base_pts :            
+        if float(val) < 0 :
+            return finish_query(job_id, -302)
+        else :
+            float_base.append(float(val))
 
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -161,7 +162,7 @@ def analysis_mode(job_id, cal_type) :
     #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
     #     return 0
 
-    result = preset1.generate_points(job_id)
+    result = preset1.generate_points(job_id, cal_type)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0

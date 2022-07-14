@@ -265,7 +265,7 @@ class Group(object):
             l.get().w.debug("maker seed  answer from pts file  \n{} {}".format(pts1, pts2))
             
         elif answer_from == 'input' :
-            if cal_type.upper() == '3D' : 
+            if cal_type == '3D' : 
                 base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
                 base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
             else :
