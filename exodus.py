@@ -54,7 +54,7 @@ class Commander(object) :
 
         elif query == df.TaskCategory.ANALYSIS :
             status = 100
-            result = analysis_mode(obj[0])
+            result = analysis_mode(obj[0], obj[2])
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
@@ -132,12 +132,12 @@ def generate_pts(job_id, cal_type, base_pts) :
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
 
-    preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     status_update(job_id, 200)
 
     return 0
 
-def analysis_mode(job_id) :
+def analysis_mode(job_id, cal_type) :
     l.get().w.info("analysis  start : {} ".format(job_id))    
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -172,7 +172,7 @@ def analysis_mode(job_id) :
         return 0
 
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
-    preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()
     return 0
 

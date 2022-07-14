@@ -31,6 +31,7 @@ def get_err_msg(err_code) :
     msg_pair = {
          0 : "ERR NONE",
          100 : "Comeplete",
+         200 : "Complete",
 
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
