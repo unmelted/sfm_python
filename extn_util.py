@@ -7,13 +7,13 @@ from logger import Logger as l
 import json
 from definition import DEFINITION as df
 
-def export_points(preset, output_type, output_path, job_id):
+def export_points(preset, output_type, output_path, job_id, cal_type):
     if output_type == 'dm' :
-        export_points_dm(preset, output_path, job_id)
+        export_points_dm(preset, output_path, job_id, cal_type)
     elif output_type == 'mct' :
-        export_points_mct(preset)
+        export_points_mct(preset, cal_type)
 
-def export_points_mct(preset) :
+def export_points_mct(preset, cal_type) :
 
     filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
@@ -41,15 +41,21 @@ def export_points_mct(preset) :
             _json['pts_2d'] = {}
             _json['pts_3d'] = {}
 
-        _json['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
-        _json['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
-        _json['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
-        _json['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
-        _json['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
-        _json['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
-        _json['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
-        _json['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
-        
+        if cal_type == '3D' : 
+            _json['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
+            _json['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
+            _json['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
+            _json['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
+            _json['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
+            _json['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
+            _json['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
+            _json['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
+        else :
+            _json['pts_2d']['Upper']['X'] = preset.cameras[i].pts[0][0]
+            _json['pts_2d']['Upper']['Y'] = preset.cameras[i].pts[0][1]
+            _json['pts_2d']['Middle']['X'] = preset.cameras[i].pts[1][0]
+            _json['pts_2d']['Middle']['Y'] = preset.cameras[i].pts[1][1]
+
         
         _json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
         _json['pts_swipe']['X1']=-1.0
@@ -68,7 +74,7 @@ def export_points_mct(preset) :
     ofile.write(bn_json)
     ofile.close()
 
-def export_points_dm(preset, output_path, job_id) :
+def export_points_dm(preset, output_path, job_id, cal_type) :
 
     filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
@@ -83,16 +89,22 @@ def export_points_dm(preset, output_path, job_id) :
         for i in range(len(preset.cameras)) :
             viewname = get_viewname(preset.cameras[i].view.name, preset.ext)            
             if from_data['points'][j]['dsc_id'] == viewname:
-                l.get().w.info('camera view name : {}'.format(preset.cameras[i].view.name))
-                from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
-                from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
-                from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
-                from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
-                from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
-                from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
-                from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
-                from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
-                             
+                l.get().w.info('cal_type {} camera view name : {}'.format(cal_type, preset.cameras[i].view.name))
+                if cal_type == '3D':
+                    from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
+                    from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
+                    from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
+                    from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
+                    from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
+                    from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
+                    from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
+                    from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
+                else :
+                    from_data['pts_2d']['Upper']['X'] = preset.cameras[i].pts[0][0]
+                    from_data['pts_2d']['Upper']['Y'] = preset.cameras[i].pts[0][1]
+                    from_data['pts_2d']['Middle']['X'] = preset.cameras[i].pts[1][0]
+                    from_data['pts_2d']['Middle']['Y'] = preset.cameras[i].pts[1][1]
+
                 break;
 
         '''

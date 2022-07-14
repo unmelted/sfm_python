@@ -100,12 +100,14 @@ def visualize_mode(job_id) :
     return 0
 
 
-def generate_pts(job_id, type, base_pts) :
+def generate_pts(job_id, cal_type, base_pts) :
     l.get().w.info("Generate pst start : {} ".format(job_id))
     time_s = time.time()                    
     float_base = []
-    if len(base_pts) < 16 :
+    if cal_type.upper() == '3D' and len(base_pts) < 16 :
         return finish_query(job_id, -301)
+    elif cal_type.upper() == '2D' and len(base_pts) < 8:
+        return finish_query(job_id, -301)        
     else :
         for val in base_pts :            
             if float(val) < 0 :
@@ -123,7 +125,7 @@ def generate_pts(job_id, type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, base_pts=float_base)
+    result = preset1.generate_points(job_id, cal_type, base_pts=float_base)
     if result < 0 :
         return finish_query(job_id, result)     
 
@@ -281,7 +283,7 @@ class autocalib(object) :
             result = prepare_job(self.input_dir, self.root_dir, self.list_from)
             if result < 0 :
                 return result 
-                
+
             if self.list_from == 'video_folder' :
                 self.list_from = 'image_folder'                
 

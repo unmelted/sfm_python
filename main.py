@@ -12,8 +12,8 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String,
-    'group' : fields.String
+    'input_dir' : fields.String, #입력 directory
+    'group' : fields.String # 캘리브레이션 진행할 그룹
 })
 
 @api.route('/exodus/autocalib')

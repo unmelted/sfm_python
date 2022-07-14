@@ -139,7 +139,7 @@ class Colmap(object) :
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
         
-        min =  rows[0]
+        min =  rows[0][0]
         max = rows[len(rows) - 1]        
         # print("check keypoints : ", min, max)
         if min < df.feature_minimum :
