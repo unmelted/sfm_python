@@ -347,14 +347,15 @@ class Group(object):
         if err < 0 :
             return err, None, None, None
 
-        pt_extra = []
+        #pt_extra = []
         x, y = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
             c0.pts[1][0], c0.pts[1][1], c0.pts[3][0], c0.pts[3][1])
         print("get_extra_point : ", x, y)
-        pt_extra.append(np.array([x, y]).T)
-        pt_extra.append(np.array([x, y - df.virtual_rod_length]).T)
-        self.cameras[i].pts_extra = pt_extra
-        print(self.cameras[i].pts_extra)
+        print(np.array([x,y]))
+        print(np.array([x,y]).T)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x, y]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x, y - df.virtual_rod_length]]), axis=0)
+        print(c0.pts_extra)
 
         extra_3d = self.adjust.backprojection_extra(c0)
         print("extra 3D : ", extra_3d)
