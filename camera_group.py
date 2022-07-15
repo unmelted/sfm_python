@@ -338,3 +338,10 @@ class Group(object):
 
     def save_answer_image(self):
         save_ex_answer_image(self)
+
+    def get_extra_point(self) :
+        for i in range(len(self.cameras)):
+            x, y = get_cross_point(self.cameras[i].pts[0][0], self.cameras[i].pts[0][1], self.cameras[i].pts[2][0], self.cameras[i].pts[2][1],
+                self.cameras[i].pts[1][0], self.cameras[i].pts[1][1], self.cameras[i].pts[3][0], self.cameras[i].pts[3][1])
+            self.cameras[i].pts_extra = np.append(self.cameras[i].pts_extra, np.array(x, y).astype(np.int32), axis=0)
+            self.cameras[i].pts_extra = np.append(self.cameras[i].pts_extra, np.array(x, y - 800).astype(np.int32), axis=0)

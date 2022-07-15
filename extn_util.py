@@ -267,7 +267,6 @@ def save_ex_answer_image(preset) :
 
 
 def save_point_image(preset) :
-
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):    
         os.makedirs(output_path)
@@ -286,6 +285,12 @@ def save_point_image(preset) :
             if j == (preset.cameras[i].pts.shape[0] - 1):
                 cv2.line(preset.cameras[i].view.image, pt_int[j], pt_int[0], (255,255,0), 3)
 
+        if preset.cameras[i].pts_extra.shape[0] > 1 :
+            pt_ex = preset.cameras[i].pts_extra
+            cv2.circle(preset.cameras[i].view.image, (pt_ex[0][0], pt_ex[0][1]), 5, (0, 255, 0), -1)
+            cv2.circle(preset.cameras[i].view.image, (pt_ex[1][0], pt_ex[1][1]), 5, (0, 255, 0), -1)            
+            cv2.line(preset.cameras[i].view.image, pt_int[0], pt_int[1], (255,0,0), 3)
+                            
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 

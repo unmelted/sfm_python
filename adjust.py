@@ -262,18 +262,6 @@ class Adjust(object):
 
             print(c_wrld.reshape((1,3)))
 
-    def reproject_3D_only(self, c0, c1) :
-        print("reproject_3D_only.. :  ", c1.view.name)
-
-        for i in range(c0.pts_back.shape[0]) :
-            cv_pts = c0.pts_back[i, :]
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts, 0 , 0)
-            c1.pts_repr = np.append(c1.pts_repr, np.array(reproject).T, axis=0)             
-
-        print(c1.pts_repr)            
-
     def find_homography(self, answer, c0) :
        H, mask = cv2.findHomography(c0.pts, answer, 1)
        return H
