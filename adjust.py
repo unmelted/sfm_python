@@ -210,7 +210,7 @@ class Adjust(object):
 
     def make_3D_extra(self, c0, c1) :
         print(" make_3D extra .... ", c0.view.name, c1.view.name)
-        pts_3d = []
+        pts_3d = np.empty((0,3), dtype=np.float64)
         cam0 = cv2.convertPointsToHomogeneous(c0.pts_extra)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts_extra)[:, 0, :]
 
@@ -221,7 +221,7 @@ class Adjust(object):
             u2_normalized = K1_inv.dot(cam1[i, :])
 
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
-            pts_3d.append(np.array(_3d).T)        
+            pts_3d =np.append(pts_3d, np.array(_3d).T)
 
         print(pts_3d)
         return pts_3d
