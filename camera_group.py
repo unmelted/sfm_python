@@ -343,26 +343,31 @@ class Group(object):
         result, image_name1, image_name2 = get_pair(job_id)
         
         viewname1 = get_viewname(image_name1, self.ext)
+        viewname2 = get_viewname(image_name2, self.ext)
         err, c0 = self.get_camera_byView(viewname1)
+        err, c1 = self.get_camera_byView(viewname2)
         if err < 0 :
             return err, None, None, None
 
-        #pt_extra = []
-        x, y = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
+        x1, y1 = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
             c0.pts[1][0], c0.pts[1][1], c0.pts[3][0], c0.pts[3][1])
-        print("get_extra_point : ", x, y)
-        print(np.array([x,y]))
-        print(np.array([x,y]).T)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x, y]]), axis=0)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x, y - df.virtual_rod_length]]), axis=0)
+        x2, y2 = get_cross_point(c1.pts[0][0], c1.pts[0][1], c1.pts[2][0], c1.pts[2][1],
+            c1.pts[1][0], c1.pts[1][1], c1.pts[3][0], c1.pts[3][1])
+            
+        print("get_extra_point : ", x1, y1, x2, y2)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length]]), axis=0)
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2]]), axis=0)
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length]]), axis=0)
+
         print(c0.pts_extra)
 
-        extra_3d = self.adjust.backprojection_extra(c0)
+        extra_3d = self.adjust.make_3D_extra(c0, c1)
         print("extra 3D : ", extra_3d)
 
         for i in range(len(self.cameras)):
             viewname = get_viewname(self.cameras[i].view.name, self.ext)            
-            if viewname == viewname1 :
+            if viewname == viewname1 or viewname == viewname2:
                 continue
 
             self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
