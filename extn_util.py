@@ -285,11 +285,14 @@ def save_point_image(preset) :
             if j == (preset.cameras[i].pts.shape[0] - 1):
                 cv2.line(preset.cameras[i].view.image, pt_int[j], pt_int[0], (255,255,0), 3)
 
-        if preset.cameras[i].pts_extra.shape[0] > 1 :
+        if len(preset.cameras[i].pts_extra) > 1 :
             pt_ex = preset.cameras[i].pts_extra
-            cv2.circle(preset.cameras[i].view.image, (pt_ex[0][0], pt_ex[0][1]), 5, (0, 255, 0), -1)
-            cv2.circle(preset.cameras[i].view.image, (pt_ex[1][0], pt_ex[1][1]), 5, (0, 255, 0), -1)            
-            cv2.line(preset.cameras[i].view.image, pt_int[0], pt_int[1], (255,0,0), 3)
+            print("save image : ", pt_ex, int(pt_ex[0][0]), int(pt_ex[0][1]))
+            print("save image : ", pt_ex, int(pt_ex[1][0]), int(pt_ex[1][1]))
+            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
+            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)            
+            cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])), 
+                        (255,0,0), 3)
                             
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
