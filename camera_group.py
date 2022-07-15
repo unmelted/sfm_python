@@ -365,6 +365,6 @@ class Group(object):
             if viewname == viewname1 :
                 continue
 
-            self.adjust.reproject_3D(extra_3d, self.cameras[i])
+            self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
 
 

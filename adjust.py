@@ -233,9 +233,10 @@ class Adjust(object):
 
     def reproject_3D_extra(self, pts_3d, c1) :
         print("reproject_3D extra .. : ", c1.view.name)
-
+        print(pts_3d)
         for i in range(len(pts_3d)) :
-            cv_pts = np.array(pts_3d[i]).T
+            cv_pts = np.array(pts_3d[i:]).T
+            print(cv_pts)
             cv_pts = np.vstack([cv_pts, 1])
             reproject = c1.project(cv_pts)
             c1.pts_extra = np.append(c1.pts_extra, np.array(reproject).T, axis=0)        
