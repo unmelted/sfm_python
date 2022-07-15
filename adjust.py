@@ -201,9 +201,6 @@ class Adjust(object):
             u2_normalized = K1_inv.dot(cam1[i, :])
 
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
-            # error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
-            # error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
-            # print("error " , error1, error2)
             pts_3d.append(np.array(_3d).T)        
 
         c0.pts_3D = pts_3d
@@ -231,6 +228,17 @@ class Adjust(object):
             cv_pts = np.vstack([cv_pts, 1])
             reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+
+    def reproject_3D_extra(self, pts_3d, c1) :
+        print("reproject_3D extra .. : ", c1.view.name)
+
+        for i in range(len(pts_3d)) :
+            cv_pts = np.array(pts_3d[i]).T
+            cv_pts = np.vstack([cv_pts, 1])
+            reproject = c1.project(cv_pts)
+            c1.pts_extra = np.append(c1.pts_extra, np.array(reproject).T, axis=0)        
 
         print(c1.pts)            
 
@@ -265,4 +273,18 @@ class Adjust(object):
     def find_homography(self, answer, c0) :
        H, mask = cv2.findHomography(c0.pts, answer, 1)
        return H
+
+
+    def backprojection_extra(self, c) :
+        extra_3d = np.empty((0, 3))
+        cam = cv2.convertPointsToHomogeneous(c.pts_extra)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
+
+        for i in range(c.pts_extra.shape[0]) :
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            extra_3d = np.append(extra_3d, np.arra().T, axis=0)
+
+        return extra_3d
 

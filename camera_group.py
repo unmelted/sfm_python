@@ -339,14 +339,31 @@ class Group(object):
     def save_answer_image(self):
         save_ex_answer_image(self)
 
-    def get_extra_point(self) :
-        for i in range(len(self.cameras)):
-            pt_extra = []
-            x, y = get_cross_point(self.cameras[i].pts[0][0], self.cameras[i].pts[0][1], self.cameras[i].pts[2][0], self.cameras[i].pts[2][1],
-                self.cameras[i].pts[1][0], self.cameras[i].pts[1][1], self.cameras[i].pts[3][0], self.cameras[i].pts[3][1])
-            print("get_extra_point : ", x, y)
-            pt_extra.append(np.array([x, y]).T)
-            pt_extra.append(np.array([x, y - 800]).T)
+    def get_extra_point(self, job_id) :
+        result, image_name1, image_name2 = get_pair(job_id)
+        
+        viewname1 = get_viewname(image_name1, self.ext)
+        err, c0 = self.get_camera_byView(viewname1)
+        if err < 0 :
+            return err, None, None, None
 
-            self.cameras[i].pts_extra = pt_extra
-            print(self.cameras[i].pts_extra)
+        pt_extra = []
+        x, y = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
+            c0.pts[1][0], c0.pts[1][1], c0.pts[3][0], c0.pts[3][1])
+        print("get_extra_point : ", x, y)
+        pt_extra.append(np.array([x, y]).T)
+        pt_extra.append(np.array([x, y - df.virtual_rod_length]).T)
+        self.cameras[i].pts_extra = pt_extra
+        print(self.cameras[i].pts_extra)
+
+        extra_3d = self.adjust.backprojection_extra(c0)
+        print("extra 3D : ", extra_3d)
+
+        for i in range(len(self.cameras)):
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
+            if viewname == viewname1 :
+                continue
+
+            self.adjust.reproject_3D(extra_3d, self.cameras[i])
+
+
