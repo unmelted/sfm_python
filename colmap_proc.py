@@ -11,7 +11,6 @@ import numpy as np
 import sqlite3
 from mathutil import quaternion_rotation_matrix
 from extn_util import * 
-from db_manager import DbManager
 from logger import Logger as l
 from definition import DEFINITION as df
 
@@ -81,6 +80,8 @@ class Colmap(object) :
         self.colmap_cmd = import_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
+        self.conn = sqlite3.connect(self.coldb_path, isolation_level = None)
+        self.cursur = self.conn.cursor()    
 
     def recon_command(self, cam_count) :
         imgpath = os.path.join(self.root_path, 'images')
@@ -89,6 +90,10 @@ class Colmap(object) :
         # cmd = self.colmap_cmd['extract_cmd'] +  self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.feature_ini)
         shell_cmd(cmd)
         l.get().w.info("Colmap : Extract Done")
+
+        result = self.check_keypoints()
+        if result < 0 :
+            return result
 
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
@@ -107,18 +112,20 @@ class Colmap(object) :
         result = self.check_solution(cam_count)
         return result
 
-    def check_solution(self, cam_count) :
+    def check_solution(self, cam_count, nullcheck=False) :
         model = glob.glob(os.path.join(self.root_path, 'sparse'))
         if len(model) == 0 :
             return -146
         elif len(model) > 1 :
             return -147
         else :
-            conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-            cursur = conn.cursor()    
-            q = ('SELECT camera_id FROM cameras')
-            cursur.execute(q)
-            rows = cursur.fetchall()
+            if nullcheck == False :
+                q = ('SELECT camera_id FROM cameras')
+            else :
+                q = ('SELECT camera_id FROM cameras WHERE image IS NOT NULL')
+            
+            self.cursur.execute(q)
+            rows = self.cursur.fetchall()
 
             if len(rows) != cam_count :
                 l.get().w.error("Colmap solution cam count is not match with images")
@@ -126,8 +133,19 @@ class Colmap(object) :
             else :
                 return 0
 
-        return 0
+    def check_keypoints(self) :
+        result = 0
+        q = ('SELECT rows FROM keypoints ORDER BY rows')
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+        
+        min =  rows[0][0]
+        max = rows[len(rows) - 1]        
+        # print("check keypoints : ", min, max)
+        if min < df.feature_minimum :
+            return -154
 
+        return 0
 
     def cvt_colmap_model(self, ext):
         modelpath = os.path.join(self.root_path, 'sparse/0')
@@ -140,10 +158,8 @@ class Colmap(object) :
             l.get().w.error("Model Convert Error : {}".format(result))            
             return -140
 
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()    
-        cursur.execute('PRAGMA table_info(cameras)')
-        rows = cursur.fetchall()
+        self.cursur.execute('PRAGMA table_info(cameras)')
+        rows = self.cursur.fetchall()
         need_alter = True
         for row in rows : 
             if 'image' in row:
@@ -153,7 +169,7 @@ class Colmap(object) :
         if need_alter == True :
             colms = ['image TEXT', 'focal_length REAL', 'qw REAL', 'qx REAL', 'qy REAL', 'qz REAL', 'skew REAL', 'tx REAL', 'ty REAL', 'tz REAL']
             for i, col in enumerate(colms) : 
-                cursur.execute('ALTER TABLE cameras ADD COLUMN ' + col)
+                self.cursur.execute('ALTER TABLE cameras ADD COLUMN ' + col)
 
         cam = open(self.camera_file, 'r')
         img = open(self.image_file, 'r')
@@ -168,7 +184,7 @@ class Colmap(object) :
             skew = float(line[7])
             # print(id, focal, skew)
             q = ('UPDATE cameras SET focal_length = ?, skew = ? WHERE camera_id = ?')            
-            cursur.execute(q, (focal, skew, id))
+            self.cursur.execute(q, (focal, skew, id))
             l.get().w.debug("execute update  : {}".format(id))
 
         lines = img.readlines()
@@ -189,20 +205,17 @@ class Colmap(object) :
                 img = str(line[9])
 
                 q = ('UPDATE cameras SET qw = ?, qx = ?, qy = ?, qz = ?, tx = ?, ty = ?, tz = ?, image = ?  WHERE camera_id = ?')
-                cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
+                self.cursur.execute(q, (qw, qx, qy, qz, tx, ty, tz, img, id))
                 l.get().w.debug("execute update 2 : {} {}".format(img, id))
 
-        conn.close()
         return result
 
     def read_colmap_cameras(self, cameras) :
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()
 
         for cam in cameras :
             q = ('SELECT qw, qx, qy, qz, tx, ty, tz FROM cameras WHERE image = \'')
-            cursur.execute(q + str(cam.view.name) + '\'')
-            row = cursur.fetchall()
+            self.cursur.execute(q + str(cam.view.name) + '\'')
+            row = self.cursur.fetchall()
 
             if row == None:
                 l.get().w.error('no cameras in db')                
@@ -228,8 +241,8 @@ class Colmap(object) :
             poseT = poseT.reshape((3,1))        
 
             q = ('SELECT focal_length, skew, width, height  FROM cameras WHERE image = \'')
-            cursur.execute(q + str(cam.view.name) + '\'')
-            row = cursur.fetchall()
+            self.cursur.execute(q + str(cam.view.name) + '\'')
+            row = self.cursur.fetchall()
             camK[0][0] = row[0][0] 
             camK[0][1] = row[0][1]
             camK[0][2] = int(row[0][2]/2)
@@ -249,28 +262,30 @@ class Colmap(object) :
         return 0      
 
     def import_colmap_cameras(self, file_names) :
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()
+
+        result = self.check_solution(len(file_names), True)
+        if result < 0 :
+            return result, None
         image_names = []
 
         q = ('SELECT image FROM cameras')
-        cursur.execute(q)
-        rows = cursur.fetchall()
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
 
         if rows == None:
             l.get().w.error('no cameras in db')
-            return -142
+            return -142, None
 
-        file_list = []
+
         for file in file_names :
-            file_name = file[file.rfind('/'):]
+            file_name = file[file.rfind('/')+1:]
             print(file_name)
             for row in rows : 
                 if row[0] in file_name : 
                     image_names.append(file)
+                    break
 
-        print(image_names)
-        return image_names
+        return 0, image_names
 
     def visualize_colmap_model(self):
         l.get().w.info('visualize colmap model')
@@ -279,10 +294,8 @@ class Colmap(object) :
 
 
     def modify_pair_table(self) :
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()    
-        cursur.execute('PRAGMA table_info(two_view_geometries)')
-        rows = cursur.fetchall()
+        self.cursur.execute('PRAGMA table_info(two_view_geometries)')
+        rows = self.cursur.fetchall()
         need_alter = True
         for row in rows : 
             if 'image1' in row or 'image2' in row:
@@ -292,12 +305,12 @@ class Colmap(object) :
         if need_alter == True :
             colms = ['image1 TEXT', 'image2 TEXT']
             for i, col in enumerate(colms) : 
-                cursur.execute('ALTER TABLE two_view_geometries ADD COLUMN ' + col)
-                cursur.execute('ALTER TABLE matches ADD COLUMN ' + col)                
+                self.cursur.execute('ALTER TABLE two_view_geometries ADD COLUMN ' + col)
+                self.cursur.execute('ALTER TABLE matches ADD COLUMN ' + col)                
         
         q = ('SELECT pair_id FROM two_view_geometries')
-        cursur.execute(q)
-        rows = cursur.fetchall()
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
 
         for row in rows :
             pair_id = int(row[0])
@@ -305,24 +318,21 @@ class Colmap(object) :
             img1_id = (int(img1_id))
             img2_id = (int(img2_id))
             # print("image id : ", img1_id , img2_id)
-            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img1_id,))
-            row = cursur.fetchone()
+            self.cursur.execute('SELECT name FROM images WHERE image_id = ?', (img1_id,))
+            row = self.cursur.fetchone()
             img1 = row[0]
-            cursur.execute('SELECT name FROM images WHERE image_id = ?', (img2_id,))
-            row = cursur.fetchone()
+            self.cursur.execute('SELECT name FROM images WHERE image_id = ?', (img2_id,))
+            row = self.cursur.fetchone()
             img2 = row[0]
 
             q = ('UPDATE two_view_geometries SET image1 = ?, image2 = ? WHERE pair_id = ?')
-            cursur.execute(q, (img1, img2, pair_id))
+            self.cursur.execute(q, (img1, img2, pair_id))
             q = ('UPDATE matches SET image1 = ?, image2 = ? WHERE pair_id = ?')            
-            cursur.execute(q, (img1, img2, pair_id))            
+            self.cursur.execute(q, (img1, img2, pair_id))            
             l.get().w.debug("pair_id {}  update 2 : {} {}".format(row[0], img1, img2))
 
-        conn.close()
 
     def make_sequential_homography(self, cameras, answer, ext) :
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()
         view_name = get_viewname(cameras[0].view.name, ext)
         cameras[0].pts =  answer[view_name]
 
@@ -333,8 +343,8 @@ class Colmap(object) :
 
             q = ('SELECT H FROM two_view_geometries WHERE image1 = ' + str1 + ' and image2 = ' + str2)
             print(q)
-            cursur.execute(q)
-            row = cursur.fetchone()
+            self.cursur.execute(q)
+            row = self.cursur.fetchone()
 
             if row == None:
                 l.get().w.error('no pair_id in db')                
@@ -355,7 +365,6 @@ class Colmap(object) :
             cameras[i].pts = repro_points
             print("repro_points : ", cameras[i].pts)
             
-        conn.close()            
         return 0
     
     
@@ -386,18 +395,14 @@ class Colmap(object) :
 
 
     def getImagNamebyId(self, id) :
-        img_name = None
-        conn = sqlite3.connect(self.coldb_path, isolation_level = None)
-        cursur = conn.cursor()
         q = ('SELECT name FROM images  WHERE image_id =  ' + str(id))
         print(q)
-        cursur.execute(q)
-        row = cursur.fetchone()
+        self.cursur.execute(q)
+        row = self.cursur.fetchone()
 
         if row == None:
             l.get().w.error('no image name by image id')
             return -149, None
         print("image name {} by id {} ".format(row[0], id))
 
-        conn.close()
         return 0, row[0]

@@ -42,12 +42,12 @@ class Group(object):
 
         self.cam_count = 0
 
-    def create_group(self, root_path, run_mode, list_from='pts_file'):
+    def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
 
         l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))        
-        result = self.prepare_camera_list(list_from)
+        result = self.prepare_camera_list(list_from, group)
         if result < 0 :
             return result
 
@@ -58,17 +58,9 @@ class Group(object):
             self.pairs = Pair.create_pair(self.cameras)
             self.sfm = SFM(self.views, self.pairs)
 
-        filename = os.path.join(self.root_path, 'images', df.pts_file_name)
-
-        # if list_from == 'colmap_db': ## shoud block those after using init pari of colmap
-        self.answer = import_answer(filename, 0) 
-        # else :
-        #     self.answer = import_answer(filename, 2)
-
-
         return 0
 
-    def prepare_camera_list(self, list_from, group_id = 'Group1'):
+    def prepare_camera_list(self, list_from, group_id ='Group1'):
         self.world.get_world()
         self.adjust = Adjust(self.world)
         self.ext = check_image_format(self.root_path)        
@@ -90,7 +82,9 @@ class Group(object):
         elif list_from == 'colmap_db' :
             file_names = sorted(glob.glob(os.path.join(self.root_path, 'images', '*.' + self.ext)))            
             t_colmap = Colmap(self.root_path)
-            image_names = t_colmap.import_colmap_cameras(file_names)
+            result, image_names = t_colmap.import_colmap_cameras(file_names)
+            if result < 0 : 
+                return result
 
         index = 0
         for image_name in image_names:
@@ -212,15 +206,16 @@ class Group(object):
         return -150, None
         
         
-    def generate_points(self, job_id, base_pts=None) :
-
+    def generate_points(self, job_id, cal_type, base_pts=None) :
+        
         if df.answer_from == 'input' and base_pts == None :
             df.answer_from = 'pts' #for analysis mode
         
         if df.answer_from == 'pts' and self.answer == None:
             return -303
-            
-        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
+
+        l.get().w.debug("generate points answer_from {}".format(df.answer_from))
+        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, cal_type, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
             return err
@@ -234,7 +229,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, pair_type='zero', answer_from='pts', base_pts= None) :
+    def make_seed_answer(self, job_id, cal_type, pair_type='zero', answer_from='pts', base_pts= None) :
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -263,13 +258,24 @@ class Group(object):
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
         if answer_from == 'pts' :
+            filename = os.path.join(self.root_path, 'images', df.pts_file_name)
+            self.answer = import_answer(filename, 0) 
             pts1 = self.answer[viewname1]
             pts2 = self.answer[viewname2]
+            l.get().w.debug("maker seed  answer from pts file  \n{} {}".format(pts1, pts2))
+            
         elif answer_from == 'input' :
-            base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
-            base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
+            if cal_type == '3D' : 
+                base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
+                base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
+            else :
+                base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
+                base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
+
             pts1 = np.array(base1)
             pts2 = np.array(base2)
+
+            l.get().w.debug("cal_type {} maker seed  answer from base \n{} {}".format(cal_type.upper(), pts1, pts2))
 
         c0.pts = pts1
         c1.pts = pts2
@@ -326,8 +332,8 @@ class Group(object):
             plot_scene(self.cameras, self.sfm, mode)
 
 
-    def export(self, output_path, job_id) :
-        export_points(self, df.export_point_type, output_path, job_id)
+    def export(self, output_path, job_id, cal_type) :
+        export_points(self, df.export_point_type, output_path, job_id, cal_type)
         save_point_image(self)
 
     def save_answer_image(self):

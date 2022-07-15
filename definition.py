@@ -31,6 +31,7 @@ def get_err_msg(err_code) :
     msg_pair = {
          0 : "ERR NONE",
          100 : "Comeplete",
+         200 : "Complete",
 
         -1 : "PROC ERR",
         -11 : "Create Preset Error",
@@ -59,6 +60,7 @@ def get_err_msg(err_code) :
         -151 : "Job id is strange. No information",
         -152 : "No initial pair info file",
         -153 : "Initial pair info is not correct",
+        -154 : "Keypoints from image is not general. Please check the images",
 
         -201 : "Query job_is is ambigous",
 
@@ -104,4 +106,4 @@ class DEFINITION(object) :
 
     initpair_file = 'init_pair.txt'
 
-
+    feature_minimum = 500

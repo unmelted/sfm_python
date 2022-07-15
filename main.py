@@ -12,7 +12,8 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String
+    'input_dir' : fields.String, #입력 directory
+    'group' : fields.String # 캘리브레이션 진행할 그룹
 })
 
 @api.route('/exodus/autocalib')
@@ -25,10 +26,11 @@ class calib_run(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
+        parser.add_argument('group', type=str)        
         args = parser.parse_args()
         
         print(args['input_dir'])
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], ip_addr))
+        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['group'], ip_addr))
 
         result = {
             'status': 0,
@@ -150,7 +152,7 @@ class calib_analysis(Resource) :
         
         print(args['job_id'])
         print(args['mode'])
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr, args['mode']))
 
         msg = df.get_err_msg(result)
         result = {

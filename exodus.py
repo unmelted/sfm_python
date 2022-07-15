@@ -54,12 +54,13 @@ class Commander(object) :
 
         elif query == df.TaskCategory.ANALYSIS :
             status = 100
-            result = analysis_mode(obj[0])
+            result = analysis_mode(obj[0], obj[2])
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
             print("data check : ", obj[2])
-            result = generate_pts(obj[0], obj[2]['type'], obj[2]['pts'])
+            cal_type = obj[2]['type'].upper()
+            result = generate_pts(obj[0], cal_type, obj[2]['pts'])
             status = 100
 
         elif query == df.TaskCategory.GET_PAIR :
@@ -83,10 +84,10 @@ class Commander(object) :
         l.get().w.info("Task Proc start : {} ".format(self.index))        
         if task == df.TaskCategory.AUTOCALIB :
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
-            ac = autocalib(obj[0], self.index, obj[1])
+            ac = autocalib(obj[0], self.index, obj[1], obj[2])
             ac.run()         
 
-            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[1], desc=task)
+            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], desc=task)
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
@@ -100,17 +101,20 @@ def visualize_mode(job_id) :
     return 0
 
 
-def generate_pts(job_id, type, base_pts) :
-    l.get().w.info("Generate pst start : {} ".format(job_id))
+def generate_pts(job_id, cal_type, base_pts) :
+    l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
+    time_s = time.time()                    
     float_base = []
-    if len(base_pts) < 16 :
+    if cal_type == '3D' and len(base_pts) < 16 :
         return finish_query(job_id, -301)
-    else :
-        for val in base_pts :            
-            if float(val) < 0 :
-                return finish_query(job_id, -302)
-            else :
-                float_base.append(float(val))
+    elif cal_type == '2D' and len(base_pts) < 8:
+        return finish_query(job_id, -301)        
+
+    for val in base_pts :            
+        if float(val) < 0 :
+            return finish_query(job_id, -302)
+        else :
+            float_base.append(float(val))
 
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -122,16 +126,19 @@ def generate_pts(job_id, type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, base_pts=float_base)
+    result = preset1.generate_points(job_id, cal_type, base_pts=float_base)
     if result < 0 :
-        return finish_query(job_id, result)                
+        return finish_query(job_id, result)     
 
-    preset1.export(os.path.join(root_path, 'output'), job_id)
+    time_e = time.time() - time_s
+    l.get().w.critical("Spending time total (sec) : {}".format(time_e))
+
+    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     status_update(job_id, 200)
 
     return 0
 
-def analysis_mode(job_id) :
+def analysis_mode(job_id, cal_type) :
     l.get().w.info("analysis  start : {} ".format(job_id))    
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -155,7 +162,7 @@ def analysis_mode(job_id) :
     #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
     #     return 0
 
-    result = preset1.generate_points(job_id)
+    result = preset1.generate_points(job_id, cal_type)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
@@ -166,13 +173,13 @@ def analysis_mode(job_id) :
         return 0
 
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
-    preset1.export(os.path.join(root_path, 'output'), job_id)
+    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()
     return 0
 
 class autocalib(object) :
 
-    def __init__ (self, input_dir, job_id, ip) :
+    def __init__ (self, input_dir, job_id, group, ip) :
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
@@ -180,6 +187,7 @@ class autocalib(object) :
         self.mode = 0 #mode
         self.job_id = job_id
         self.ip = ip
+        self.group = group
 
     def run(self) :
         DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
@@ -192,7 +200,7 @@ class autocalib(object) :
         status_update(self.job_id, 10)
 
         l.get().w.error("list from type : {} ".format(self.list_from))        
-        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from)
+        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from, self.group)
 
         if( ret < 0 ):
             return finish(self.job_id, -101)
@@ -273,21 +281,12 @@ class autocalib(object) :
             if not os.path.exists(os.path.join(self.root_dir, 'images')) :
                 os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            if self.list_from == 'image_folder':
-                result = prepare_image_job(self.input_dir, self.root_dir)
+            result = prepare_job(self.input_dir, self.root_dir, self.list_from)
+            if result < 0 :
+                return result 
 
-            elif self.list_from == 'video_folder' :
-                video_files = 0
-                video_files = sorted(glob.glob(os.path.join(self.input_dir,'*.mp4')))
-
-                if len(video_files) < 3 :
-                    return -102
-
-                result = prepare_video_job(self.input_dir, self.root_dir)
+            if self.list_from == 'video_folder' :
                 self.list_from = 'image_folder'                
-
-            elif self.list_from == 'pts_file' :
-                result = prepare_image_job(self.input_dir, self.root_dir)
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
             DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)

@@ -6,19 +6,28 @@ import shutil
 from logger import Logger as l
 from definition import DEFINITION as df
 
-def prepare_video_job(from_path, root_path) :
-    
+def prepare_job(from_path, root_path, type) :
     if not os.path.exists(os.path.join(from_path, df.pts_file_name)):
         return -106
-    to_path = os.path.join(root_path, 'images')
 
+    to_path = os.path.join(root_path, 'images')
     pts = os.path.join(from_path, df.pts_file_name)
     shutil.copy(pts, to_path)
     copy_answer_pts(from_path, to_path)
     setup_proj_ini(root_path)
 
+    if type == 'video_folder' :
+        return prepare_video_job(from_path, to_path)
+    elif type == 'image_folder' or type == 'pts_file':
+        return prepare_image_job(from_path, to_path)
+
+
+def prepare_video_job(from_path, to_path) :
+    
     video_files = sorted(glob.glob(os.path.join(from_path,'*.mp4')))
-    pick_frame = 5
+    pick_frame = 1
+    if len(video_files) < 5 :
+        return -102
 
     for video in video_files : 
         l.get().w.debug(video)
@@ -40,18 +49,12 @@ def prepare_video_job(from_path, root_path) :
 
     return 0
 
-def prepare_image_job(from_path, root_path) :
-
-    if not os.path.exists(os.path.join(from_path, df.pts_file_name)):
-        return -106
-
-    to_path = os.path.join(root_path, 'images')
-    pts = os.path.join(from_path, df.pts_file_name)
-    shutil.copy(pts, to_path)
-    copy_answer_pts(from_path, to_path)
-    setup_proj_ini(root_path)    
+def prepare_image_job(from_path, to_path) :
 
     image_files = sorted(glob.glob(os.path.join(from_path,'*')))
+
+    if len(image_files) < 5 :
+        return -102
 
     for image in image_files : 
         from_file = os.path.join(from_path, image)
