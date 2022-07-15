@@ -356,8 +356,10 @@ class Group(object):
             
         print("get_extra_point : ", x1, y1, x2, y2)
         c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1]]), axis=0)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length/2]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length]]), axis=0)        
         c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2]]), axis=0)
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length/2]]), axis=0)
         c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length]]), axis=0)
 
         print(c0.pts_extra)
