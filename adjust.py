@@ -284,7 +284,8 @@ class Adjust(object):
         for i in range(c.pts_extra.shape[0]) :
             u1_normalized = K_inv.dot(cam[i, :])
             u1_normalized = u1_normalized.T - c.t.reshape((1,3))
-            extra_3d = np.append(extra_3d, np.arra().T, axis=0)
+            bproj = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            extra_3d = np.append(extra_3d, np.array(bproj).T, axis=0)
 
         return extra_3d
 
