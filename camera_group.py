@@ -10,7 +10,7 @@ from camera import *
 from pair import *
 from view import *
 from visualize import *
-from adjust import *
+from camera_transform import *
 from world import *
 from extn_util import * 
 from intrn_util import *
@@ -62,7 +62,7 @@ class Group(object):
 
     def prepare_camera_list(self, list_from, group_id ='Group1'):
         self.world.get_world()
-        self.adjust = Adjust(self.world)
+        self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)        
         image_names = []
 
@@ -375,3 +375,7 @@ class Group(object):
             self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
 
 
+    def generate_adjust(self) :
+
+        output_path = os.path.join(self.root_path, 'output')
+        making_gif(self.root_path, output_path)

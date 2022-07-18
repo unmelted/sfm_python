@@ -38,11 +38,15 @@ class Camera(object):
         self.pts_back = np.empty((0,3), dtype=np.float64)
         self.pts_extra = np.empty((0,2), dtype=np.float64)
 
-        self.normal = [] # 2 vectocs
+
         self.center = [] # tracking center
-        self.norm = None
-        self.angle = None
-        self.radian = None
+        self.rod_length = 0
+        self.radian = 0
+        self.scale = 0        
+        self.adjust_x = 0
+        self.adjust_y = 0
+        self.rotate_x = 0
+        self.rotate_y = 0
 
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)

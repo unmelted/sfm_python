@@ -1,64 +1,308 @@
+import os
+import sys
 import numpy as np
-import matplotlib.pyplot as plt
-from pytransform3d.plot_utils import make_3d_axis
-from pytransform3d.rotations import active_matrix_from_intrinsic_euler_xyz
-from pytransform3d.transformations import transform_from, plot_transform
-from pytransform3d.camera import make_world_grid, world2image, plot_camera
+import math
+import cv2
+import logging
+import json
+from world import *
+from mathutil import *
+
+class CameraTransform(object):
+
+    def __init__(self, world):
+        self.calib_type = None  # 2d, 3d
+        self.world = world
+        scale = 100
+        self.normal = np.array([[1920, 1080, 0], [1920, 1080, -500]])
+    
+    def cart2hom(self, arr):
+        """ Convert catesian to homogenous points by appending a row of 1s
+        :param arr: array of shape (num_dimension x num_points)
+        :returns: array of shape ((num_dimension+1) x num_points) 
+        """
+        if arr.ndim == 1:
+            return np.hstack([arr, 1])
+        return np.asarray(np.vstack([arr, np.ones(arr.shape[1])]))
 
 
-# cam2world = transform_from(
-    # active_matrix_from_intrinsic_euler_xyz([-np.pi + 1, -0.1, 0.3]),
-    # [0.2, -1, 0.5])
-E = np.array([[-0.56672101,  0.02895646,  0.82340076],
- [ 0.03346314, -0.99774864,  0.05811937],
- [ 0.82322993,  0.06049104,  0.56447615]])
-K = np.array([
-    [2759, 0, 1520.69],
-    [0, 2764, 1006.81],
-    [0, 0, 1]
-])
-K_inv = np.linalg.inv(K)
-KT_inv = np.linalg.inv(K.T)
-F = KT_inv @ E @ K_inv
-print(F)
+    def get_camera_pos(self, target):
+        R_inv = np.linalg.inv(target.R)
+        zc = np.array([[0, 1, 0]]).T
+        cam_pos = R_inv.dot(target.t)
+        zw = R_inv.dot(zc)
+        print("Camera pose z -- ", zw)
+        pan = math.atan2 (zw[2], zw[0]) - math.pi / 2
+        xc = np.array([1, 0, 0]).T
+        xw = R_inv.dot(xc)
+        xpan = [math.cos(pan), math.sin(pan), 0]
+        roll = math.acos(xw[0]*xpan[0] + xw[1] * xpan[1] + xw[2]*xpan[2])
+        if xw[2] < 0 : roll = -roll
 
-cam2world = transform_from(R=F, p=[0.49059479,
-0.01932094, 0.8711736])
+        print(roll, roll * 180/math.pi)
+    
+    #cam1 -> cam2 relative
+    def get_camera_relative2(self, ref, target) :
+        newR = np.dot(ref.R.T, target.R)
+        print("camera_releative.. ", newR)
 
-focal_length = 20
-sensor_size = (0.017, 0.0135)
-image_size = (3840, 2160)
-intrinsic_camera_matrix = K
-#  np.array([
-#     [focal_length, 0, sensor_size[0] / 2],
-#     [0, focal_length, sensor_size[1] / 2],
-#     [0, 0, 1]
-# ])
+        temp = -1* np.dot(newR, ref.t)
+        newT = temp + target.t
+        K_inv = np.linalg.inv(target.K)
+        print("new T " , newT)
 
-world_grid = make_world_grid(n_points_per_line=101, xlim=(-10, 10),ylim=(-10, 10))
-image_grid = world2image(world_grid, cam2world, sensor_size, image_size,
-                         focal_length)
+        temp = np.hstack([newR, newT])
+        P = np.dot(target.K, temp) 
+        return P
 
-plt.figure(figsize=(24, 10))
-ax = make_3d_axis(1, 121, unit="m")
-ax.view_init(elev=30, azim=-70)
-plot_transform(ax)
-plot_transform(ax, A2B=cam2world, s=1, name="Camera")
-plot_camera(ax, intrinsic_camera_matrix, cam2world,
-            sensor_size=sensor_size, virtual_image_distance=5)
-ax.set_title("Camera and world frames")
-ax.scatter(
-    world_grid[:, 0], world_grid[:, 1], world_grid[:, 2], s=1, alpha=0.2)
-ax.scatter(image_grid[:, 0], -(image_grid[:, 1] - image_size[1]))    
+        ppts = ref.pts.reshape((3, 1))        
+        ppts = np.vstack([ppts, 1])
+        reproject = np.dot(P, ppts)
+        target.pts =  K_inv.dot(reproject).T    
+        # target.pts[0][1] = 0            
+        print("camera_relative.. " , target.pts)
 
-ax.scatter(world_grid[-1, 0], world_grid[-1, 1], world_grid[-1, 2], color="r")
-ax.view_init(elev=25, azim=-130)
 
-# ax = plt.subplot(122, aspect="equal")
-# ax.set_title("Camera image")
-# ax.set_xlim(0, image_size[0])
-# ax.set_ylim(0, image_size[1])
-# ax.scatter(image_grid[:, 0], -(image_grid[:, 1] - image_size[1]))
-# ax.scatter(image_grid[-1, 0], -(image_grid[-1, 1] - image_size[1]), color="r")
+    def convert_pts(self, ppts, target):
+        ppts2 = ppts.reshape((3,1))
+        ppts2 = self.cart2hom(ppts2)
+        print("convert_pts .. " , ppts2) 
 
-plt.show()
+        reproject = np.dot(target.P, ppts2)
+        reproject /= reproject[2]
+        print("reproject .. 1  ",  reproject)
+        ppts = ppts.reshape((3,1))
+        reproject2 = target.K.dot(target.R.dot(ppts) + target.t)
+        reproject2 = cv2.convertPointsFromHomogeneous(reproject2.T)[:, 0, :].T
+        print("reporject.. 2 ", reproject2)
+
+        # for pt in self.world.world_points:
+        #     pt = pt.reshape((3,1))
+        #     # K_inv = np.linalg.inv(target.K)
+        #     # pt = K_inv.dot(pt) 
+        #     reproject = (target.R.T.dot(pt) + target.t)
+        #     eproject = cv2.convertPointsFromHomogeneous(reproject.T)[:, 0, :].T
+        #     # print("4point .. " , pt)
+        #     # print("reproject .. " ,reproject)
+        #     target.pts.append(reproject)
+    
+    def convert_pts2(self, ppts, target):
+        print("convert_pts2 .. ", target.view.name, ppts)
+        pts = np.zeros((3), dtype=np.float)
+        pts[0] = ppts[0][0]
+        pts[1] = ppts[0][1]
+        pts[2] = ppts[0][2]
+        pts = np.array([pts])
+        ppts = pts.reshape((3,1))         
+        K_inv = np.linalg.inv(target.K)
+        #ppts = np.vstack([ppts, 1])        
+        ppts = K_inv.dot(ppts)
+        distcoeff = np.array([[0., 0., 0., 0.]])
+        projectvector, _ = cv2.projectPoints(ppts, target.Rvec, target.t, target.K, distcoeff)
+        ppts = K_inv.dot(np.vstack([projectvector[0][0].reshape((2,1)), 1]))
+        print("convert_pts2 .. " ,  ppts)
+
+    def convert_pts3(self, ppts, target) :
+        print("convert_pt3  ", target.view.name, ppts)
+        ppts = ppts.reshape((3, 1))    
+        ppts = np.vstack([ppts, 1])            
+        K_inv = np.linalg.inv(target.K)
+        reproject = np.dot(target.P, ppts)
+        target.pts =  K_inv.dot(reproject).T
+        # target.pts =  reproject
+        print("convert_pt3 1.. " , target.pts)
+        self.convert_pts2(target.pts, target)
+        # temp = target.pts.reshape((3, 1))        
+        # temp = K_inv.dot(temp)
+        # distcoeff = np.array([[0., 0., 0., 0.]])
+        # projectvector, _ = cv2.projectPoints(temp, target.Rvec, target.t, target.K, distcoeff)
+        # temp = np.vstack([projectvector[0][0].reshape((2,1)), 1])
+        # print("convert_pt3 2.. " , (temp))
+
+    def convert_pts4(self, ppts, target) :
+        pts = np.zeros((2), dtype=float)
+        pts[0] = ppts[0][0]
+        pts[1] = ppts[0][2]
+        print(pts)
+        pts = np.array([pts])
+        K_inv = np.linalg.inv(target.K)
+        #ppts = np.vstack([ppts, 1])
+
+        reprojected_points = cv2.perspectiveTransform(src=pts, m=target.P)
+        print("convert_pts4 .. ", reprojected_points)
+        z = reprojected_points[0, :, -1]        
+        print("convert_pts4 .. ", z)
+
+    def convert_pts5(self, ppts, target):
+        print("convert_pt5..  ", target.view.name, ppts)
+        K_inv = np.linalg.inv(target.K)                 
+        ppts = ppts.reshape((3, 1))        
+        ppts = K_inv.dot(ppts)        
+        ppts = np.vstack([ppts, 1])
+        R_inv = np.linalg.inv(target.R)                 
+        temp = np.dot(R_inv, target.t)
+        print("convert_pt5.. campos : ", temp)
+        temp = np.dot(target.K, temp)
+        # back_proj = np.dot(temp, ppts)
+        # back_proj = np.vstack([back_proj, 1])        
+        # print("convert_pt5 .. ", back_proj)
+        # move_pt = np.dot(target.P, back_proj)        
+        # print("convert_pt5.. " , move_pt, np.dot(K_inv, move_pt))
+
+
+    def check_normal(self, c1) :
+        K_inv = np.linalg.inv(c1.K)
+        cv_pts = self.normal[0, :]
+        #cv_pts = K_inv.dot(cv_pts)
+        cv_pts = np.hstack([cv_pts, 1])
+        cv_pts = cv_pts.reshape((4,1))
+        reproject = c1.project(cv_pts)
+        print("normal 1 ")
+        print(reproject)
+    
+        cv_pts = self.normal[1, :]
+        cv_pts = np.hstack([cv_pts, 1])
+        cv_pts = cv_pts.reshape((4,1))
+        reproject = c1.project(cv_pts)
+        print("normal 2 ")
+        print(reproject)    
+
+    def make_3D_byCam(self, c0, c1) :
+        print(" make_3D .... ", c0.view.name, c1.view.name)
+
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
+        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
+
+        for i in range(c0.pts.shape[0]) :
+            K0_inv = np.linalg.inv(c0.K)            
+            K1_inv = np.linalg.inv(c1.K)
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
+
+            point_3D = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+
+            error1 = calculate_reprojection_error(point_3D, cam0[i, 0:2], c0.K, c0.R, c0.t)
+            error2 = calculate_reprojection_error(point_3D, cam1[i, 0:2], c1.K, c1.R, c1.t)
+            # print("error " , error1, error2)
+            c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
+
+        print(c1.pts_3D)
+
+    def make_3D(self, c0, c1) :
+        print(" make_3D .... ", c0.view.name, c1.view.name)
+        pts_3d = []
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
+        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
+
+        for i in range(c0.pts.shape[0]) :
+            K0_inv = np.linalg.inv(c0.K)            
+            K1_inv = np.linalg.inv(c1.K)
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
+
+            _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+            pts_3d.append(np.array(_3d).T)        
+
+        c0.pts_3D = pts_3d
+        c1.pts_3D = pts_3d        
+        print(pts_3d)
+        return pts_3d
+
+    def make_3D_extra(self, c0, c1) :
+        print(" make_3D extra .... ", c0.view.name, c1.view.name)
+        pts_3d = np.empty((0,3), dtype=np.float64)
+        cam0 = cv2.convertPointsToHomogeneous(c0.pts_extra)[:, 0, :]
+        cam1 = cv2.convertPointsToHomogeneous(c1.pts_extra)[:, 0, :]
+
+        for i in range(c0.pts_extra.shape[0]) :
+            K0_inv = np.linalg.inv(c0.K)            
+            K1_inv = np.linalg.inv(c1.K)
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
+
+            _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+            pts_3d =np.append(pts_3d, np.array(_3d).T)
+
+        print(pts_3d)
+        return pts_3d
+
+    def reproject_3D_byCam(self, c0, c1) :
+        print("reproject_3D .. : ", c1.view.name)
+
+        for i in range(c0.pts.shape[0]) :
+            cv_pts = c0.pts_3D[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c1.project(cv_pts)
+            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+
+    def reproject_3D(self, pts_3d, c1) :
+        print("reproject_3D .. : ", c1.view.name)
+
+        for i in range(len(pts_3d)) :
+            cv_pts = np.array(pts_3d[i]).T
+            cv_pts = np.vstack([cv_pts, 1])
+            reproject = c1.project(cv_pts)
+            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+
+    def reproject_3D_extra(self, pts_3d, c1) :
+        print("reproject_3D extra .. : ", c1.view.name)
+        for i in range(pts_3d.shape[0]) :
+            cv_pts = np.array(pts_3d[i]).reshape((3,1))
+            cv_pts = np.vstack([cv_pts, 1])
+            reproject = c1.project(cv_pts)
+            c1.pts_extra = np.append(c1.pts_extra, np.array(reproject).T, axis=0)        
+
+        print(c1.pts_extra)
+
+
+    def reproject(self, c0, c1) :
+        print("reproject .. : ", c1.view.name)
+
+        for i in range(c0.pts.shape[0]) :
+            cv_pts = c0.pts_back[i, :]
+            cv_pts = np.hstack([cv_pts, 1])
+            cv_pts = cv_pts.reshape((4,1))
+            reproject = c1.project(cv_pts)
+            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+
+        print(c1.pts)            
+
+    def backprojection(self, c):
+        cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
+
+        print(" Back projection .. : ", c.view.name)
+
+        for i in range(c.pts.shape[0]) :        
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
+
+            print(c_wrld.reshape((1,3)))
+
+    def find_homography(self, answer, c0) :
+       H, mask = cv2.findHomography(c0.pts, answer, 1)
+       return H
+
+
+    def backprojection_extra(self, c) :
+        extra_3d = np.empty((0, 3))
+        cam = cv2.convertPointsToHomogeneous(c.pts_extra)[:, 0, :]
+        K_inv = np.linalg.inv(c.K)
+        R0_inv = np.linalg.inv(c.R)
+
+        for i in range(c.pts_extra.shape[0]) :
+            u1_normalized = K_inv.dot(cam[i, :])
+            u1_normalized = u1_normalized.T - c.t.reshape((1,3))
+            bproj = np.dot(R0_inv, u1_normalized.reshape((3,1)))
+            extra_3d = np.append(extra_3d, np.array(bproj).T, axis=0)
+
+        return extra_3d
+

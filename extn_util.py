@@ -6,6 +6,7 @@ import cv2
 from logger import Logger as l
 import json
 from definition import DEFINITION as df
+from PIL import Image
 
 def export_points(preset, output_type, output_path, job_id, cal_type):
     if output_type == 'dm' :
@@ -406,3 +407,8 @@ def get_initpair(root_path) :
     id1 = ids[0]
     id2 = ids[1]
     return 0, id1, id2
+
+def making_gif(root_path, output_path) :
+    frames = [Image.open(image) for image in glob.glob(f"{output_path}/*.png")]
+    frame_one = frames[0]
+    frame_one.save(os.path.join(root_path, 'preview.gif'), format="GIF", append_iamge=frames, save_all=True, duration=300, loop=0)

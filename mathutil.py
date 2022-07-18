@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import math
 import cv2
 import logging
 
@@ -325,3 +326,18 @@ def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
     cy = temp3 / temp4
 
     return cx, cy
+
+def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
+    delx = point_x - center_x
+    dely = point_y - center_y
+
+    cos_ = math.cos(radian)
+    sin_ = math.sin(radian)
+
+    ret_x = center_x * cos_ - center_y * sin_
+    ret_y = center_x * sin_ - center_y * cos_
+
+    ret_x = ret_x + center_x
+    ret_y = ret_y + center_y
+
+    return ret_x, ret_y
