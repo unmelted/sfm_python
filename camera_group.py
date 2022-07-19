@@ -347,7 +347,45 @@ class Group(object):
     def save_answer_image(self):
         save_ex_answer_image(self)
 
-    def get_extra_point(self, job_id) :
+    def get_extra_point(self, job_id, base_pts=None) :
+
+        type = 'insert2D'
+        if type == 'simple2D' : #first try : from create point based on simply length of rod
+            self.get_extra_point_normal2D(job_id)
+        elif type == 'based3D' : # third try : same method  as existed logic in dm
+            self.get_extra_point_based3D(job_id)
+        elif type == 'insert2D' : #second try : user input scenario
+            self.get_extra_point_basedInput(job_id, base_pts)
+
+
+    def get_extra_point_based3D(self, job_id) :
+        pass
+
+    def get_extra_point_basedInput(self, job_id, base_pts):
+        result, image_name1, image_name2 = get_pair(job_id)
+        
+        viewname1 = get_viewname(image_name1, self.ext)
+        viewname2 = get_viewname(image_name2, self.ext)
+        err, c0 = self.get_camera_byView(viewname1)
+        err, c1 = self.get_camera_byView(viewname2)
+
+        l.get().w.debug("maybe missed  {} {}".format(viewname1, viewname2))
+        base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
+        base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
+        c0.pts_extra = np.array(base1)
+        c1.pts_extra = np.array(base2)
+
+        extra_3d = self.adjust.make_3d_extra(c0, c1)
+        print("extra 3D : ", extra_3d)        
+
+        for i in range(len(self.cameras)):
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
+            if viewname == viewname1 or viewname == viewname2:
+                continue
+
+            self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
+
+    def get_extra_point_normal2D(self, job_id) :
         result, image_name1, image_name2 = get_pair(job_id)
         
         viewname1 = get_viewname(image_name1, self.ext)
