@@ -121,7 +121,7 @@ class GroupAdjust(object) :
 
             left.append(margin_left)
             right.append(margin_right)
-            top.apeend(margin_top)
+            top.append(margin_top)
             bottom.append(margin_bottom)
 
         left.sort(reverse=True)
