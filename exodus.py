@@ -165,6 +165,8 @@ def analysis_mode(job_id, cal_type) :
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()
+    preset1.generate_adjust()
+    
     return 0
 
 class autocalib(object) :
