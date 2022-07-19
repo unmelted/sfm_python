@@ -130,7 +130,7 @@ class GroupAdjust(object) :
         bottom.sort()
         margin_width = right[0] - left[0]
         margin_height = bottom[0] - top[0]
-        l.get().w.debug('calculated margin l {} r {} t {} b {} width {} height {}'.format(left[0], right[0],top[[0], bottom[0]], margin_width, margin_height))
+        l.get().w.debug('calculated margin l {} r {} t {} b {} width {} height {}'.format(left[0], right[0],top[[0], bottom[0], margin_width, margin_height))
 
         return left[0], right[0],top[[0], bottom[0]], margin_width, margin_height
 
