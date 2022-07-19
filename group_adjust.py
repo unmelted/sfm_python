@@ -57,7 +57,7 @@ class GroupAdjust(object) :
             self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
             self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
             self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
-            l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(i, self.cameras[i].scale, self.cameras[i].ajdust_x, self.cameras[i].adjust_y))
+            l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(i, self.cameras[i].scale, self.cameras[i].adjust_x, self.cameras[i].adjust_y))
 
 
     def calculate_margin(self) :
