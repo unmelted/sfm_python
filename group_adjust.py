@@ -9,8 +9,8 @@ class GroupAdjust(object) :
     def __init__(self, cameras) :
         self.cameras = cameras
 
-    def calculate_radian(self, cameras) :
-        for i in range(len(cameras)):
+    def calculate_radian(self) :
+        for i in range(len(self.cameras)):
             dist = 0
             diffx = self.cameras[i].pts_extra[0][0] - self.cameras[i].ptx_extra[2][0]
             diffy = self.cameras[i].pts_extra[0][1] - self.cameras[i].ptx_extra[2][1]
@@ -25,7 +25,7 @@ class GroupAdjust(object) :
             l.get().w.debug("camera {} diffx {} diffy {} degree {} radian {} ".format(i, diffx, diffy, degree, self.cameras[i].radian))
 
 
-    def calculate_scaleshift(self, cameras) :
+    def calculate_scaleshift(self) :
         sumx = 0
         sumy = 0
         avex = 0    
@@ -37,9 +37,9 @@ class GroupAdjust(object) :
         startx = self.cameras[0].ptx_extra[1][0]
         startx = self.cameras[0].ptx_extra[1][1]        
         start_len = self.cameras[0].rod_length
-        target_len = self.cameras[len(cameras) -1].rod_length
+        target_len = self.cameras[len(self.cameras) -1].rod_length
 
-        for i in range(len(cameras)):
+        for i in range(len(self.cameras)):
             sumx += self.cameras[i].pts_extra[1][0]
             sumy += self.cameras[i].pts_extra[1][1]
             dsccnt += 1
@@ -50,7 +50,7 @@ class GroupAdjust(object) :
         targy = avey
         interval = (target_len - start_len) / (dsccnt - 1)
 
-        for i in range(len(cameras)):
+        for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
             self.cameras[i].scale = dist_len / self.cameras[i].rod_length
             self.cameras[i].adjust_x = targx - self.cameras[i].ptx_extra[1][0]
@@ -60,13 +60,13 @@ class GroupAdjust(object) :
             l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(i, self.cameras[i].scale, self.cameras[i].ajdust_x, self.cameras[i].adjust_y))
 
 
-    def calculate_margin(self, cameras) :
+    def calculate_margin(self) :
         left = []
         right = []
         top = []
         bottom = []
 
-        for i in range(len(cameras)):
+        for i in range(len(self.cameras)):
             scale = self.cameras[i].scale
             center_x = self.cameras[i].rotate_x
             center_y = self.cameras[i].rotate_y
@@ -143,7 +143,7 @@ class GroupAdjust(object) :
         out = mat5 * mat4 * mat3 * mat2 * mat1
 
         return out
-        
+
     def adjust_image(self, output_path, ext) :
         w = self.cameras[0].view.image_width
         h = self.cameras[0].view.image_height
