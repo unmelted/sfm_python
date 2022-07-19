@@ -1,5 +1,7 @@
 import numpy as np
+from enum import Enum
 import pandas as pd
+import math
 import cv2
 import logging
 
@@ -312,3 +314,103 @@ def quaternion_rotation_matrix(Q):
                            [r20, r21, r22]])
                             
     return rot_matrix
+
+def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
+    cx = 0
+    cy = 0
+
+    temp1 = (x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2) * ( x3*y4 - y3*x4 )
+    temp2 = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+    cx = temp1 / temp2
+    temp3 = (x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2)*( x3*y4 - y3*x4 )
+    temp4 = (x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 -x4)
+    cy = temp3 / temp4
+
+    return cx, cy
+
+def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
+    delx = point_x - center_x
+    dely = point_y - center_y
+
+    cos_ = math.cos(radian)
+    sin_ = math.sin(radian)
+
+    ret_x = center_x * cos_ - center_y * sin_
+    ret_y = center_x * sin_ - center_y * cos_
+
+    ret_x = ret_x + center_x
+    ret_y = ret_y + center_y
+
+    return ret_x, ret_y
+
+
+def get_translation_matrix(dx, dy):
+    out = np.eye(3, dtype=np.float64)
+    out[0,2] = dx
+    out[1,2] = dy
+    return out
+
+def get_rotation_matrix(radian) :
+    out = np.eye(3, dtype=np.float64)
+    out[0,0] = math.cos(radian)
+    out[0,1] = -1 * math.sin(radian)
+    out[1,0] = math.sin(radian)
+    out[1,1] = math.cos(radian)
+
+    return out
+
+def get_rotation_matrix_with_center(radian, cx, cy) :
+
+    mtran = get_translation_matrix(-cx, -cy)
+    mrot = get_rotation_matrix(radian)
+    mtran2 = get_translation_matrix(cx, cy)
+    out = np.linalg.multi_dot([mtran2, mrot, mtran])
+
+    return out 
+
+def get_scale_matrix(scalex, scaley) :
+    out = np.eye(3, dtype=np.float64)
+    out[0,0] = scalex
+    out[1,1] = scaley
+
+    return out 
+
+def get_scale_matrix_center(scalex, scaley, cx, cy) :
+
+    mtran = get_translation_matrix(-cx, -cy)
+    msc = get_scale_matrix(scalex, scaley)
+    mtran2 = get_translation_matrix(cx, cy)
+    out = np.linalg.multi_dot([mtran2, msc, mtran])
+    return out
+
+
+def get_flip_matrix(width, height, flipx, flipy) :
+    out = np.eye(3, dtype=np.float64)
+
+    if flipx == True :
+        out[0,0] = -1.0
+        out[0,2] = width
+    
+    if flipy == True :
+        out[1,1] = -1.0
+        out[1,2] = height
+
+    return out
+
+def get_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_height) :
+    out = np.eye(3, dtype=np.float64)
+
+    cx = margin_x + margin_width / 2.0
+    cy = margin_y + margin_height / 2.0
+    scalex = width / margin_width
+    scaley = height / margin_height
+
+    mtran = get_translation_matrix(-cx, -cy)
+    msc = get_scale_matrix(scalex, scaley)
+    mtran2 = get_translation_matrix(width/ 2.0, height/ 2.0)
+
+    out = np.linalg.multi_dot([mtran2, msc, mtran])
+
+    #print("margin matrix ")
+    #print(out)
+    return out

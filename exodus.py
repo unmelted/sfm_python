@@ -152,16 +152,6 @@ def analysis_mode(job_id, cal_type) :
         return 0
 
     preset1.read_cameras()
-    # result = preset1.generate_points(mode='colmap_zero')
-    # if result < 0 :
-    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-    #     return 0
-
-    # result = preset1.calculate_real_error()
-    # if result < 0 :
-    #     l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-    #     return 0
-
     result = preset1.generate_points(job_id, cal_type)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
@@ -171,10 +161,12 @@ def analysis_mode(job_id, cal_type) :
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
-
+    preset1.get_extra_point(job_id)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()
+    preset1.generate_adjust()
+    
     return 0
 
 class autocalib(object) :

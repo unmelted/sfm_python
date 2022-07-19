@@ -3,6 +3,7 @@ from re import I
 import sys
 import glob
 import numpy as np
+from group_adjust import GroupAdjust
 
 from logger import Logger as l
 from definition import DEFINITION as df
@@ -10,7 +11,7 @@ from camera import *
 from pair import *
 from view import *
 from visualize import *
-from adjust import *
+from camera_transform import *
 from world import *
 from extn_util import * 
 from intrn_util import *
@@ -42,6 +43,13 @@ class Group(object):
 
         self.cam_count = 0
 
+        self.left = 0
+        self.right = 0
+        self.top = 0
+        self.bottom = 0
+        self.width = 0
+        self.height = 0
+
     def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
@@ -62,7 +70,7 @@ class Group(object):
 
     def prepare_camera_list(self, list_from, group_id ='Group1'):
         self.world.get_world()
-        self.adjust = Adjust(self.world)
+        self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)        
         image_names = []
 
@@ -338,3 +346,53 @@ class Group(object):
 
     def save_answer_image(self):
         save_ex_answer_image(self)
+
+    def get_extra_point(self, job_id) :
+        result, image_name1, image_name2 = get_pair(job_id)
+        
+        viewname1 = get_viewname(image_name1, self.ext)
+        viewname2 = get_viewname(image_name2, self.ext)
+        err, c0 = self.get_camera_byView(viewname1)
+        err, c1 = self.get_camera_byView(viewname2)
+        if err < 0 :
+            return err, None, None, None
+
+        x1, y1 = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
+            c0.pts[1][0], c0.pts[1][1], c0.pts[3][0], c0.pts[3][1])
+        x2, y2 = get_cross_point(c1.pts[0][0], c1.pts[0][1], c1.pts[2][0], c1.pts[2][1],
+            c1.pts[1][0], c1.pts[1][1], c1.pts[3][0], c1.pts[3][1])
+            
+        print("get_extra_point : ", x1, y1, x2, y2)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length/2]]), axis=0)
+        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length]]), axis=0)        
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2]]), axis=0)
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length/2]]), axis=0)
+        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length]]), axis=0)
+
+        print(c0.pts_extra)
+
+        extra_3d = self.adjust.make_3D_extra(c0, c1)
+        print("extra 3D : ", extra_3d)
+
+        for i in range(len(self.cameras)):
+            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
+            if viewname == viewname1 or viewname == viewname2:
+                continue
+
+            self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
+
+
+    def generate_adjust(self) :
+        gadj = GroupAdjust(self.cameras)
+        gadj.calculate_radian()
+        gadj.calculate_scaleshift()
+        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
+
+        if not os.path.exists(os.path.join(self.root_path, 'preview')) :
+            os.makedirs(os.path.join(self.root_path, 'preview'))
+        output_path = os.path.join(self.root_path, 'preview')
+
+        gadj.adjust_image(output_path, self.ext)
+
+        making_gif(output_path, output_path)

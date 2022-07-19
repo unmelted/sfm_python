@@ -1,0 +1,852 @@
+{
+    "RecordName": "CAL-2022_06_10_12_00_34",
+    "PreSetNumber": 0,
+    "worlds": [
+        {
+            "group": "Group1",
+            "stadium": "BaseballHome",
+            "world_coords": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1
+            }
+        }
+    ],
+    "points": [
+        {
+            "dsc_id": "011101",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 1,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011102",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 2,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011103",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 3,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011104",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 4,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011105",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 5,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011106",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 6,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 14,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011107",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 7,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 13,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011108",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 8,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 12,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011109",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 9,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 18,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        },
+        {
+            "dsc_id": "011110",
+            "ModelName": "FD10",
+            "LensName": "EF 16-35mm f/2.8L III USM",
+            "point_index": 10,
+            "framenum": 123,
+            "camfps": 61,
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": -1,
+            "ManualOffsetY": 0,
+            "FocalLength": 13,
+            "pts_2d": {
+                "UpperPosX": -1,
+                "UpperPosY": -1,
+                "MiddlePosX": -1,
+                "MiddlePosY": -1,
+                "LowerPosX": -1,
+                "LowerPosY": -1,
+                "Upper": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Middle": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Lower": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_3d": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1,
+                "X3": -1,
+                "Y3": -1,
+                "X4": -1,
+                "Y4": -1,
+                "CenterX": -1,
+                "CenterY": -1,
+                "Point1": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point2": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point3": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Point4": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                },
+                "Center": {
+                    "IsEmpty": false,
+                    "X": -1,
+                    "Y": -1
+                }
+            },
+            "pts_swipe": {
+                "X1": -1,
+                "Y1": -1,
+                "X2": -1,
+                "Y2": -1
+            }
+        }
+    ]
+}

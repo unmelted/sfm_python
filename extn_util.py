@@ -6,6 +6,8 @@ import cv2
 from logger import Logger as l
 import json
 from definition import DEFINITION as df
+from PIL import Image
+import imageio
 
 def export_points(preset, output_type, output_path, job_id, cal_type):
     if output_type == 'dm' :
@@ -267,7 +269,6 @@ def save_ex_answer_image(preset) :
 
 
 def save_point_image(preset) :
-
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):    
         os.makedirs(output_path)
@@ -286,6 +287,16 @@ def save_point_image(preset) :
             if j == (preset.cameras[i].pts.shape[0] - 1):
                 cv2.line(preset.cameras[i].view.image, pt_int[j], pt_int[0], (255,255,0), 3)
 
+        if len(preset.cameras[i].pts_extra) > 1 :
+            pt_ex = preset.cameras[i].pts_extra
+            print("save image : ", pt_ex, int(pt_ex[0][0]), int(pt_ex[0][1]))
+            print("save image : ", pt_ex, int(pt_ex[1][0]), int(pt_ex[1][1]))
+            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
+            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)            
+            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)                        
+            cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[2][0]), int(pt_ex[2][1])), 
+                        (255,0,0), 3)
+                            
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 
@@ -397,3 +408,22 @@ def get_initpair(root_path) :
     id1 = ids[0]
     id2 = ids[1]
     return 0, id1, id2
+
+def making_gif(from_path, output_path) :
+    writer = imageio.get_writer(os.path.join(output_path, 'preview.gif'), mode='I')
+    imgs = glob.glob(f"{from_path}/*.png")
+    imgs.sort()
+    frames = []
+    for i in imgs :
+#        new_frame = Image.open(i)
+        print(i)
+        new_frame = imageio.imread(i)
+        frames.append(new_frame)
+#        frames.append(new_frame)
+
+    imageio.mimsave(os.path.join(output_path, 'preview.gif'), frames, fps=2)
+    '''
+    print("making_gif framecount : ", len(frames))
+    frame_one = frames[0]
+    frame_one.save(os.path.join(output_path, 'preview.gif'), format="GIF", append_iamge=frames[1:], save_all=True, duration=500, loop=0)
+    '''
