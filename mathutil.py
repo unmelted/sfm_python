@@ -344,29 +344,74 @@ def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
     return ret_x, ret_y
 
 
-class MATRIXOPERATION(Enum):
-    NONE                    = 0 
-    TRANSLATION             = 100
-    ROTATION                = 200
-    SCALE                   = 400
-    FLIP                    = 600
-    MARGIN                  = 700
-    SUBMAT                  = 800
+def get_translation_matrix(dx, dy):
+    out = np.eye((3,3), dtype=np.float64)
+    out[0,2] = dx
+    out[1,2] = dy
+    return out
+
+def get_rotation_matrix(radian) :
+    out = np.eye((3,3), dtype=np.float64)
+    out[0,0] = math.cos(radian)
+    out[0,1] = -1 * math.sin(radian)
+    out[1,0] = math.sin(radian)
+    out[1,1] = math.cos(radian)
+
+    return out
+
+def get_rotation_matrix_with_center(radian, cx, cy) :
+
+    mtran = get_translation_matrix(-cx, -cy)
+    mrot = get_rotation_matrix(radian)
+    mtran2 = get_translation_matrix(cx, cy)
+    out = mtran2 * mrot * mtran
+
+    return out 
+
+def get_scale_matrix(scalex, scaley) :
+    out = np.eye((3,3), dtype=np.float64)
+    out[0,0] = scalex
+    out[1,1] = scaley
+
+    return out 
+
+def get_scale_matrix_center(scalex, scaley, cx, cy) :
+
+    mtran = get_translation_matrix(-cx, -cy)
+    msc = get_scale_matrix(scalex, scaley)
+    mtran2 = get_translation_matrix(cx, cy)
+    out = mtran2 * msc * mtran
+    return out
 
 
-def get_matrix(type, param) :
-    out = np.empty((3,3), dtype=np.float64)
+def get_flip_matrix(width, height, flipx, flipy) :
+    out = np.eye((3,3), dtype=np.float64)
 
-    if type == MATRIXOPERATION.TRANSLATION :
-        pass
-    elif type == MATRIXOPERATION.ROTATION :
-        pass
-    elif type == MATRIXOPERATION.SCALE :
-        pass
-    elif type == MATRIXOPERATION.MARGIN :
-        pass
-    elif type == MATRIXOPERATION.SUBMAT : 
-        out = param[:2][:3]
+    if flipx == True :
+        out[0,0] = -1.0
+        out[0,2] = width
+    
+    if flipy == True :
+        out[1,1] = -1.0
+        out[1,2] = height
 
+    return out
 
+def get_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_height) :
+    out = np.eye((3,3), dtype=np.float64)
+
+    cx = margin_x + margin_width /2
+    cy = margin_y + margin_height / 2
+    scalex = width / margin_width
+    scaley = height / margin_height
+
+    mtran = get_translation_matrix(-cx, -cy)
+    msc = get_scale_matrix(scalex, scaley)
+    mtran2 = get_translation_matrix(width/ 2, height/ 2)
+
+    out = mtran2 * msc * mtran
+    return out
+
+def get_sub_matrix(input) :
+    out = input[:2, :3]
     return out

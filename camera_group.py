@@ -384,10 +384,15 @@ class Group(object):
 
 
     def generate_adjust(self) :
-        gadj = GroupAdjust()
-        gadj.calculate_radian(self.cameras)
-        gadj.calculate_scaleshift(self.cameras)
-        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin(self.cameras)
+        gadj = GroupAdjust(self.cameras)
+        gadj.calculate_radian()
+        gadj.calculate_scaleshift()
+        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
 
-        output_path = os.path.join(self.root_path, 'output')
-        making_gif(self.root_path, output_path)
+        if not os.path.exists(os.path.join(self.root_path, 'preview')) :
+            os.makedirs(os.path.join(self.root_path, 'preview'))
+        output_path = os.path.join(self.root_path, 'preview')
+
+        gadj.adjust_image(output_path, self.ext)
+
+        making_gif(output_path, output_path)
