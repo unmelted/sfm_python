@@ -12,8 +12,8 @@ class GroupAdjust(object) :
     def calculate_radian(self) :
         for i in range(len(self.cameras)):
             dist = 0
-            diffx = self.cameras[i].pts_extra[0][0] - self.cameras[i].ptx_extra[2][0]
-            diffy = self.cameras[i].pts_extra[0][1] - self.cameras[i].ptx_extra[2][1]
+            diffx = self.cameras[i].pts_extra[0][0] - self.cameras[i].pts_extra[2][0]
+            diffy = self.cameras[i].pts_extra[0][1] - self.cameras[i].pts_extra[2][1]
             if diffx == 0:
                 dist = diffy
             else : 
@@ -34,8 +34,8 @@ class GroupAdjust(object) :
         targx = 0
         targy = 0
 
-        startx = self.cameras[0].ptx_extra[1][0]
-        startx = self.cameras[0].ptx_extra[1][1]        
+        startx = self.cameras[0].pts_extra[1][0]
+        startx = self.cameras[0].pts_extra[1][1]        
         start_len = self.cameras[0].rod_length
         target_len = self.cameras[len(self.cameras) -1].rod_length
 
@@ -53,10 +53,10 @@ class GroupAdjust(object) :
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
             self.cameras[i].scale = dist_len / self.cameras[i].rod_length
-            self.cameras[i].adjust_x = targx - self.cameras[i].ptx_extra[1][0]
-            self.cameras[i].adjust_y = targy - self.cameras[i].ptx_extra[1][1]
-            self.cameras[i].rotate_x = self.cameras[i].ptx_extra[1][0]
-            self.cameras[i].rotate_y = self.cameras[i].ptx_extra[1][1]
+            self.cameras[i].adjust_x = targx - self.cameras[i].pts_extra[1][0]
+            self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
+            self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
+            self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
             l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(i, self.cameras[i].scale, self.cameras[i].ajdust_x, self.cameras[i].adjust_y))
 
 
