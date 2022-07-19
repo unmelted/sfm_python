@@ -345,13 +345,13 @@ def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
 
 
 def get_translation_matrix(dx, dy):
-    out = np.eye((3,3), dtype=np.float64)
+    out = np.eye(3, dtype=np.float64)
     out[0,2] = dx
     out[1,2] = dy
     return out
 
 def get_rotation_matrix(radian) :
-    out = np.eye((3,3), dtype=np.float64)
+    out = np.eye(3, dtype=np.float64)
     out[0,0] = math.cos(radian)
     out[0,1] = -1 * math.sin(radian)
     out[1,0] = math.sin(radian)
@@ -369,7 +369,7 @@ def get_rotation_matrix_with_center(radian, cx, cy) :
     return out 
 
 def get_scale_matrix(scalex, scaley) :
-    out = np.eye((3,3), dtype=np.float64)
+    out = np.eye(3, dtype=np.float64)
     out[0,0] = scalex
     out[1,1] = scaley
 
@@ -385,7 +385,7 @@ def get_scale_matrix_center(scalex, scaley, cx, cy) :
 
 
 def get_flip_matrix(width, height, flipx, flipy) :
-    out = np.eye((3,3), dtype=np.float64)
+    out = np.eye(3, dtype=np.float64)
 
     if flipx == True :
         out[0,0] = -1.0
@@ -398,7 +398,7 @@ def get_flip_matrix(width, height, flipx, flipy) :
     return out
 
 def get_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_height) :
-    out = np.eye((3,3), dtype=np.float64)
+    out = np.eye(3, dtype=np.float64)
 
     cx = margin_x + margin_width /2
     cy = margin_y + margin_height / 2
