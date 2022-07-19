@@ -364,7 +364,7 @@ def get_rotation_matrix_with_center(radian, cx, cy) :
     mtran = get_translation_matrix(-cx, -cy)
     mrot = get_rotation_matrix(radian)
     mtran2 = get_translation_matrix(cx, cy)
-    out = mtran2 * mrot * mtran
+    out = np.linalg.multi_dot([mtran2, mrot, mtran])
 
     return out 
 
@@ -380,7 +380,7 @@ def get_scale_matrix_center(scalex, scaley, cx, cy) :
     mtran = get_translation_matrix(-cx, -cy)
     msc = get_scale_matrix(scalex, scaley)
     mtran2 = get_translation_matrix(cx, cy)
-    out = mtran2 * msc * mtran
+    out = np.linalg.multi_dot([mtran2, msc, mtran])
     return out
 
 
@@ -400,18 +400,17 @@ def get_flip_matrix(width, height, flipx, flipy) :
 def get_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_height) :
     out = np.eye(3, dtype=np.float64)
 
-    cx = margin_x + margin_width /2
-    cy = margin_y + margin_height / 2
+    cx = margin_x + margin_width / 2.0
+    cy = margin_y + margin_height / 2.0
     scalex = width / margin_width
     scaley = height / margin_height
 
     mtran = get_translation_matrix(-cx, -cy)
     msc = get_scale_matrix(scalex, scaley)
-    mtran2 = get_translation_matrix(width/ 2, height/ 2)
+    mtran2 = get_translation_matrix(width/ 2.0, height/ 2.0)
 
-    out = mtran2 * msc * mtran
-    return out
+    out = np.linalg.multi_dot([mtran2, msc, mtran])
 
-def get_sub_matrix(input) :
-    out = input[:2, :3]
+    #print("margin matrix ")
+    #print(out)
     return out

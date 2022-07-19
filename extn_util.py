@@ -7,6 +7,7 @@ from logger import Logger as l
 import json
 from definition import DEFINITION as df
 from PIL import Image
+import imageio
 
 def export_points(preset, output_type, output_path, job_id, cal_type):
     if output_type == 'dm' :
@@ -409,6 +410,20 @@ def get_initpair(root_path) :
     return 0, id1, id2
 
 def making_gif(from_path, output_path) :
-    frames = [Image.open(image) for image in glob.glob(f"{from_path}/*.png")]
+    writer = imageio.get_writer(os.path.join(output_path, 'preview.gif'), mode='I')
+    imgs = glob.glob(f"{from_path}/*.png")
+    imgs.sort()
+    frames = []
+    for i in imgs :
+#        new_frame = Image.open(i)
+        print(i)
+        new_frame = imageio.imread(i)
+        frames.append(new_frame)
+#        frames.append(new_frame)
+
+    imageio.mimsave(os.path.join(output_path, 'preview.gif'), frames, fps=2)
+    '''
+    print("making_gif framecount : ", len(frames))
     frame_one = frames[0]
-    frame_one.save(os.path.join(output_path, 'preview.gif'), format="GIF", append_iamge=frames, save_all=True, duration=300, loop=0)
+    frame_one.save(os.path.join(output_path, 'preview.gif'), format="GIF", append_iamge=frames[1:], save_all=True, duration=500, loop=0)
+    '''

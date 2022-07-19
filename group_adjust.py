@@ -31,7 +31,7 @@ class GroupAdjust(object) :
             self.cameras[i].rod_length = dist
             degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
             if degree < 0 :
-                degree + 360
+                degree = degree + 360
                 
             self.cameras[i].radian = degree * math.pi / 180
             l.get().w.debug("camera {} diffx {} diffy {} degree {} radian {} ".format(i, diffx, diffy, degree, self.cameras[i].radian))
@@ -153,16 +153,20 @@ class GroupAdjust(object) :
         mat3 = get_translation_matrix(cam.adjust_x, cam.adjust_y)
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
-        out = mat5 * mat4 * mat3 * mat2 * mat1
-
+        out = np.linalg.multi_dot([mat5, mat4, mat3, mat2, mat1]) 
+#        out = np.matmul(out, mat3)
+#        out = np.matmul(out, mat2)
+#        out = np.matmul(out, mat1)
+        print(out)
         return out
 
     def adjust_image(self, output_path, ext) :
-        w = self.cameras[0].view.image_width
-        h = self.cameras[0].view.image_height
+        w = int(self.cameras[0].view.image_width/2)
+        h = int(self.cameras[0].view.image_height/2)
 
         for i in range(len(self.cameras)) :
             file_name = os.path.join(output_path, get_viewname(self.cameras[i].view.name, ext) + '_adj.png')
             mat = self.get_affine_matrix(self.cameras[i])
-            dst_img = cv2.warpAffine(self.cameras[i].view.image, mat, (w, h))
+
+            dst_img = cv2.warpAffine(self.cameras[i].view.image, mat[:2,:3], (w, h))
             cv2.imwrite(file_name, dst_img)
