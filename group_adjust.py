@@ -134,9 +134,9 @@ class GroupAdjust(object) :
 
         return left[0], right[0],top[0], bottom[0], margin_width, margin_height
 
-    def get_affine_matrinx(self, cam) :
+    def get_affine_matrix(self, cam) :
         mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x, cam.rotate_y)
-        mat2 = get_scale_matrix_center(cam.scale, cam.rotate_x, cam.rotate_y)
+        mat2 = get_scale_matrix_center(cam.scale, cam.scale, cam.rotate_x, cam.rotate_y)
         mat3 = get_translation_matrix(cam.adjust_x, cam.adjust_y)
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height)
         mat5 = get_scale_matrix(0.5, 0.5)
