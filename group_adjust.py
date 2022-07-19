@@ -9,6 +9,15 @@ class GroupAdjust(object) :
     def __init__(self, cameras) :
         self.cameras = cameras
 
+    def set_group_margin(self, left, top, right, bottom, width, height):
+        self.left = left
+        self.top = top
+        self.right = right
+        self.bottom = bottom
+        self.width = width
+        self.height = height
+
+
     def calculate_radian(self) :
         for i in range(len(self.cameras)):
             dist = 0
@@ -20,7 +29,10 @@ class GroupAdjust(object) :
                 dist = math.sqrt(diffx* diffx + diffy * diffy)
 
             self.cameras[i].rod_length = dist
-            degree = cv2.fastAtan2(diffy, diffx)
+            degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
+            if degree < 0 :
+                degree + 360
+                
             self.cameras[i].radian = degree * math.pi / 180
             l.get().w.debug("camera {} diffx {} diffy {} degree {} radian {} ".format(i, diffx, diffy, degree, self.cameras[i].radian))
 
@@ -132,13 +144,14 @@ class GroupAdjust(object) :
         margin_height = bottom[0] - top[0]
         l.get().w.debug('calculated margin l {} r {} t {} b {} width {} height {}'.format(left[0], right[0],top[0], bottom[0], margin_width, margin_height))
 
+        self.set_group_margin(left[0], right[0],top[0], bottom[0], margin_width, margin_height)
         return left[0], right[0],top[0], bottom[0], margin_width, margin_height
 
     def get_affine_matrix(self, cam) :
         mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x, cam.rotate_y)
         mat2 = get_scale_matrix_center(cam.scale, cam.scale, cam.rotate_x, cam.rotate_y)
         mat3 = get_translation_matrix(cam.adjust_x, cam.adjust_y)
-        mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height)
+        mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
         out = mat5 * mat4 * mat3 * mat2 * mat1
 
