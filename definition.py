@@ -25,7 +25,6 @@ class CommandMode(Enum):
     PTS_ERROR_ANALYSIS  = 80
     VISUALIZE           = 90
 
-
 def get_err_msg(err_code) :
     msg = None
     msg_pair = {

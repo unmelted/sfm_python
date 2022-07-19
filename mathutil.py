@@ -1,4 +1,5 @@
 import numpy as np
+from enum import Enum
 import pandas as pd
 import math
 import cv2
@@ -341,3 +342,31 @@ def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
     ret_y = ret_y + center_y
 
     return ret_x, ret_y
+
+
+class MATRIXOPERATION(Enum):
+    NONE                    = 0 
+    TRANSLATION             = 100
+    ROTATION                = 200
+    SCALE                   = 400
+    FLIP                    = 600
+    MARGIN                  = 700
+    SUBMAT                  = 800
+
+
+def get_matrix(type, param) :
+    out = np.empty((3,3), dtype=np.float64)
+
+    if type == MATRIXOPERATION.TRANSLATION :
+        pass
+    elif type == MATRIXOPERATION.ROTATION :
+        pass
+    elif type == MATRIXOPERATION.SCALE :
+        pass
+    elif type == MATRIXOPERATION.MARGIN :
+        pass
+    elif type == MATRIXOPERATION.SUBMAT : 
+        out = param[:2][:3]
+
+
+    return out

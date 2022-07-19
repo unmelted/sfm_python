@@ -3,6 +3,7 @@ from re import I
 import sys
 import glob
 import numpy as np
+from group_adjust import GroupAdjust
 
 from logger import Logger as l
 from definition import DEFINITION as df
@@ -41,6 +42,13 @@ class Group(object):
         self.ext = None
 
         self.cam_count = 0
+
+        self.left = 0
+        self.right = 0
+        self.top = 0
+        self.bottom = 0
+        self.width = 0
+        self.height = 0
 
     def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
         self.root_path = root_path
@@ -376,6 +384,10 @@ class Group(object):
 
 
     def generate_adjust(self) :
+        gadj = GroupAdjust()
+        gadj.calculate_radian(self.cameras)
+        gadj.calculate_scaleshift(self.cameras)
+        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin(self.cameras)
 
         output_path = os.path.join(self.root_path, 'output')
         making_gif(self.root_path, output_path)
