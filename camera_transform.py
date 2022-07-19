@@ -221,7 +221,7 @@ class CameraTransform(object):
             u2_normalized = K1_inv.dot(cam1[i, :])
 
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
-            pts_3d =np.append(pts_3d, np.array(_3d).T)
+            pts_3d =np.append(pts_3d, np.array(_3d).T, axis=0)
 
         print(pts_3d)
         return pts_3d
