@@ -161,7 +161,7 @@ def analysis_mode(job_id, cal_type) :
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
-    base_pts = [1960, 542, 1960, 1092, 1923, 543, 1923, 1080]
+    base_pts = [1960.0, 542.0, 1960.0, 1092.0, 1923.0, 543.0, 1923.0, 1080.0]
     preset1.generate_extra_point(job_id, base_pts)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
