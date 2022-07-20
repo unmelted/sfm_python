@@ -347,7 +347,7 @@ class Group(object):
     def save_answer_image(self):
         save_ex_answer_image(self)
 
-    def get_extra_point(self, job_id, base_pts=None) :
+    def generate_extra_point(self, job_id, base_pts=None) :
 
         type = 'insert2D'
         if type == 'simple2D' : #first try : from create point based on simply length of rod
