@@ -364,13 +364,19 @@ class Group(object):
             world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
         world = np.array(world_p)
         dist_coeff = np.zeros((4,1))
-
+        camera = np.array([[ 6400, 0 , 1920], [0, 6400, 1080], [0,0,1]])
+        
         for i in range(len(self.cameras)):        
-            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
-            normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-            print(normal2d[:,0,:])
+            # result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
+            # normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+            # self.cameras[i].pts_extra = normal2d[:,0,:]
+            # print(self.cameras[i].pts_extra)
+
+            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, camera, dist_coeff)
+            print(result, vector_rotation, vector_translation)
+            normal2d, jacobian = cv2.projectPoints(np.array([402, 647, 1200]), vector_rotation, vector_translation, camera, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:,0,:]
-            print(self.cameras[i].pts_extra)
+
 
 
     def get_extra_point_basedInput(self, job_id, base_pts):
