@@ -330,10 +330,10 @@ def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
 
 def get_normalized_point(world) :
     new_world = []
-    maxx = 0
-    maxy = 0
-    minx = 100000
-    miny = 100000
+    maxx = 0.0
+    maxy = 0.0
+    minx = 100000.0
+    miny = 100000.0
 
     for point in world :
         print(point)
@@ -347,17 +347,17 @@ def get_normalized_point(world) :
             miny = point[1]
 
     print(minx, maxx, miny, maxy)
-    max_range = 100
-    range = 0
-    margin_x = 0
-    margin_y = 0
+    max_range = 100.0
+    range = 0.0
+    margin_x = 0.0
+    margin_y = 0.0
 
     if (maxx - minx) > (maxy - miny) :
         range = max_range / (maxx - minx)
-        margin_y = (max_range - (maxy - miny) * range) / 2
+        margin_y = (max_range - (maxy - miny) * range) / 2.0
     else :
         range = max_range / (maxy - miny)
-        margin_x = (max_range - (maxx - miny) * range) / 2
+        margin_x = (max_range - (maxx - miny) * range) / 2.0
 
     for point in world : 
         newx = (point[0] - minx) * range + margin_x
