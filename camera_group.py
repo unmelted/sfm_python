@@ -349,10 +349,10 @@ class Group(object):
 
     def generate_extra_point(self, job_id, base_pts=None, world_pts=None) :
 
-        type = 'insert2D'
+        type = 'base3D'
         if type == 'simple2D' : #first try : from create point based on simply length of rod
             self.get_extra_point_normal2D(job_id)
-        elif type == 'based3D' : # third try : same method  as existed logic in dm
+        elif type == 'base3D' : # third try : same method  as existed logic in dm
             self.get_extra_point_based3D(job_id, world_pts)
         elif type == 'insert2D' : #second try : user input scenario
             self.get_extra_point_basedInput(job_id, base_pts)
@@ -367,10 +367,10 @@ class Group(object):
 
         for i in range(len(self.cameras)):        
             result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
-            print(result, vector_rotation, vector_translation)
-            normal2d, jacobian = cv2.projectPoints(np.array([402, 647, 1200]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-            print(normal2d, jacobian)
-            
+            normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+            print(normal2d[:,0,:])
+            self.cameras[i].pts_extra = normal2d[:,0,:]
+            print(self.cameras[i].pts_extra)
 
 
     def get_extra_point_basedInput(self, job_id, base_pts):
