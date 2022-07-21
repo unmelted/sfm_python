@@ -293,8 +293,8 @@ def save_point_image(preset) :
             print("save image : ", pt_ex, int(pt_ex[1][0]), int(pt_ex[1][1]))
             cv2.circle(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
             cv2.circle(preset.cameras[i].view.image, (int(pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)            
-            cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)                        
-            cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[2][0]), int(pt_ex[2][1])), 
+            #cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)                        
+            cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])), 
                         (255,0,0), 3)
                             
         l.get().w.info(file_name)

@@ -21,15 +21,18 @@ class GroupAdjust(object) :
     def calculate_radian(self) :
         for i in range(len(self.cameras)):
             dist = 0
-            diffx = self.cameras[i].pts_extra[0][0] - self.cameras[i].pts_extra[2][0]
-            diffy = self.cameras[i].pts_extra[0][1] - self.cameras[i].pts_extra[2][1]
+            diffx = self.cameras[i].pts_extra[0][0] - self.cameras[i].pts_extra[1][0]
+            diffy = self.cameras[i].pts_extra[0][1] - self.cameras[i].pts_extra[1][1]
             if diffx == 0:
                 dist = diffy
             else : 
                 dist = math.sqrt(diffx* diffx + diffy * diffy)
-
+            
             self.cameras[i].rod_length = dist
-            degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
+            if diffx == 0 :
+                degree = 0
+            else : 
+                degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
             if degree < 0 :
                 degree = degree + 360
                 
@@ -153,7 +156,7 @@ class GroupAdjust(object) :
         mat3 = get_translation_matrix(cam.adjust_x, cam.adjust_y)
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
-        out = np.linalg.multi_dot([mat5, mat4, mat3, mat2, mat1]) 
+        out = np.linalg.multi_dot([mat5, mat3, mat2, mat1]) 
 #        out = np.matmul(out, mat3)
 #        out = np.matmul(out, mat2)
 #        out = np.matmul(out, mat1)
