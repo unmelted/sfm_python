@@ -328,6 +328,9 @@ def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
 
     return cx, cy
 
+def get_normalize_point(world) :
+    pass
+
 def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
     delx = point_x - center_x
     dely = point_y - center_y
