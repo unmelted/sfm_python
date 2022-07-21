@@ -362,8 +362,8 @@ class Group(object):
     
         world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [world_pts[4], 
             world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
-        
-        world = np.array(world_p)
+        p = get_normalized_point(world_p)
+        world = np.array(p)
         dist_coeff = np.zeros((4,1))
         camera = np.array([[ 6400.0, 0.0 , 1920.0], [0.0, 6400.0, 1080.0], [0.0, 0.0, 1.0]])
 
@@ -375,7 +375,7 @@ class Group(object):
 
             result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, camera, dist_coeff)
             print(result, vector_rotation, vector_translation)
-            normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, camera, dist_coeff)
+            normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, 50.0]]), vector_rotation, vector_translation, camera, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:,0,:]
 
 
