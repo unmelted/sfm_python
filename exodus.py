@@ -102,7 +102,6 @@ def visualize_mode(job_id) :
 
 
 def generate_pts(job_id, cal_type, base_pts) :
-    cal_type = '3D'
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     time_s = time.time()                    
     float_base = []
@@ -140,6 +139,7 @@ def generate_pts(job_id, cal_type, base_pts) :
     return 0
 
 def analysis_mode(job_id, base_pts, world_pts) :
+    cal_type = '3D'    
     l.get().w.info("analysis  start : {} ".format(job_id))
     float_base = []
     float_world = []
