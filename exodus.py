@@ -150,19 +150,35 @@ def analysis_mode(job_id, cal_type) :
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
-
+    base_pts = [1616.0,
+1178.0,
+1224.0,
+1217.0,
+1832.0,
+1501.0,
+2375.0,
+1421.0,
+1760.0,
+1164.0,
+1374.0,
+1187.0,
+1554.0,
+1518.0,
+2182.0,
+1459.0]
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type)
+    result = preset1.generate_points(job_id, cal_type, base_pts)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    result = preset1.calculate_real_error()
-    if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
-    base_pts = [1960.0, 542.0, 1960.0, 1092.0, 1923.0, 543.0, 1923.0, 1094.0]
-    world_pts = [291.0, 514.0, 291.0, 780.0, 513.0, 780.0, 513.0, 515.0 ]
+    # result = preset1.calculate_real_error()
+    # if result < 0 :
+        # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        # return 0
+
+    #world_pts = [291.0.0, 514.0, 291.0, 780.0, 513.0, 780.0, 513.0, 515.0 ] #NBA2
+    world_pts = [800.0, 240.0, 800.0, 0.0, 0.0, 0.0, 0.0, 240.0]
     preset1.generate_extra_point(job_id, base_pts, world_pts)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)

@@ -366,17 +366,14 @@ class Group(object):
         print("normalized workd : ", p)
         world = np.array(p)
         dist_coeff = np.zeros((4,1))
-        camera = np.array([[ 14000.0, 0.0 , 1920.0], [0.0, 14000.0, 1080.0], [0.0, 0.0, 1.0]])
+        # camera = np.array([[ 6400.0, 0.0 , 1920.0], [0.0, 6400.0, 1080.0], [0.0, 0.0, 1.0]]) # using Static K
 
         for i in range(len(self.cameras)):        
-            # result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
-            # normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-            # self.cameras[i].pts_extra = normal2d[:,0,:]
-            # print(self.cameras[i].pts_extra)
+            # result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, camera, dist_coeff)
+            # normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, -50.0]]), vector_rotation, vector_translation, camera, dist_coeff)
 
-            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, camera, dist_coeff)
-            #print(result, vector_rotation, vector_translation)
-            normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, -50.0]]), vector_rotation, vector_translation, camera, dist_coeff)
+            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
+            normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:,0,:]
 
 
