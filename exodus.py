@@ -102,6 +102,7 @@ def visualize_mode(job_id) :
 
 
 def generate_pts(job_id, cal_type, base_pts) :
+    cal_type = '3D'
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     time_s = time.time()                    
     float_base = []
@@ -126,7 +127,7 @@ def generate_pts(job_id, cal_type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, base_pts=float_base)
+    result = preset1.generate_points(job_id, base_pts=float_base)
     if result < 0 :
         return finish_query(job_id, result)     
 
