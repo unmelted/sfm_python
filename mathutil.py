@@ -357,7 +357,7 @@ def get_normalized_point(world) :
         margin_y = (max_range - (maxy - miny) * range) / 2.0
     else :
         range = max_range / (maxy - miny)
-        margin_x = (max_range - (maxx - miny) * range) / 2.0
+        margin_x = (max_range - (maxx - minx) * range) / 2.0
 
     for point in world : 
         newx = (point[0] - minx) * range + margin_x

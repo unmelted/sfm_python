@@ -80,7 +80,11 @@ class GroupAdjust(object) :
         right = []
         top = []
         bottom = []
-
+        left.append(0)
+        right.append(self.cameras[i].view.image_width)
+        top.append(0)
+        bottom.append(self.cameras[i].view.image_height)
+        
         for i in range(len(self.cameras)):
             scale = self.cameras[i].scale
             center_x = self.cameras[i].rotate_x
