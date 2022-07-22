@@ -161,7 +161,7 @@ def analysis_mode(job_id, base_pts, world_pts) :
         float_world.append(float(wp))
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, float_base, float_world)
+    result = preset1.generate_points(job_id, cal_type, float_base)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
