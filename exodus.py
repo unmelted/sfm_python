@@ -54,7 +54,7 @@ class Commander(object) :
 
         elif query == df.TaskCategory.ANALYSIS :
             status = 100
-            result = analysis_mode(obj[0], obj[2])
+            result = analysis_mode(obj[0], obj[2]['3d_pts'], obj[2]['world'])
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
@@ -138,8 +138,11 @@ def generate_pts(job_id, cal_type, base_pts) :
 
     return 0
 
-def analysis_mode(job_id, cal_type) :
-    l.get().w.info("analysis  start : {} ".format(job_id))    
+def analysis_mode(job_id, base_pts, world_pts) :
+    l.get().w.info("analysis  start : {} ".format(job_id))
+    float_base = []
+    float_world = []
+
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0 :
@@ -150,24 +153,14 @@ def analysis_mode(job_id, cal_type) :
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
-    base_pts = [1616.0,
-1178.0,
-1224.0,
-1217.0,
-1832.0,
-1501.0,
-2375.0,
-1421.0,
-1760.0,
-1164.0,
-1374.0,
-1187.0,
-1554.0,
-1518.0,
-2182.0,
-1459.0]
+
+    for bp in base_pts : 
+        float_base.append(float(bp))
+    for wp in world_pts :
+        float_world.append(float(wp))
+
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, base_pts)
+    result = preset1.generate_points(job_id, cal_type, float_base, float_world)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
@@ -177,8 +170,6 @@ def analysis_mode(job_id, cal_type) :
         # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         # return 0
 
-    #world_pts = [291.0.0, 514.0, 291.0, 780.0, 513.0, 780.0, 513.0, 515.0 ] #NBA2
-    world_pts = [800.0, 240.0, 800.0, 0.0, 0.0, 0.0, 0.0, 240.0]
     preset1.generate_extra_point(job_id, base_pts, world_pts)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)

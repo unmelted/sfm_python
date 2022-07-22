@@ -36,3 +36,4 @@ vtk==9.0.1
 Werkze$ug==2.1.2
 pyTelegramBotAPI
 cutelog
+imageio
