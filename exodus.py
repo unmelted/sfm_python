@@ -178,7 +178,7 @@ def analysis_mode(job_id, base_pts_3d, base_pts_2d, world_pts) :
         # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         # return 0
 
-    preset1.generate_extra_point(job_id, base_pts_2d, float_world)
+    preset1.generate_extra_point(job_id, float_2d_base, float_world)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()

@@ -380,8 +380,8 @@ class Group(object):
         err, c1 = self.get_camera_byView(viewname2)
 
         l.get().w.debug("maybe missed  {} {}".format(viewname1, viewname2))
-        base1 = [[base_pts[2],base_pts[3]], [base_pts[0], base_pts[1]]]
-        base2 = [[base_pts[6],base_pts[7]], [base_pts[4], base_pts[5]]]
+        base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
+        base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
         c0.pts_extra = np.array(base1)
         c1.pts_extra = np.array(base2)
 
