@@ -9,6 +9,7 @@ from logger import Logger as l
 from db_manager import DbManager
 from prepare_proc import *
 from intrn_util import *
+import json
 
 class Commander(object) :
     instance = None
@@ -58,7 +59,6 @@ class Commander(object) :
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
-            print("data check : ", obj[2])
             cal_type = obj[2]['type'].upper()
             result = generate_pts(obj[0], cal_type, obj[2]['pts'])
             status = 100
@@ -70,7 +70,11 @@ class Commander(object) :
                 contents.append(image1)
                 contents.append(image2)
         
-        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], task=query, desc= obj[2] if len(obj) > 1 else obj[0])
+        if len(obj) > 1 :            
+            DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
+        else :
+            DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc='') 
+
         return status, result, contents
 
     def add_task(self, task, obj) :
