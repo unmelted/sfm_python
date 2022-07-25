@@ -80,7 +80,11 @@ class GroupAdjust(object) :
         right = []
         top = []
         bottom = []
-
+        left.append(0)
+        right.append(self.cameras[0].view.image_width)
+        top.append(0)
+        bottom.append(self.cameras[0].view.image_height)
+        
         for i in range(len(self.cameras)):
             scale = self.cameras[i].scale
             center_x = self.cameras[i].rotate_x
@@ -157,10 +161,6 @@ class GroupAdjust(object) :
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
         out = np.linalg.multi_dot([mat5, mat3, mat2, mat1]) 
-#        out = np.matmul(out, mat3)
-#        out = np.matmul(out, mat2)
-#        out = np.matmul(out, mat1)
-        print(out)
         return out
 
     def adjust_image(self, output_path, ext) :

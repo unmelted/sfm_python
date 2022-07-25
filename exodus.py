@@ -9,6 +9,7 @@ from logger import Logger as l
 from db_manager import DbManager
 from prepare_proc import *
 from intrn_util import *
+import json
 
 class Commander(object) :
     instance = None
@@ -54,11 +55,10 @@ class Commander(object) :
 
         elif query == df.TaskCategory.ANALYSIS :
             status = 100
-            result = analysis_mode(obj[0], obj[2])
+            result = analysis_mode(obj[0], obj[2]['3d_pts'], obj[2]['2d_pts'], obj[2]['world'])
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
-            print("data check : ", obj[2])
             cal_type = obj[2]['type'].upper()
             result = generate_pts(obj[0], cal_type, obj[2]['pts'])
             status = 100
@@ -69,8 +69,12 @@ class Commander(object) :
             if result == 0 :
                 contents.append(image1)
                 contents.append(image2)
+        
+        if len(obj) > 2:            
+            DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
+        else :
+            DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc='') 
 
-        DbManager.getInstance().insert('request_history', job_id=obj[0], requestor=obj[1], desc=query, result=result)
         return status, result, contents
 
     def add_task(self, task, obj) :
@@ -86,8 +90,8 @@ class Commander(object) :
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
             ac = autocalib(obj[0], self.index, obj[1], obj[2])
             ac.run()         
-
-            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], desc=task)
+            desc = obj[0] + obj[1]
+            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], task=task, desc=desc)
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
@@ -126,7 +130,7 @@ def generate_pts(job_id, cal_type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, base_pts=float_base)
+    result = preset1.generate_points(job_id, float_base)
     if result < 0 :
         return finish_query(job_id, result)     
 
@@ -138,8 +142,13 @@ def generate_pts(job_id, cal_type, base_pts) :
 
     return 0
 
-def analysis_mode(job_id, cal_type) :
-    l.get().w.info("analysis  start : {} ".format(job_id))    
+def analysis_mode(job_id, base_pts_3d, base_pts_2d, world_pts) :
+    cal_type = '3D'    
+    l.get().w.info("analysis  start : {} ".format(job_id))
+    float_3d_base = []
+    float_2d_base = []    
+    float_world = []
+
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0 :
@@ -151,19 +160,25 @@ def analysis_mode(job_id, cal_type) :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
+    for bp in base_pts_3d : 
+        float_3d_base.append(float(bp))
+    for bp in base_pts_2d : 
+        float_2d_base.append(float(bp))        
+    for wp in world_pts :
+        float_world.append(float(wp))
+
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type)
+    result = preset1.generate_points(job_id, float_3d_base)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    result = preset1.calculate_real_error()
-    if result < 0 :
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
-        return 0
-    base_pts = [1960.0, 542.0, 1960.0, 1092.0, 1923.0, 543.0, 1923.0, 1094.0]
-    world_pts = [291.0, 514.0, 513.0, 515.0, 513.0, 780.0, 291.0, 780.0]
-    preset1.generate_extra_point(job_id, base_pts, world_pts)
+    # result = preset1.calculate_real_error()
+    # if result < 0 :
+        # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
+        # return 0
+
+    preset1.generate_extra_point(job_id, float_2d_base, float_world)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()

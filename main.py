@@ -12,7 +12,7 @@ api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slav
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String, #입력 directory
+    'input_dir' : fields.String, #directory in storage
     'group' : fields.String # 캘리브레이션 진행할 그룹
 })
 
@@ -90,7 +90,7 @@ class calib_status(Resource) :
         
         print(jobid)
         # print("calib status  .. : " ,Commander.getInstance())        
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
@@ -115,7 +115,7 @@ class get_pair(Resource) :
         pair1 = None
         pair2 = None
 
-        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, (jobid, ip_addr))
+        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, [jobid, ip_addr])
         msg = df.get_err_msg(status)
         if result == 0 :
             pair1 = contents[0]
@@ -134,7 +134,9 @@ class get_pair(Resource) :
 
 analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
-    'mode' : fields.String,
+    "3d_pts" : fields.List(fields.Float),
+    "2d_pts" : fields.List(fields.Float),    
+    "world" : fields.List(fields.Float)
 })
 
 @api.route('/exodus/autocalib/analysis')
@@ -147,12 +149,17 @@ class calib_analysis(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
-        parser.add_argument('mode', type=str)        
+        parser.add_argument('3d_pts', default=list, action='append')
+        parser.add_argument('2d_pts', default=list, action='append')        
+        parser.add_argument('world', default=list, action='append')
+
         args = parser.parse_args()
         
         print(args['job_id'])
-        print(args['mode'])
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr, args['mode']))
+        print(args['3d_pts'])
+        print(args['2d_pts'])        
+        print(args['world'])        
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr, args))
 
         msg = df.get_err_msg(result)
         result = {

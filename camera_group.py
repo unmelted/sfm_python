@@ -214,7 +214,7 @@ class Group(object):
         return -150, None
         
         
-    def generate_points(self, job_id, cal_type, base_pts=None) :
+    def generate_points(self, job_id, base_pts=None) :
         
         if df.answer_from == 'input' and base_pts == None :
             df.answer_from = 'pts' #for analysis mode
@@ -223,7 +223,7 @@ class Group(object):
             return -303
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
-        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, cal_type, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
+        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
 
         if err < 0 :
             return err
@@ -237,7 +237,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, cal_type, pair_type='zero', answer_from='pts', base_pts= None) :
+    def make_seed_answer(self, job_id, pair_type='zero', answer_from='pts', base_pts= None) :
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -273,17 +273,15 @@ class Group(object):
             l.get().w.debug("maker seed  answer from pts file  \n{} {}".format(pts1, pts2))
             
         elif answer_from == 'input' :
-            if cal_type == '3D' : 
-                base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
-                base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
-            else :
-                base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
-                base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
+            # base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]] #2D
+            # base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]] #2D
+            base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
+            base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
 
             pts1 = np.array(base1)
             pts2 = np.array(base2)
 
-            l.get().w.debug("cal_type {} maker seed  answer from base \n{} {}".format(cal_type.upper(), pts1, pts2))
+            l.get().w.debug("maker seed  answer from base \n{} {}".format(pts1, pts2))
 
         c0.pts = pts1
         c1.pts = pts2
@@ -349,7 +347,7 @@ class Group(object):
 
     def generate_extra_point(self, job_id, base_pts=None, world_pts=None) :
 
-        type = 'base3D'
+        type = 'insert2D'
         if type == 'simple2D' : #first try : from create point based on simply length of rod
             self.get_extra_point_normal2D(job_id)
         elif type == 'base3D' : # third try : same method  as existed logic in dm
@@ -362,22 +360,15 @@ class Group(object):
     
         world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [world_pts[4], 
             world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
-        
-        world = np.array(world_p)
+        p = get_normalized_point(world_p)
+        world = np.array(p)
         dist_coeff = np.zeros((4,1))
-        camera = np.array([[ 6400.0, 0.0 , 1920.0], [0.0, 6400.0, 1080.0], [0.0, 0.0, 1.0]])
+        # camera = np.array([[ 6400.0, 0.0 , 1920.0], [0.0, 6400.0, 1080.0], [0.0, 0.0, 1.0]])
 
         for i in range(len(self.cameras)):        
-            # result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
-            # normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-            # self.cameras[i].pts_extra = normal2d[:,0,:]
-            # print(self.cameras[i].pts_extra)
-
-            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, camera, dist_coeff)
-            print(result, vector_rotation, vector_translation)
-            normal2d, jacobian = cv2.projectPoints(np.array([[402.0, 647.0, 0.0],[402.0, 647.0, 300.0]]), vector_rotation, vector_translation, camera, dist_coeff)
+            result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
+            normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:,0,:]
-
 
 
     def get_extra_point_basedInput(self, job_id, base_pts):
@@ -389,8 +380,8 @@ class Group(object):
         err, c1 = self.get_camera_byView(viewname2)
 
         l.get().w.debug("maybe missed  {} {}".format(viewname1, viewname2))
-        base1 = [[base_pts[2],base_pts[3]], [base_pts[0], base_pts[1]]]
-        base2 = [[base_pts[6],base_pts[7]], [base_pts[4], base_pts[5]]]
+        base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
+        base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
         c0.pts_extra = np.array(base1)
         c1.pts_extra = np.array(base2)
 
