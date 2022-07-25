@@ -347,7 +347,7 @@ class Group(object):
 
     def generate_extra_point(self, job_id, base_pts=None, world_pts=None) :
 
-        type = 'base3D'
+        type = 'insert2D'
         if type == 'simple2D' : #first try : from create point based on simply length of rod
             self.get_extra_point_normal2D(job_id)
         elif type == 'base3D' : # third try : same method  as existed logic in dm

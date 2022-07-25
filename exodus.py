@@ -55,7 +55,7 @@ class Commander(object) :
 
         elif query == df.TaskCategory.ANALYSIS :
             status = 100
-            result = analysis_mode(obj[0], obj[2]['3d_pts'], obj[2]['world'])
+            result = analysis_mode(obj[0], obj[2]['3d_pts'], obj[2]['2d_pts'], obj[2]['world'])
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
@@ -142,10 +142,11 @@ def generate_pts(job_id, cal_type, base_pts) :
 
     return 0
 
-def analysis_mode(job_id, base_pts, world_pts) :
+def analysis_mode(job_id, base_pts_3d, base_pts_2d, world_pts) :
     cal_type = '3D'    
     l.get().w.info("analysis  start : {} ".format(job_id))
-    float_base = []
+    float_3d_base = []
+    float_2d_base = []    
     float_world = []
 
     preset1 = Group()
@@ -159,13 +160,15 @@ def analysis_mode(job_id, base_pts, world_pts) :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
 
-    for bp in base_pts : 
-        float_base.append(float(bp))
+    for bp in base_pts_3d : 
+        float_3d_base.append(float(bp))
+    for bp in base_pts_2d : 
+        float_2d_base.append(float(bp))        
     for wp in world_pts :
         float_world.append(float(wp))
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, float_base)
+    result = preset1.generate_points(job_id, float_3d_base)
     if result < 0 :
         l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         return 0
@@ -175,7 +178,7 @@ def analysis_mode(job_id, base_pts, world_pts) :
         # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))        
         # return 0
 
-    preset1.generate_extra_point(job_id, base_pts, float_world)
+    preset1.generate_extra_point(job_id, base_pts_2d, float_world)
     # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
     preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
     # preset1.save_answer_image()

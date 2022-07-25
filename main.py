@@ -135,6 +135,7 @@ class get_pair(Resource) :
 analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
     "3d_pts" : fields.List(fields.Float),
+    "2d_pts" : fields.List(fields.Float),    
     "world" : fields.List(fields.Float)
 })
 
@@ -149,12 +150,14 @@ class calib_analysis(Resource) :
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
         parser.add_argument('3d_pts', default=list, action='append')
+        parser.add_argument('2d_pts', default=list, action='append')        
         parser.add_argument('world', default=list, action='append')
 
         args = parser.parse_args()
         
         print(args['job_id'])
         print(args['3d_pts'])
+        print(args['2d_pts'])        
         print(args['world'])        
         status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr, args))
 
