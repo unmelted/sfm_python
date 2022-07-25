@@ -90,7 +90,7 @@ class calib_status(Resource) :
         
         print(jobid)
         # print("calib status  .. : " ,Commander.getInstance())        
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, (jobid, ip_addr))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
@@ -115,7 +115,7 @@ class get_pair(Resource) :
         pair1 = None
         pair2 = None
 
-        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, (jobid, ip_addr))
+        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, [jobid, ip_addr])
         msg = df.get_err_msg(status)
         if result == 0 :
             pair1 = contents[0]

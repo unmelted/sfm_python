@@ -70,7 +70,7 @@ class Commander(object) :
                 contents.append(image1)
                 contents.append(image2)
         
-        if len(obj) > 1 :            
+        if len(obj) > 2:            
             DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
         else :
             DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc='') 
@@ -130,7 +130,7 @@ def generate_pts(job_id, cal_type, base_pts) :
         return finish_query(job_id, result)
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, base_pts=float_base)
+    result = preset1.generate_points(job_id, float_base)
     if result < 0 :
         return finish_query(job_id, result)     
 
