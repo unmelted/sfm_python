@@ -238,7 +238,7 @@ class Colmap(object) :
             poseT = np.append(poseT, np.array(row[0][6]).reshape((1)), axis = 0)                        
 
             poseRT = quaternion_to_rotation(poseR)
-            poseEU = quaternion_to_euler(poseR)
+            poseEU = quaternion_to_euler(poseR) * 180 / np.pi
             poseT = poseT.reshape((3,1))        
 
             q = ('SELECT focal_length, skew, width, height  FROM cameras WHERE image = \'')
