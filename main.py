@@ -132,6 +132,28 @@ class get_pair(Resource) :
 
         return result
 
+@api.route('/exodus/autocalib/visualize/<int:jobid>')
+@api.doc()
+class visualize(Resource) : 
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor " , ip_addr)
+        
+        print(jobid)
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.VISUALIZE, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
+            'status' : status,
+            'result' : result,
+            'message': msg,
+        }
+
+        return result
+
+
 analysis = api.model('analysis' , {
     'job_id' : fields.Integer,
     "3d_pts" : fields.List(fields.Float),
