@@ -255,7 +255,8 @@ class Colmap(object) :
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
-            # print(cam.R)
+            print("camera pose : ", cam.view.name)
+            print(cam.R / (np.pi) * 180)
             # print(cam.t)
             # print(cam.K)
 

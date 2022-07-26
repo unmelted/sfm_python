@@ -347,7 +347,7 @@ class Group(object):
 
     def generate_extra_point(self, job_id, base_pts=None, world_pts=None) :
 
-        type = 'insert2D'
+        type = 'base3D'
         if type == 'simple2D' : #first try : from create point based on simply length of rod
             self.get_extra_point_normal2D(job_id)
         elif type == 'base3D' : # third try : same method  as existed logic in dm
@@ -358,8 +358,8 @@ class Group(object):
 
     def get_extra_point_based3D(self, job_id, world_pts) :
     
-        world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [world_pts[4], 
-            world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
+        world_p = [[world_pts[0], world_pts[1], world_pts[2]], [world_pts[3], world_pts[4], world_pts[5]], [world_pts[6], 
+            world_pts[7], world_pts[8]], [world_pts[9], world_pts[10], world_pts[11]]]
         p = get_normalized_point(world_p)
         world = np.array(p)
         dist_coeff = np.zeros((4,1))

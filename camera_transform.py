@@ -247,7 +247,7 @@ class CameraTransform(object):
             reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        print(c1.pts)            
+        # print(c1.pts)            
 
     def reproject_3D_extra(self, pts_3d, c1) :
         print("reproject_3D extra .. : ", c1.view.name)
@@ -257,7 +257,7 @@ class CameraTransform(object):
             reproject = c1.project(cv_pts)
             c1.pts_extra = np.append(c1.pts_extra, np.array(reproject).T, axis=0)        
 
-        print(c1.pts_extra)
+        # print(c1.pts_extra)
 
 
     def reproject(self, c0, c1) :
@@ -270,7 +270,7 @@ class CameraTransform(object):
             reproject = c1.project(cv_pts)
             c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        print(c1.pts)            
+        # print(c1.pts)            
 
     def backprojection(self, c):
         cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]

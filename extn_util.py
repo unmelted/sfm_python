@@ -289,8 +289,6 @@ def save_point_image(preset) :
 
         if len(preset.cameras[i].pts_extra) > 1 :
             pt_ex = preset.cameras[i].pts_extra
-            print("save image : ", pt_ex, int(pt_ex[0][0]), int(pt_ex[0][1]))
-            print("save image : ", pt_ex, int(pt_ex[1][0]), int(pt_ex[1][1]))
             cv2.circle(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
             cv2.circle(preset.cameras[i].view.image, (int(pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)            
             #cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)                        

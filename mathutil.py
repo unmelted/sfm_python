@@ -332,8 +332,10 @@ def get_normalized_point(world) :
     new_world = []
     maxx = 0.0
     maxy = 0.0
+    maxz = 0.0
     minx = 100000.0
     miny = 100000.0
+    minz = 100000.0
 
     for point in world :
         print(point)
@@ -341,28 +343,31 @@ def get_normalized_point(world) :
             maxx = point[0]
         if point[1] > maxy :
             maxy = point[1]
+        if point[2] > maxz :
+            maxz = point[2]
         if minx > point[0]:
             minx = point[0]
         if miny > point[1] :
             miny = point[1]
+        if minz > point[2] :
+            minz = point[2]
 
     print(minx, maxx, miny, maxy)
     max_range = 100.0
     range = 0.0
     margin_x = 0.0
     margin_y = 0.0
-
-    if (maxx - minx) > (maxy - miny) :
-        range = max_range / (maxx - minx)
-        margin_y = (max_range - (maxy - miny) * range) / 2.0
-    else :
-        range = max_range / (maxy - miny)
-        margin_x = (max_range - (maxx - minx) * range) / 2.0
+    margin_z = 0.0
+    max_diff = max([maxx - minx, maxy - miny, maxz - minz])
+    range = max_range / max_diff    
+    margin_y = (max_range - (maxy - miny) * range) / 2.0
+    margin_x = (max_range - (maxx - minx) * range) / 2.0
+    margin_z = (max_range - (maxz - minz) * range) / 2.0
 
     for point in world : 
         newx = (point[0] - minx) * range + margin_x
         newy = (point[1] - miny) * range + margin_y
-        newz = 0
+        newz = (point[2] - minz) * range + margin_z
         new_world.append([newx, newy, newz])
 
     print(new_world)
