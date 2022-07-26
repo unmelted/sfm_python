@@ -332,10 +332,7 @@ class Group(object):
         return 0
 
     def visualize(self, mode='colmap') :
-        if mode == 'colmap' :
-            self.colmap.visualize_colmap_model()
-        else :         
-            plot_scene(self.cameras, self.sfm, mode)
+        plot_scene(self.cameras)
 
 
     def export(self, output_path, job_id, cal_type) :

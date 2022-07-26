@@ -100,8 +100,14 @@ def visualize_mode(job_id) :
         l.get().w.error("visualize err: {} ".format(df.get_err_msg(result)))
         return 0
 
-    colmap = Colmap(root_path)
-    colmap.visualize_colmap_model()
+    preset1 = Group()
+    result = preset1.create_group(root_path, df.DEFINITION.run_mode, 'colmap_db')
+    if result < 0 :
+        return finish_query(job_id, result)
+
+    preset1.read_cameras()
+    preset1.visualize()
+    
     return 0
 
 

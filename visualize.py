@@ -8,17 +8,15 @@ from pytransform3d.transformations import transform_from, plot_transform
 from camera_group import *
 
 
-def plot_scene(cameras, sfm) :
+def plot_scene(cameras) :
         plot_camera(cameras)
-        plot_pointmap(sfm)
+        # plot_pointmap(sfm)
 
 
-def plot_cameras(cameras, limit):
+def plot_cameras(cameras, ):
     plt.figure(figsize=(20, 10))
     ax = make_3d_axis(1, 111, 10)
     plot_transform(ax)
-    focal_length = 10
-    j  = 0   
     sensor_size = np.array([1920, 1080])
 
     for i, camera in enumerate(cameras):                    
@@ -27,9 +25,6 @@ def plot_cameras(cameras, limit):
         print(camera.R)
         print(camera.t.T)        
         plot_camera(ax, M=camera.K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=1)
-
-        if limit != 0 and i == limit : 
-            break
 
     plt.rcParams['figure.figsize'] = [1, 1]
     plt.show()
