@@ -13,18 +13,19 @@ def plot_scene(cameras) :
         # plot_pointmap(sfm)
 
 
-def plot_cameras(cameras, ):
+def plot_cameras(cameras):
     plt.figure(figsize=(20, 10))
     ax = make_3d_axis(1, 111, 10)
     plot_transform(ax)
     sensor_size = np.array([1920, 1080])
 
-    for i, camera in enumerate(cameras):                    
-        cam2world = transform_from(camera.R, camera.t.T)
+    for i in range(cameras):                    
         print("-- plot camera -- ")
-        print(camera.R)
-        print(camera.t.T)        
-        plot_camera(ax, M=camera.K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=1)
+        print(cameras[i].R )
+        print(cameras[i].t.T )        
+        print(cameras[i].K )
+        cam2world = transform_from(cameras[i].R, cameras[i].t.T)
+        plot_camera(ax, M=cameras[i].K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=1)
 
     plt.rcParams['figure.figsize'] = [1, 1]
     plt.show()
