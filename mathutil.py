@@ -275,7 +275,7 @@ def refine_outliers(view1, view2, inliers1, inliers2) :
 
     return points1, points2, inliers1, inliers2    
 
-def quaternion_rotation_matrix(Q):
+def quaternion_to_rotation(Q):
     """
     Covert a quaternion into a full three-dimensional rotation matrix.
  
@@ -314,6 +314,9 @@ def quaternion_rotation_matrix(Q):
                            [r20, r21, r22]])
                             
     return rot_matrix
+
+def quaternion_to_euler(Q):
+    pass
 
 def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
     cx = 0

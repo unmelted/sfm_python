@@ -9,7 +9,7 @@ from datetime import datetime
 import subprocess
 import numpy as np
 import sqlite3
-from mathutil import quaternion_rotation_matrix
+from mathutil import *
 from extn_util import * 
 from logger import Logger as l
 from definition import DEFINITION as df
@@ -237,7 +237,8 @@ class Colmap(object) :
             poseT = np.append(poseT, np.array(row[0][5]).reshape((1)), axis = 0)
             poseT = np.append(poseT, np.array(row[0][6]).reshape((1)), axis = 0)                        
 
-            poseR = quaternion_rotation_matrix(poseR)
+            poseRT = quaternion_to_rotation(poseR)
+            poseEU = quaternion_to_euler(poseR)
             poseT = poseT.reshape((3,1))        
 
             q = ('SELECT focal_length, skew, width, height  FROM cameras WHERE image = \'')
@@ -250,13 +251,13 @@ class Colmap(object) :
             camK[1][2] = int(row[0][3]/2)
             camK[2][2] = 1
 
-            cam.R = poseR
+            cam.R = poseRT
             cam.t = poseT
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
             print("camera pose : ", cam.view.name)
-            print(cam.R / (np.pi) * 180)
+            print(poseEU)
             # print(cam.t)
             # print(cam.K)
 

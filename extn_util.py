@@ -1,7 +1,7 @@
 import os
 import glob
 import numpy as np
-from mathutil import quaternion_rotation_matrix
+from mathutil import *
 import cv2
 from logger import Logger as l
 import json
@@ -233,7 +233,7 @@ def import_camera_pose(preset) :
             poseT = np.append(poseT, np.array(t).reshape((1)), axis = 0)
 
         # poseR = poseR.reshape((3,3))
-        poseR = quaternion_rotation_matrix(poseR)
+        poseR = quaternion_to_rotation(poseR)
         poseT = poseT.reshape((3,1))        
         l.get().w.debug(poseR)
         l.get().w.debug(poseT)
