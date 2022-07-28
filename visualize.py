@@ -15,9 +15,17 @@ def plot_scene(cameras) :
 
 def plot_cameras(cameras):
     plt.figure(figsize=(20, 10))
-    ax = make_3d_axis(1, 111, 10)
+    ax = make_3d_axis(1, 111, None, 10)
+    # ax.set_xlim(-10, 10)
+    # ax.set_ylim(-10, 10)
+    # ax.set_zlim(-10, 10)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_zlim(0, 1)
+
     plot_transform(ax)
-    sensor_size = np.array([320, 240])
+    sensor_size = np.array([3840, 2160])/5
+
 
     for i in range(len(cameras)):
         print("-- plot camera -- ")
@@ -25,7 +33,7 @@ def plot_cameras(cameras):
         print(cameras[i].t.T )        
         print(cameras[i].K )
         cam2world = transform_from(cameras[i].R, cameras[i].t.T)
-        plot_camera(ax, M=cameras[i].K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance= 0.5)
+        plot_camera(ax, M=cameras[i].K, cam2world=cam2world, sensor_size=sensor_size, virtual_image_distance=0.5)
 
     plt.rcParams['figure.figsize'] = [1, 1]
     plt.show()
