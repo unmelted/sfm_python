@@ -55,7 +55,7 @@ def run(args):
         preset1.visualize('off')
 
     time_e = time.time() - time_s
-    l.get().w.info("Exodus Offline Spending time total (sec) :", time_e)
+    l.get().w.info("Exodus Offline Spending time total (sec) : {} ".format(time_e))
 
 def set_args(parser):
 

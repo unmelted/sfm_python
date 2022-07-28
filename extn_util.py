@@ -215,7 +215,7 @@ def import_answer(filepath, limit):
 
 def import_camera_pose(preset) :
     filename = os.path.join(preset.root_path, 'cameras', 'pose_colmap.json')    
-    l.get().w.info("import_camera pose " , filename)
+    l.get().w.info("import_camera pose {}".format(filename))
 
     with open(filename, 'r') as json_file :
         json_data = json.load(json_file)
@@ -224,7 +224,7 @@ def import_camera_pose(preset) :
     for i in range(11) :
         poseR = np.empty((0))
         poseT = np.empty((0))
-        l.get().w.debug("import camera i : ", i)
+        l.get().w.debug("import camera i : {}".format(i))
 
         for r in json_data["pose"][i]["R"] :
             poseR = np.append(poseR, np.array(r).reshape((1)), axis = 0)
