@@ -50,15 +50,14 @@ class Logger(object) :
             console.setFormatter(formatter)
             self.w.addHandler(console)
 
-
+        '''
         if 'viewer' in type:            
-            pass
-            '''
+
             socket_handler = SocketHandler(ip, 19996)  # default listening address
             socket_handler.setLevel(logging.DEBUG)                        
             socket_handler.setFormatter(formatter)
             self.w.addHandler(socket_handler)
-            '''
+        '''
 
         if 'bot' in type:
             # telegram_log_handler = TelegramLoggingHandler(BOT_TOKEN, CHANNEL_NAME)

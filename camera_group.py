@@ -142,7 +142,7 @@ class Group(object):
                     logging.error("Pkl file not found for camera %s. Computing from scratch {} ".format(cam.view.name))
                     break
 
-                l.get().w.info("read from camera file : ".format( cam.view.name))
+                l.get().w.info("read from camera file : {} ".format(cam.view.name))
                 cam.P = tcon[0]
                 cam.EX = tcon[1]
                 cam.K = tcon[2]
@@ -164,6 +164,10 @@ class Group(object):
                 return result 
 
             result = self.colmap.cvt_colmap_model(self.ext)
+            if result < 0 :
+                return result
+
+            result = self.colmap.check_solution(self.cam_count, True)
             if result < 0 :
                 return result
 
