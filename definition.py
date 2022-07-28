@@ -92,7 +92,7 @@ class DEFINITION(object) :
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    export_point_type ='mct'  # 'dm', 'mct'
+    export_point_type ='dm'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'

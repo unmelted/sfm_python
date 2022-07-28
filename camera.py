@@ -57,7 +57,7 @@ class Camera(object):
                 self.P = np.dot(self.K, self.EX)
                 # print('calculate P of camera ', self.view.name)
             except TypeError as e:
-                print('Invalid parameters to Camera. Must either supply P or K, R, t')
+                l.get().w.error('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
 
     def project(self, X, H = None):

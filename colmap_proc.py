@@ -192,7 +192,7 @@ class Colmap(object) :
             line = line.split()
             if line[0] == '#' : 
                 continue
-            print(line[9])
+            # print(line[9])
             if ext in line[9] :
                 id = int(line[8])
                 qw = float(line[1])
@@ -256,8 +256,8 @@ class Colmap(object) :
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
-            print("camera pose : ", cam.view.name)
-            print(poseEU)
+            # print("camera pose : ", cam.view.name)
+            # print(poseEU)
             # print(cam.t)
             # print(cam.K)
 
@@ -281,7 +281,7 @@ class Colmap(object) :
 
         for file in file_names :
             file_name = file[file.rfind('/')+1:]
-            print(file_name)
+            l.get().w.debug(file_name)
             for row in rows : 
                 if row[0] in file_name : 
                     image_names.append(file)
@@ -377,7 +377,7 @@ class Colmap(object) :
 
 
     def pair_id_to_image_ids(self, pair_id):
-        print("received pair_id : ", pair_id)
+        # print("received pair_id : ", pair_id)
         image_id2 = pair_id % MAX_IMAGE_ID
         image_id1 = (pair_id - image_id2) / MAX_IMAGE_ID
         return image_id1, image_id2
@@ -398,13 +398,13 @@ class Colmap(object) :
 
     def getImagNamebyId(self, id) :
         q = ('SELECT name FROM images  WHERE image_id =  ' + str(id))
-        print(q)
+        # print(q)
         self.cursur.execute(q)
         row = self.cursur.fetchone()
 
         if row == None:
             l.get().w.error('no image name by image id')
             return -149, None
-        print("image name {} by id {} ".format(row[0], id))
+        # print("image name {} by id {} ".format(row[0], id))
 
         return 0, row[0]

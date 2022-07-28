@@ -175,7 +175,7 @@ def import_answer(filepath, limit):
     for i in range(len(json_data['points'])):
         answer_pt = np.empty((0,2))
         name = json_data['points'][i]['dsc_id']
-        print("dsc id : ", name)
+        # print("dsc id : ", name)
 
         pt = np.array([json_data['points'][i]['pts_3d']['X1'], json_data['points'][i]['pts_3d']['Y1']])
         pt = pt.reshape((1, 2))
@@ -333,7 +333,7 @@ def make_cam_list_in_pts(from_path, group_id):
             cam_inpts.append(_data["points"][i]["dsc_id"])
             count += 1
 
-    print(cam_inpts)
+    l.get().w.debug(cam_inpts)
     return count, cam_inpts
 
 
@@ -399,7 +399,7 @@ def get_initpair(root_path) :
     initpair = open(filename, 'r')
     line = initpair.readlines()[0]
     ids = line.split()
-    print(ids)    
+    l.get().w.debug(ids)    
     if len(ids) < 2 :
         return -153, id1, id2
 
