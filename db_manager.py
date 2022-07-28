@@ -98,7 +98,7 @@ class DbManager(object) :
         if len(rows) > 1 :
             return -201, 0
         else : 
-            l.get().w.debug(rows[0][0], rows[0][1])
+            l.get().w.debug("{} {} ".format(rows[0][0], rows[0][1]))
                 
         return rows[0][0], rows[0][1]
 
