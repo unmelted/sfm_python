@@ -127,7 +127,7 @@ class get_pair(Resource) :
         pair2 = None
 
         status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, [jobid, ip_addr])
-        msg = df.get_err_msg(status)
+        msg = df.get_err_msg(result)
         if result == 0 :
             pair1 = contents[0]
             pair2 = contents[1]

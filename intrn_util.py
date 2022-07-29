@@ -19,12 +19,15 @@ class JobManager(object) :
         self.job_id = -1
 
     def set_current_jobid(self, job_id) :
+        print("set current jobid : ", job_id)
         self.job_id = job_id
 
     def release_current_jobid(self) :
+        print("called release_current_jobid()")
         self.job_id = -1
 
     def get_current_jobid(self) :
+        print("called jobmanager getcureent jobid : ", self.job_id)
         return self.job_id
 
 
@@ -38,7 +41,7 @@ def status_update(job_id, status) :
         finish(job_id, 100)
 
 def status_update_quiet(job_id, status) :
-    l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
+    l.get().w.info("Quiet status update. JOB_ID: {} Status: {} ".format(job_id, status))
     DbManager.getInstance().update('command', status=status, job_id=job_id)
 
 def finish_querys(job_id, result, count) :
@@ -95,16 +98,3 @@ def check_image_format(path) :
         elif ext == 'jpg' :
             return 'jpg'
     return 'png'
-
-
-
-def get_viewname(name, ext):
-    viewname = None
-
-    if name.rfind('_') == -1 :
-        viewname = name[:-1 * (len(ext) + 1)]
-    else :
-        viewname = name[:name.rfind('_')]
-
-    return viewname
-

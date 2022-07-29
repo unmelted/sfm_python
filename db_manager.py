@@ -111,6 +111,8 @@ class DbManager(object) :
         
         if len(rows) > 1 :
             return -201, None, None
+        elif rows[0][0] == None or  rows[0][1] == None or rows[0][0] == '' or rows[0][1] == '' :
+            return -144, None, None
         else : 
             l.get().w.info("Get Pair success : {} {}".format(rows[0][0], rows[0][1]))
                 

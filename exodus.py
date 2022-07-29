@@ -77,12 +77,11 @@ class Commander(object) :
         return status, result, contents
 
     def add_task(self, task, obj) :
-        if self.job_manager.get_current_jobid() == -1 :
-            self.job_manager.set_current_jobid(self.index)            
+        if self.job_manager.get_current_jobid() == -1 :          
             self.cmd_que.put((task, obj))
             self.index = DbManager.getInstance().getJobIndex() + 1
             l.get().w.info("Alloc job id {} ".format(self.index))
-
+            self.job_manager.set_current_jobid(self.index)  
             return self.index
         else :
             return -22
@@ -98,6 +97,7 @@ class Commander(object) :
             DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], task=task, desc=desc)
             self.job_manager.release_current_jobid()
 
+            
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
     result, root_path = DbManager.getInstance().getRootPath(job_id)

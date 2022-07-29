@@ -7,7 +7,7 @@ import cv2
 from logger import Logger as l
 import json
 from definition import DEFINITION as df
-from intrn_util import *  
+from intrn_util import *
 from PIL import Image
 import imageio
 
@@ -251,6 +251,17 @@ def import_camera_pose(preset) :
         cam.t = poseT
         cam.K = preset.K
         cam.calculate_p()
+
+
+def get_viewname(name, ext):
+    viewname = None
+
+    if name.rfind('_') == -1 :
+        viewname = name[:-1 * (len(ext) + 1)]
+    else :
+        viewname = name[:name.rfind('_')]
+
+    return viewname
 
 
 def save_ex_answer_image(preset) :
