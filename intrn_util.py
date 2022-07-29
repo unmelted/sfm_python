@@ -46,7 +46,7 @@ def get_pair(job_id) :
 
 def get_targetpath(job_id) :
     l.get().w.info("Get target path start : {} ".format(job_id))    
-    result, target_path = DbManager.getInstance().getPair(job_id)
+    result, target_path = DbManager.getInstance().getTargetPath(job_id)
     if result < 0 :
         return finish_query(job_id, result)
     else : 

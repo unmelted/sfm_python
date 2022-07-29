@@ -10,7 +10,7 @@ from definition import DEFINITION as df
 from PIL import Image
 import imageio
 
-def export_points(preset, job_id, cal_type, output_type, target_path=None):
+def export_points(preset, output_type, job_id, cal_type, target_path=None):
     if output_type == 'dm' :
         output_path = os.path.join(preset.root_path, 'output')
         export_points_dm(preset, job_id, cal_type, output_path, target_path)
@@ -89,6 +89,8 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
         l.get().w.error("Can't open the pts file.") 
         return -12
 
+    l.get().w.info("Write dm pts file.. ") 
+
     for j in range(len(from_data['points'])) :
         l.get().w.debug('pts dsc_id : {}'.format(from_data['points'][j]['dsc_id']))
         for i in range(len(preset.cameras)) :
@@ -164,7 +166,7 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
     ofile.write(bn_json)
     ofile.close()
 
-    shutil.copy(outfile, target_path)
+    shutil.copy(output, target_path)
     l.get().w.warn("output pts file copy done to {} ".format(target_path))    
 
 def import_answer(filepath, limit):

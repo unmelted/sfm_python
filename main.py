@@ -65,13 +65,13 @@ class generate_points(Resource) :
         print(args['type'])
         print(args['pts'])
 
-        status, err, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)
         
         result = {
             'job_id': job_id,
             'status' : status,
-            'result' : err,
+            'result' : result,
             'message' : msg
         }
 
