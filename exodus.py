@@ -1,15 +1,14 @@
 import os
 import time
 from datetime import datetime
-import logging
 from multiprocessing.dummy import Queue
+import json
 from camera_group import *
 import definition as df
 from logger import Logger as l
 from db_manager import DbManager
 from prepare_proc import *
 from intrn_util import *
-import json
 
 class Commander(object) :
     instance = None
@@ -23,8 +22,8 @@ class Commander(object) :
     def __init__(self) :
         self.cmd_que = Queue()        
         self.index = 0
-        self.db = DbManager.getInstance()
         l.get().w.info("Commander initialized.")
+        self.job_manager = JobManager()
 
     def Receiver(self, t) :
         while True :
@@ -78,20 +77,26 @@ class Commander(object) :
         return status, result, contents
 
     def add_task(self, task, obj) :
-        self.cmd_que.put((task, obj))
-        self.index = DbManager.getInstance().getJobIndex() + 1
-        l.get().w.info("Alloc job id {} ".format(self.index))
+        if self.job_manager.get_current_jobid == -1 :
+            self.job_manager.set_current_jobid(self.index)            
+            self.cmd_que.put((task, obj))
+            self.index = DbManager.getInstance().getJobIndex() + 1
+            l.get().w.info("Alloc job id {} ".format(self.index))
 
-        return self.index
+            return self.index
+        else :
+            return -22
 
     def processor(self, task, obj) :
-        l.get().w.info("Task Proc start : {} ".format(self.index))        
+        l.get().w.info("Task Proc start : {} ".format(self.index))     
+
         if task == df.TaskCategory.AUTOCALIB :
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
             ac = autocalib(obj[0], self.index, obj[1], obj[2])
             ac.run()         
             desc = obj[0] + obj[1]
             DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], task=task, desc=desc)
+            self.job_manager.release_current_jobid()
 
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))

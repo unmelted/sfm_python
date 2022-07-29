@@ -75,10 +75,10 @@ def shell_cmd(cmd):
 
 class Colmap(object) :
 
-    def __init__ (self, root_path, job_id) :
+    def __init__ (self, root_path) :
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
-        self.job_id = job_id
+        self.job_id = get_current_job()
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
         self.conn = sqlite3.connect(self.coldb_path, isolation_level = None)
@@ -98,12 +98,12 @@ class Colmap(object) :
         if result < 0 :
             return result
 
-        status_update_quiet(self.job_id, 40)
+        status_update_quiet(get_current_job(), 40)
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
         shell_cmd(cmd)
         l.get().w.info("Colmap : Matcher Done")
-        status_update_quiet(self.job_id, 60)
+        status_update_quiet(get_current_job(), 60)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
@@ -113,7 +113,7 @@ class Colmap(object) :
         result = 0
         l.get().w.info("Colmap : Mapper Done")
 
-        status_update_quiet(self.job_id, 80)        
+        status_update_quiet(get_current_job(), 80)        
         result = self.check_solution(cam_count)
 
         return result
@@ -140,7 +140,6 @@ class Colmap(object) :
                 return 0
 
     def check_keypoints(self) :
-        result = 0
         q = ('SELECT rows FROM keypoints ORDER BY rows')
         self.cursur.execute(q)
         rows = self.cursur.fetchall()

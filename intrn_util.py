@@ -6,6 +6,31 @@ from db_manager import DbManager
 import definition as df
 
 
+class JobManager(object) :
+
+    instance = None
+    @staticmethod
+    def getInstance():
+        if JobManager.instance is None:
+            JobManager.instance = JobManager()
+        return JobManager.instance
+
+    def __init__ (self) :
+        self.job_id = -1
+
+    def set_current_jobid(self, job_id) :
+        self.job_id = job_id
+
+    def release_current_jobid(self) :
+        self.job_id = -1
+
+    def get_current_jobid(self) :
+        return self.job_id
+
+
+def get_current_job():
+    return JobManager.getInstance().get_current_jobid()
+
 def status_update(job_id, status) :
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
     DbManager.getInstance().update('command', status=status, job_id=job_id)

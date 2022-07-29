@@ -37,6 +37,7 @@ def get_err_msg(err_code) :
         -12 : "Can't open and read pts file",
         -13 : "Image count is not match with dsc_id in pts",
         -21 : "Input value is invalid",
+        -22 : "Can't add task. Now I'm busy..",
 
         -101 : "Error on Autocalib Init. (create group)",
         -102 : "Video (Camera) file is too small count",
