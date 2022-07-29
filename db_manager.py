@@ -115,3 +115,17 @@ class DbManager(object) :
             l.get().w.info("Get Pair success : {} {}".format(rows[0][0], rows[0][1]))
                 
         return 0, rows[0][0], rows[0][1]
+
+    def getTargetPath(self, id) :
+        q = self.sql_list['query_gettarget'] + str(id)
+        l.get().w.info("Get targetpath Query: {} ".format(q))
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+        
+        if len(rows) > 1 :
+            return -201, 0
+        else : 
+            l.get().w.debug("target path : {} ".format(rows[0][0]))
+                
+        return 0, rows[0][0]
+        

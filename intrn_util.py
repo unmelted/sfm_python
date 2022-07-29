@@ -43,7 +43,15 @@ def get_pair(job_id) :
     else : 
         return 0, image_name1, image_name2
     
-    i
+
+def get_targetpath(job_id) :
+    l.get().w.info("Get target path start : {} ".format(job_id))    
+    result, target_path = DbManager.getInstance().getPair(job_id)
+    if result < 0 :
+        return finish_query(job_id, result)
+    else : 
+        return  0, target_path
+
 def check_image_format(path) :
     flist = glob.glob(os.path.join(path, 'images', '*'))
     for i in flist :

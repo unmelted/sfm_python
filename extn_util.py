@@ -1,5 +1,6 @@
 import os
 import glob
+import shutil
 import numpy as np
 from mathutil import *
 import cv2
@@ -9,9 +10,11 @@ from definition import DEFINITION as df
 from PIL import Image
 import imageio
 
-def export_points(preset, output_type, output_path, job_id, cal_type):
+def export_points(preset, job_id, cal_type, output_type, target_path=None):
     if output_type == 'dm' :
-        export_points_dm(preset, output_path, job_id, cal_type)
+        output_path = os.path.join(preset.root_path, 'output')
+        export_points_dm(preset, job_id, cal_type, output_path, target_path)
+
     elif output_type == 'mct' :
         export_points_mct(preset, cal_type)
 
@@ -76,7 +79,7 @@ def export_points_mct(preset, cal_type) :
     ofile.write(bn_json)
     ofile.close()
 
-def export_points_dm(preset, output_path, job_id, cal_type) :
+def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
 
     filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
     with open(filename, 'r') as json_file :
@@ -160,6 +163,9 @@ def export_points_dm(preset, output_path, job_id, cal_type) :
     ofile = open(output, 'w')
     ofile.write(bn_json)
     ofile.close()
+
+    shutil.copy(outfile, target_path)
+    l.get().w.warn("output pts file copy done to {} ".format(target_path))    
 
 def import_answer(filepath, limit):
 
@@ -247,9 +253,6 @@ def import_camera_pose(preset) :
 def save_ex_answer_image(preset) :
 
     output_path = os.path.join(preset.root_path, 'output')
-    if not os.path.exists(output_path):    
-        os.makedirs(output_path)
-
     for i in range(len(preset.cameras)) :
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         file_name = os.path.join(output_path, viewname +"_ans.png")

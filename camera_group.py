@@ -339,9 +339,17 @@ class Group(object):
         plot_scene(self.cameras)
 
 
-    def export(self, output_path, job_id, cal_type) :
-        export_points(self, df.export_point_type, output_path, job_id, cal_type)
+    def export(self, job_id, cal_type) :
+        target_path = None
+        if df.export_point_type == 'dm' :
+            result, target_path = get_targetpath(job_id)
+            if result < 0 : 
+                return result
+
+        export_points(self, df.export_point_type, job_id, cal_type, target_path)
         save_point_image(self)
+
+        return 0
 
     def save_answer_image(self):
         save_ex_answer_image(self)

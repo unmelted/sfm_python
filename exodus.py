@@ -143,7 +143,13 @@ def generate_pts(job_id, cal_type, base_pts) :
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
 
-    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
+    if not os.path.exists(os.path.join(root_path, 'output')) :
+        os.makedirs(os.path.join(root_path, 'output'))
+
+    result = preset1.export(job_id, cal_type)
+    if result < 0 : 
+        return finish_query(job_id, result)
+        
     status_update(job_id, 200)
 
     return 0
