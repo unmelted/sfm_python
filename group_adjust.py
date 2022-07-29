@@ -2,7 +2,7 @@ import numpy as np
 import math
 from logger import Logger as l
 from mathutil import *
-from extn_util import *  
+from intrn_util import *  
 
 class GroupAdjust(object) :
 

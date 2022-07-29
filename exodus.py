@@ -149,7 +149,7 @@ def generate_pts(job_id, cal_type, base_pts) :
     result = preset1.export(job_id, cal_type)
     if result < 0 : 
         return finish_query(job_id, result)
-        
+
     status_update(job_id, 200)
 
     return 0
@@ -224,15 +224,15 @@ class autocalib(object) :
         ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from, self.group)
 
         if( ret < 0 ):
-            return finish(self.job_id, -101)
+            return finish(self.job_id, ret)
         status_update(self.job_id, 30)
         time_e1 = time.time()
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1 - time_s))
 
         ret = preset1.run_sfm()
         if( ret < 0 ):
-            return finish(self.job_id, -101)
-        status_update(self.job_id, 80)
+            return finish(self.job_id, ret)
+        status_update(self.job_id, 90)
 
         ret = self.init_pair_update(preset1.colmap)
         if( ret < 0 ):

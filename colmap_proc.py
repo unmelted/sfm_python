@@ -5,12 +5,13 @@ import cv2
 import time
 import threading
 import queue
+import json
 from datetime import datetime
 import subprocess
 import numpy as np
 import sqlite3
 from mathutil import *
-from extn_util import * 
+from intrn_util import *
 from logger import Logger as l
 from definition import DEFINITION as df
 
@@ -74,15 +75,17 @@ def shell_cmd(cmd):
 
 class Colmap(object) :
 
-    def __init__ (self, root_path) :
+    def __init__ (self, root_path, job_id) :
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
-        self.colmap_cmd = import_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
+        self.job_id = job_id
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
         self.conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         self.cursur = self.conn.cursor()    
-
+        json_file = open(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'), 'r')
+        self.colmap_cmd = json.load(json_file)        
+        
     def recon_command(self, cam_count) :
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
@@ -95,11 +98,12 @@ class Colmap(object) :
         if result < 0 :
             return result
 
+        status_update_quiet(self.job_id, 40)
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
         shell_cmd(cmd)
         l.get().w.info("Colmap : Matcher Done")
-
+        status_update_quiet(self.job_id, 60)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
@@ -108,8 +112,10 @@ class Colmap(object) :
         shell_cmd(cmd)
         result = 0
         l.get().w.info("Colmap : Mapper Done")
-        
+
+        status_update_quiet(self.job_id, 80)        
         result = self.check_solution(cam_count)
+
         return result
 
     def check_solution(self, cam_count, nullcheck=False) :

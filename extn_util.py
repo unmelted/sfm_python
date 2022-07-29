@@ -7,6 +7,7 @@ import cv2
 from logger import Logger as l
 import json
 from definition import DEFINITION as df
+from intrn_util import *  
 from PIL import Image
 import imageio
 
@@ -302,18 +303,6 @@ def save_point_image(preset) :
                             
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
-
-
-
-def get_viewname(name, ext):
-    viewname = None
-
-    if name.rfind('_') == -1 :
-        viewname = name[:-1 * (len(ext) + 1)]
-    else :
-        viewname = name[:name.rfind('_')]
-
-    return viewname
 
 
 def import_json(path) :

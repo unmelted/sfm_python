@@ -12,6 +12,10 @@ def status_update(job_id, status) :
     if status == 100 :
         finish(job_id, 100)
 
+def status_update_quiet(job_id, status) :
+    l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
+    DbManager.getInstance().update('command', status=status, job_id=job_id)
+
 def finish_querys(job_id, result, count) :
     if count == 0 :
         return finish_query(job_id, result)        
@@ -66,4 +70,16 @@ def check_image_format(path) :
         elif ext == 'jpg' :
             return 'jpg'
     return 'png'
+
+
+
+def get_viewname(name, ext):
+    viewname = None
+
+    if name.rfind('_') == -1 :
+        viewname = name[:-1 * (len(ext) + 1)]
+    else :
+        viewname = name[:name.rfind('_')]
+
+    return viewname
 
