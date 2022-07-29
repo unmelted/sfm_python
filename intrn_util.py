@@ -23,16 +23,18 @@ class JobManager(object) :
         self.job_id = job_id
 
     def release_current_jobid(self) :
-        print("called release_current_jobid()")
+        print("called release_current_jobid() ")
         self.job_id = -1
 
     def get_current_jobid(self) :
-        print("called jobmanager getcureent jobid : ", self.job_id)
+        print("called Jobmanager getcurrent_jobid : ", self.job_id)
         return self.job_id
 
 
 def get_current_job():
-    return JobManager.getInstance().get_current_jobid()
+    id = JobManager.getInstance().get_current_jobid()    
+    l.get().w.info("Called get_current_job : {} ".format(id))    
+    return id
 
 def status_update(job_id, status) :
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
@@ -41,7 +43,7 @@ def status_update(job_id, status) :
         finish(job_id, 100)
 
 def status_update_quiet(job_id, status) :
-    l.get().w.info("Quiet status update. JOB_ID: {} Status: {} ".format(job_id, status))
+    l.get().w.info("Quiet tatus update. JOB_ID: {} Status: {} ".format(job_id, status))
     DbManager.getInstance().update('command', status=status, job_id=job_id)
 
 def finish_querys(job_id, result, count) :

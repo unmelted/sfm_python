@@ -31,21 +31,26 @@ class calib_run(Resource) :
         
         print(args['input_dir'])
         job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['group'], ip_addr))
-        status = 0
-        message = None
-        
-        if job_id < 0 :
-            status = -1
-            message = df.get_err_msg(job_id)
-        else :
-            status = 0,
-            message = 'SUCCESS'
 
         result = {
-            'status': status,
+            'status': 0,
             'job_id': job_id,
-            'message': message,
+            'message': '',
         }
+
+        if job_id < 0 :            
+            message = df.get_err_msg(job_id)
+            result = {
+                'status': -1,
+                'job_id': job_id,
+                'message': message,
+            }
+        else :
+            result = {
+                'status': 0,
+                'job_id': job_id,
+                'message': 'SUCCESS',
+            }
 
         return result
 

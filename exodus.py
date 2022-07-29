@@ -23,7 +23,7 @@ class Commander(object) :
         self.cmd_que = Queue()        
         self.index = 0
         l.get().w.info("Commander initialized.")
-        self.job_manager = JobManager()
+        self.job_manager = JobManager.getInstance()
 
     def Receiver(self, t) :
         while True :
