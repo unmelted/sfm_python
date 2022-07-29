@@ -77,7 +77,7 @@ class Commander(object) :
         return status, result, contents
 
     def add_task(self, task, obj) :
-        if self.job_manager.get_current_jobid == -1 :
+        if self.job_manager.get_current_jobid() == -1 :
             self.job_manager.set_current_jobid(self.index)            
             self.cmd_que.put((task, obj))
             self.index = DbManager.getInstance().getJobIndex() + 1
