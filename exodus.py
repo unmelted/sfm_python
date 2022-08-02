@@ -9,6 +9,7 @@ from logger import Logger as l
 from db_manager import DbManager
 from prepare_proc import *
 from intrn_util import *
+import gc
 
 class Commander(object) :
     instance = None
@@ -74,6 +75,7 @@ class Commander(object) :
         else :
             DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc='') 
 
+        gc.collect()
         return status, result, contents
 
     def add_task(self, task, obj) :
@@ -96,7 +98,8 @@ class Commander(object) :
             desc = obj[0] + obj[1]
             DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], task=task, desc=desc)
             self.job_manager.release_current_jobid()
-
+        
+        gc.collect()
             
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
