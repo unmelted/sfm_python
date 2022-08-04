@@ -269,7 +269,7 @@ def save_ex_answer_image(preset) :
     output_path = os.path.join(preset.root_path, 'output')
     for i in range(len(preset.cameras)) :
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
-        file_name = os.path.join(output_path, viewname +"_ans.png")
+        file_name = os.path.join(output_path, viewname +"_ans.jpg")
         gt_int = preset.answer[viewname].astype(np.int32)
 
         for j in range(preset.cameras[i].pts.shape[0]) :
@@ -292,7 +292,7 @@ def save_point_image(preset) :
 
     for i in range(len(preset.cameras)) :
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
-        file_name = os.path.join(output_path, viewname +"_pt.png")
+        file_name = os.path.join(output_path, viewname +"_pt.jpg")
         pt_int = preset.cameras[i].pts.astype(np.int32)            
 
         for j in range(preset.cameras[i].pts.shape[0]) :
@@ -414,7 +414,7 @@ def get_initpair(root_path) :
 
 def making_gif(from_path, output_path) :
     writer = imageio.get_writer(os.path.join(output_path, 'preview.gif'), mode='I')
-    imgs = glob.glob(f"{from_path}/*.png")
+    imgs = glob.glob(f"{from_path}/*.jpg")
     imgs.sort()
     frames = []
     for i in imgs :
