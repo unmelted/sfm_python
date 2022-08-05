@@ -1,7 +1,7 @@
 import os
+from multiprocessing import Process, Queue
 import time
 from datetime import datetime
-from multiprocessing.dummy import Queue
 import json
 from camera_group import *
 import definition as df
@@ -28,13 +28,11 @@ class Commander(object) :
 
     def Receiver(self, t) :
         while True :
-            if(self.index % 100000 == 0) :
-                self.index = 0
             time.sleep(0.2)
-
             if(self.cmd_que.empty() is False) :
-                task, obj = self.cmd_que.get()
-                self.processor(task, obj)
+                print("check2 : ", self.index, os.getpid())
+                task, obj, index = self.cmd_que.get()
+                self.task_process(task, obj, index)
 
 
     def send_query(self, query, obj) :
@@ -75,32 +73,38 @@ class Commander(object) :
         else :
             DbManager.getInstance().insert('request_history', job_id=int(obj[0]), requestor=obj[1], task=query, desc='') 
 
-        gc.collect()
         return status, result, contents
 
     def add_task(self, task, obj) :
         if self.job_manager.get_current_jobid() == -1 :          
-            self.cmd_que.put((task, obj))
             self.index = DbManager.getInstance().getJobIndex() + 1
             l.get().w.info("Alloc job id {} ".format(self.index))
-            self.job_manager.set_current_jobid(self.index)  
+            self.job_manager.set_current_jobid(self.index)
+            self.cmd_que.put((task, obj, self.index))
             return self.index
         else :
             return -22
 
-    def processor(self, task, obj) :
-        l.get().w.info("Task Proc start : {} ".format(self.index))     
-
+    def task_process(self, task, obj, index) :
+        l.get().w.info("Task Proc start : {} ".format(index))
+        print("task_process pid : ", os.getpid())
         if task == df.TaskCategory.AUTOCALIB :
-            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(self.index, obj[0], obj[1]))
-            ac = autocalib(obj[0], self.index, obj[1], obj[2])
-            ac.run()         
+            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(index, obj[0], obj[1]))
+            p = Process(target=calculate_mode, args= (obj[0], index, obj[1], obj[2]))
+            p.start()
+            p.join()
+
             desc = obj[0] + obj[1]
-            DbManager.getInstance().insert('request_history', job_id=self.index, requestor=obj[2], task=task, desc=desc)
+            DbManager.getInstance().insert('request_history', job_id=index, requestor=obj[2], task=task, desc=desc)
             self.job_manager.release_current_jobid()
-        
-        gc.collect()
-            
+
+def calculate_mode(input_dir, job_id, group, ip):
+    print("calculated mode started pid : ", os.getpid())
+    ac = autocalib( input_dir, job_id, group, ip)
+    ac.run()         
+    del ac
+    ac = None     
+
 def visualize_mode(job_id) :
     l.get().w.info("Visualize start : {} ".format(job_id))
     result, root_path = DbManager.getInstance().getRootPath(job_id)
@@ -217,19 +221,29 @@ class autocalib(object) :
         self.job_id = job_id
         self.ip = ip
         self.group = group
+        self.preset = None
+
+    def __del__ (self) :
+        print("autocalib destroyer is called! ")
+        del self.group
+        del self.preset
+        self.group = None
+        self.preset = None
+        gc.collect()
+
 
     def run(self) :
         DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
-        preset1 = Group()        
+        self.preset = Group()        
         result = self.checkDataValidity()
 
         if result != 0 :
             return finish(self.job_id, result)
         status_update(self.job_id, 10)
-
+        
         l.get().w.error("list from type : {} ".format(self.list_from))        
-        ret = preset1.create_group(self.root_dir, self.run_mode, self.list_from, self.group)
+        ret = self.preset.create_group(self.root_dir, self.run_mode, self.list_from, self.group)
 
         if( ret < 0 ):
             return finish(self.job_id, ret)
@@ -237,12 +251,12 @@ class autocalib(object) :
         time_e1 = time.time()
         l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1 - time_s))
 
-        ret = preset1.run_sfm()
+        ret = self.preset.run_sfm()
         if( ret < 0 ):
             return finish(self.job_id, ret)
         status_update(self.job_id, 90)
 
-        ret = self.init_pair_update(preset1.colmap)
+        ret = self.init_pair_update(self.preset.colmap)
         if( ret < 0 ):
             return finish(self.job_id, ret)
         status_update(self.job_id, 100)

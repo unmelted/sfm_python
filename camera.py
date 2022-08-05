@@ -48,6 +48,18 @@ class Camera(object):
         self.rotate_x = 0
         self.rotate_y = 0
 
+    def __del__(self) :
+        del self.view
+        del self.pts
+        del self.pts_3D
+        del self.pts_back
+        del self.pts_extra
+        self.view = None
+        self.pts = None
+        self.pts_3D = None
+        self.pts_back = None
+        self.pts_extra = None
+
     def calculate_p(self) :
         """ P = K[R|t] camera model. (3 x 4)
          Must either supply P or K, R, t """

@@ -42,6 +42,12 @@ class View(object):
         else:
             self.read_features()
 
+    def __del__(self) :
+        del self.image_width
+        del self.image_height
+        del self.image
+        self.image = None
+
     def extract_features(self):
         """Extracts features from the image"""
 

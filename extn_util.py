@@ -168,6 +168,8 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
     ofile.close()
 
     shutil.copy(output, target_path)
+    json_file.close()
+    del bn_json    
     l.get().w.warn("output pts file copy done to {} ".format(target_path))    
 
 def import_answer(filepath, limit):

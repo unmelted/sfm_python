@@ -60,6 +60,7 @@ def prepare_image_job(from_path, to_path) :
         from_file = os.path.join(from_path, image)
         shutil.copy(from_file, to_path)
 
+    del image_files
     return 0
 
 
@@ -111,4 +112,5 @@ def setup_proj_ini(root_path) :
     contents3 = "".join(contents3)
     ini_file.write(contents3)
     ini_file.close()
+
     

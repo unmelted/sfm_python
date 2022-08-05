@@ -22,7 +22,7 @@ class DbManager(object) :
         if not os.path.exists(os.path.join(os.getcwd(), 'db')):
             os.makedirs(os.path.join(os.getcwd(), 'db')) 
 
-        self.conn = sqlite3.connect(os.path.join(os.getcwd(), 'db', self.db_name), isolation_level=None, check_same_thread=False)
+        self.conn = sqlite3.connect(os.path.join(os.getcwd(), 'db', self.db_name), isolation_level=None)
         self.cursur = self.conn.cursor()        
 
         create = ["create_command_db", "create_request_history", "create_hw_info"]
@@ -31,6 +31,7 @@ class DbManager(object) :
             self.cursur.execute(self.sql_list[i])
         
     def insert(self, table, **k) :
+
         # print(k)
         q = 'INSERT INTO ' + table
         c = '('

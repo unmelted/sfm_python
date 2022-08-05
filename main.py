@@ -22,8 +22,6 @@ class calib_run(Resource) :
     @api.expect(recon_args)
     def post(self, model=recon_args):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
-
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
         parser.add_argument('group', type=str)        
@@ -52,6 +50,7 @@ class calib_run(Resource) :
                 'message': 'SUCCESS',
             }
 
+        del parser
         return result
 
 

@@ -1,6 +1,7 @@
 from socket import inet_aton
 import sys
 import os
+import gc
 import cv2
 import time
 import threading
@@ -72,6 +73,9 @@ def shell_cmd(cmd):
         if bail:
             break
         '''
+    process.kill()
+    del process
+    gc.collect()
     return 0
 
 class Colmap(object) :
