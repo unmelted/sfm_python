@@ -59,7 +59,8 @@ class Commander(object) :
 
         elif query == df.TaskCategory.GENERATE_PTS :
             l.get().w.info(" Task Generate start obj : {} {} ".format( obj[0], obj[2]))
-            cal_type = obj[2]['type'].upper()
+            #cal_type = obj[2]['type'].upper()
+            cal_type = '2D' #temporary
             result = generate_pts(obj[0], cal_type, obj[2]['pts'])
             status = 100
 

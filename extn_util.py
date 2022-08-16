@@ -108,11 +108,12 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
                     from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
                     from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
                 else :
-                    from_data['pts_2d']['Upper']['X'] = preset.cameras[i].pts[0][0]
-                    from_data['pts_2d']['Upper']['Y'] = preset.cameras[i].pts[0][1]
-                    from_data['pts_2d']['Middle']['X'] = preset.cameras[i].pts[1][0]
-                    from_data['pts_2d']['Middle']['Y'] = preset.cameras[i].pts[1][1]
-
+                    from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts[0][0]
+                    from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts[0][1]
+                    from_data['points'][j]['pts_2d']['MiddlePosX'] = -1.0
+                    from_data['points'][j]['pts_2d']['MiddlePosY'] = -1.0
+                    from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts[1][0]
+                    from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts[1][1]
                 break;
 
         '''
