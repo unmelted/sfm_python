@@ -33,7 +33,7 @@ def prepare_video_job(from_path, to_path) :
         l.get().w.debug(video)
         filename = video[video.rfind('/') + 1:]
         print(filename)        
-        filename = filename[0:filename.rfind('_')] + '.png'
+        filename = filename[0:filename.rfind('_')] + '.jpg'
         l.get().w.debug(filename)
 
         cam = cv2.VideoCapture(video)

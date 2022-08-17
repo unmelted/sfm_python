@@ -48,20 +48,21 @@ def export_points_mct(preset, cal_type) :
             _json['pts_3d'] = {}
 
         if cal_type == '3D' : 
-            _json['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
-            _json['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
-            _json['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
-            _json['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
-            _json['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
-            _json['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
-            _json['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
-            _json['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
+            _json['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0]
+            _json['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1]
+            _json['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0]
+            _json['pts_3d']['Y2'] = preset.cameras[i].pts_3d[1][1]
+            _json['pts_3d']['X3'] = preset.cameras[i].pts_3d[2][0]
+            _json['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1]
+            _json['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
+            _json['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
         else :
-            _json['pts_2d']['UpperPosX'] = preset.cameras[i].pts[0][0]
-            _json['pts_2d']['UpperPosY'] = preset.cameras[i].pts[0][1]
-            _json['pts_2d']['MiddlePosX'] = preset.cameras[i].pts[1][0]
-            _json['pts_2d']['MiddlePosY'] = preset.cameras[i].pts[1][1]
-
+            _json['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0]
+            _json['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1]
+            _json['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
+            _json['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1]
+            _json['pts_2d']['MiddlePosX'] = -1.0
+            _json['pts_2d']['MiddlePosY'] = -1.0
         
         _json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
         _json['pts_swipe']['X1']=-1.0
@@ -99,19 +100,19 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path) :
             if from_data['points'][j]['dsc_id'] == viewname:
                 l.get().w.info('cal_type {} camera view name : {}'.format(cal_type, preset.cameras[i].view.name))
                 if cal_type == '3D':
-                    from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts[0][0]
-                    from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts[0][1]
-                    from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts[1][0]
-                    from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts[1][1]
-                    from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts[2][0]
-                    from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts[2][1]
-                    from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts[3][0]
-                    from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts[3][1]
+                    from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0]
+                    from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1]
+                    from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0]
+                    from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts_3d[1][1]
+                    from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts_3d[2][0]
+                    from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1]
+                    from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
+                    from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
                 else :
-                    from_data['pts_2d']['Upper']['X'] = preset.cameras[i].pts[0][0]
-                    from_data['pts_2d']['Upper']['Y'] = preset.cameras[i].pts[0][1]
-                    from_data['pts_2d']['Middle']['X'] = preset.cameras[i].pts[1][0]
-                    from_data['pts_2d']['Middle']['Y'] = preset.cameras[i].pts[1][1]
+                    from_data['pts_2d']['Upper']['X'] = preset.cameras[i].pts_2d[0][0]
+                    from_data['pts_2d']['Upper']['Y'] = preset.cameras[i].pts_2d[0][1]
+                    from_data['pts_2d']['Middle']['X'] = preset.cameras[i].pts_2d[1][0]
+                    from_data['pts_2d']['Middle']['Y'] = preset.cameras[i].pts_2d[1][1]
 
                 break;
 

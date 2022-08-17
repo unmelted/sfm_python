@@ -67,6 +67,7 @@ def get_err_msg(err_code) :
         -301 : "Base points should be inserted 16 points",
         -302 : "Base points should be greater than 0",
         -303 : "Answer pts can't refer (no answer pts)",
+        -304 : "Points count is abnormal",
         
         -501 : "There is no answer for err calculation"
     }
@@ -97,7 +98,7 @@ class DEFINITION(object) :
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
-    CHAT_ID = '1140943041'
+    CHAT_ID = '5623435982' #['1140943041', '5623435982']
     log_viewer_ip = '127.0.0.1'
 
     feature_ini = 'colmap_feature.ini'
@@ -109,3 +110,14 @@ class DEFINITION(object) :
     feature_minimum = 500
 
     virtual_rod_length = 600
+
+    class loglevel(Enum) :
+        CRITICAL = 50
+        FATAL = CRITICAL
+        ERROR = 40
+        WARNING = 30
+        IMPORTANT = WARNING        
+        WARN = WARNING
+        INFO = 20
+        DEBUG = 10
+        NOTSET = 0

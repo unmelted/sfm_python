@@ -57,8 +57,8 @@ class calib_run(Resource) :
 
 gen_args = api.model('gen_args' , {
     "job_id" : fields.Integer,
-    "type" : fields.String,    
-    "pts" : fields.List(fields.Float)
+    "pts_2d" : fields.List(fields.Float),
+    "pts_3d" : fields.List(fields.Float)     
 })
 
 @api.route('/exodus/generate')
@@ -72,12 +72,12 @@ class generate_points(Resource) :
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
-        parser.add_argument('type', type=str)        
-        parser.add_argument('pts', default=list, action='append')
+        parser.add_argument('pts_2d', default=list, action='append')
+        parser.add_argument('pts_3d', default=list, action='append')        
         args = parser.parse_args()
         job_id = args['job_id']
-        print(args['type'])
-        print(args['pts'])
+        print(args['pts_2d'])
+        print(args['pts_3d'])        
 
         status, result, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)

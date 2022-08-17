@@ -191,23 +191,30 @@ class CameraTransform(object):
 
     def make_3D(self, c0, c1) :
         l.get().w.debug(" make_3D .... {} {}".format(c0.view.name, c1.view.name))
+        pts_2d = []    
         pts_3d = []
-        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
-        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
+        K0_inv = np.linalg.inv(c0.K)            
+        K1_inv = np.linalg.inv(c1.K)
 
-        for i in range(c0.pts.shape[0]) :
-            K0_inv = np.linalg.inv(c0.K)            
-            K1_inv = np.linalg.inv(c1.K)
+        for i in range(c0.pts_2d.shape[0]) :
+            cam0 = cv2.convertPointsToHomogeneous(c0.pts_2d)[:, 0, :]
+            cam1 = cv2.convertPointsToHomogeneous(c1.pts_2d)[:, 0, :]
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
+
+            _2d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+            pts_2d.append(np.array(_2d).T)        
+
+        for i in range(c0.pts_3d.shape[0]) :
+            cam0 = cv2.convertPointsToHomogeneous(c0.pts_3d)[:, 0, :]
+            cam1 = cv2.convertPointsToHomogeneous(c1.pts_3d)[:, 0, :]
             u1_normalized = K0_inv.dot(cam0[i, :])
             u2_normalized = K1_inv.dot(cam1[i, :])
 
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
             pts_3d.append(np.array(_3d).T)        
 
-        c0.pts_3D = pts_3d
-        c1.pts_3D = pts_3d        
-        l.get().w.debug(pts_3d)
-        return pts_3d
+        return pts_2d, pts_3d
 
     def make_3D_extra(self, c0, c1) :
         l.get().w.debug(" make_3D extra .... {} {}".format(c0.view.name, c1.view.name))
@@ -227,28 +234,18 @@ class CameraTransform(object):
         l.get().w.debug(pts_3d)
         return pts_3d
 
-    def reproject_3D_byCam(self, c0, c1) :
-        l.get().w.debug("reproject_3D .. : {} ".format(c1.view.name))
+    def reproject(self, _pts, c1, type) :
+        l.get().w.debug("reproject points .. : {}".format(c1.view.name))
 
-        for i in range(c0.pts.shape[0]) :
-            cv_pts = c0.pts_3D[i, :]
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
-
-        l.get().w.debug(c1.pts)            
-
-    def reproject_3D(self, pts_3d, c1) :
-        l.get().w.debug("reproject_3D .. : {}".format(c1.view.name))
-
-        for i in range(len(pts_3d)) :
-            cv_pts = np.array(pts_3d[i]).T
+        for i in range(len(_pts)) :
+            cv_pts = np.array(_pts[i]).T
             cv_pts = np.vstack([cv_pts, 1])
             reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+            if type == '2D' :
+                c1.pts_2d = np.append(c1.pts_2d, np.array(reproject).T, axis=0)        
+            elif type == '3D' :
+                c1.pts_3d = np.append(c1.pts_3d, np.array(reproject).T, axis=0)                        
 
-        # print(c1.pts)            
 
     def reproject_3D_extra(self, pts_3d, c1) :
         print("reproject_3D extra .. : ", c1.view.name)
@@ -261,15 +258,15 @@ class CameraTransform(object):
         # print(c1.pts_extra)
 
 
-    def reproject(self, c0, c1) :
-        l.get().w.debug("reproject .. : {}".format(c1.view.name))
+    # def reproject(self, c0, c1) :
+    #     l.get().w.debug("reproject .. : {}".format(c1.view.name))
 
-        for i in range(c0.pts.shape[0]) :
-            cv_pts = c0.pts_back[i, :]
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+    #     for i in range(c0.pts.shape[0]) :
+    #         cv_pts = c0.pts_back[i, :]
+    #         cv_pts = np.hstack([cv_pts, 1])
+    #         cv_pts = cv_pts.reshape((4,1))
+    #         reproject = c1.project(cv_pts)
+    #         c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
         # print(c1.pts)            
 

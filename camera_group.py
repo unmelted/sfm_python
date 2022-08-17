@@ -51,6 +51,15 @@ class Group(object):
         self.width = 0
         self.height = 0
 
+    def destroy(self) :
+        del self.cameras
+        del self.views
+        del self.matches
+
+        if self.run_mode == 'colmap':
+            del self.colmap
+
+
     def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
@@ -219,16 +228,16 @@ class Group(object):
         return -150, None
         
         
-    def generate_points(self, job_id, base_pts=None) :
+    def generate_points(self, job_id, cal_type, float_2d=None, float_3d=None) :
         
-        if df.answer_from == 'input' and base_pts == None :
+        if df.answer_from == 'input' and (float_2d == None or float_3d == None):
             df.answer_from = 'pts' #for analysis mode
         
         if df.answer_from == 'pts' and self.answer == None:
             return -303
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
-        err, pts_3d, viewname1, viewname2 = self.make_seed_answer(job_id, pair_type=df.init_pair_mode, answer_from=df.answer_from, base_pts=base_pts)
+        err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(job_id, cal_type, float_2d, float_3d, pair_type=df.init_pair_mode, answer_from=df.answer_from)
 
         if err < 0 :
             return err
@@ -238,16 +247,20 @@ class Group(object):
             if viewname == viewname1 or viewname == viewname2 :
                 continue
             else :
-                self.adjust.reproject_3D(pts_3d, self.cameras[i])
+                if cal_type == '2D3D' or cal_type == '2D' :
+                    self.adjust.reproject(_2d, self.cameras[i], '2D')      
+                if cal_type == '2D3D' or cal_type == '3D' :
+                    self.adjust.reproject(_3d, self.cameras[i], '3D')
 
         return 0
 
-    def make_seed_answer(self, job_id, pair_type='zero', answer_from='pts', base_pts= None) :
+    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type='zero', answer_from='pts') :
         viewname1 = None
         viewname2 = None
         c0 = None
         c1 = None
         err = 0
+        _2d = None
         _3d = None
 
         if pair_type == 'zero' :
@@ -262,11 +275,11 @@ class Group(object):
             viewname2 = get_viewname(image_name2, self.ext)
             err, c0 = self.get_camera_byView(viewname1)
             if err < 0 :
-                return err, None, None, None
+                return err, None, None, None, None
 
             err, c1 = self.get_camera_byView(viewname2)
             if err < 0 :
-                return err, None, None, None
+                return err, None, None, None, None
 
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
@@ -278,21 +291,41 @@ class Group(object):
             l.get().w.debug("maker seed  answer from pts file  \n{} {}".format(pts1, pts2))
             
         elif answer_from == 'input' :
-            # base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]] #2D
-            # base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]] #2D
-            base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]], [base_pts[4], base_pts[5]] ,[base_pts[6], base_pts[7]]]
-            base2 = [[base_pts[8],base_pts[9]], [base_pts[10], base_pts[11]], [base_pts[12], base_pts[13]] ,[base_pts[14], base_pts[15]]]
+            base1_3d = []
+            base2_3d = []
+            base1_2d = []
+            base2_2d = []
 
-            pts1 = np.array(base1)
-            pts2 = np.array(base2)
+            if cal_type == '2D3D' or cal_type == '2D' :
+                base1_2d.append([float_2d[0],float_2d[1]])
+                base1_2d.append([float_2d[2],float_2d[3]])                
 
-            l.get().w.debug("maker seed  answer from base \n{} {}".format(pts1, pts2))
+                base2_2d.append([float_2d[4],float_2d[5]])
+                base2_2d.append([float_2d[6],float_2d[7]])                
+                
+            if cal_type == '2D3D' or cal_type == '3D' :
+                base1_3d.append([float_3d[0],float_3d[1]])
+                base1_3d.append([float_3d[2],float_3d[3]])                
+                base1_3d.append([float_3d[4],float_3d[5]])                
+                base1_3d.append([float_3d[6],float_3d[7]])                
 
-        c0.pts = pts1
-        c1.pts = pts2
-        _3d = self.adjust.make_3D(c0, c1)
+                base2_3d.append([float_3d[8],float_3d[9]])
+                base2_3d.append([float_3d[10],float_3d[11]])                
+                base2_3d.append([float_3d[12],float_3d[13]])                
+                base2_3d.append([float_3d[14],float_3d[15]])
 
-        return err, _3d, viewname1, viewname2
+
+            print("base 1 2d/3d " ,base1_2d, base1_3d)
+            print("base 2 2d/3d" , base2_2d, base2_3d)
+
+        c0.pts_2d = np.array(base1_2d)
+        c0.pts_3d = np.array(base1_3d)
+        c1.pts_2d = np.array(base1_2d)
+        c1.pts_3d = np.array(base1_3d)
+
+        _2d, _3d = self.adjust.make_3D(c0, c1)
+
+        return err, _2d, _3d, viewname1, viewname2
 
     def calculate_real_error(self) :
 
@@ -356,14 +389,7 @@ class Group(object):
         save_ex_answer_image(self)
 
     def generate_extra_point(self, job_id, base_pts=None, world_pts=None) :
-
-        type = 'base3D'
-        if type == 'simple2D' : #first try : from create point based on simply length of rod
-            self.get_extra_point_normal2D(job_id)
-        elif type == 'base3D' : # third try : same method  as existed logic in dm
-            self.get_extra_point_based3D(job_id, world_pts)
-        elif type == 'insert2D' : #second try : user input scenario
-            self.get_extra_point_basedInput(job_id, base_pts)
+        self.get_extra_point_based3D(job_id, world_pts)
 
 
     def get_extra_point_based3D(self, job_id, world_pts) :
@@ -379,66 +405,6 @@ class Group(object):
             result, vector_rotation, vector_translation = cv2.solvePnP(world, self.cameras[i].pts, self.cameras[i].K, dist_coeff)
             normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0],[50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:,0,:]
-
-
-    def get_extra_point_basedInput(self, job_id, base_pts):
-        result, image_name1, image_name2 = get_pair(job_id)
-        
-        viewname1 = get_viewname(image_name1, self.ext)
-        viewname2 = get_viewname(image_name2, self.ext)
-        err, c0 = self.get_camera_byView(viewname1)
-        err, c1 = self.get_camera_byView(viewname2)
-
-        l.get().w.debug("maybe missed  {} {}".format(viewname1, viewname2))
-        base1 = [[base_pts[0],base_pts[1]], [base_pts[2], base_pts[3]]]
-        base2 = [[base_pts[4],base_pts[5]], [base_pts[6], base_pts[7]]]
-        c0.pts_extra = np.array(base1)
-        c1.pts_extra = np.array(base2)
-
-        extra_3d = self.adjust.make_3D_extra(c0, c1)
-        print("extra 3D : ", extra_3d)        
-
-        for i in range(len(self.cameras)):
-            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
-            if viewname == viewname1 or viewname == viewname2:
-                continue
-
-            self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
-
-    def get_extra_point_normal2D(self, job_id) :
-        result, image_name1, image_name2 = get_pair(job_id)
-        
-        viewname1 = get_viewname(image_name1, self.ext)
-        viewname2 = get_viewname(image_name2, self.ext)
-        err, c0 = self.get_camera_byView(viewname1)
-        err, c1 = self.get_camera_byView(viewname2)
-        if err < 0 :
-            return err, None, None, None
-
-        x1, y1 = get_cross_point(c0.pts[0][0], c0.pts[0][1], c0.pts[2][0], c0.pts[2][1],
-            c0.pts[1][0], c0.pts[1][1], c0.pts[3][0], c0.pts[3][1])
-        x2, y2 = get_cross_point(c1.pts[0][0], c1.pts[0][1], c1.pts[2][0], c1.pts[2][1],
-            c1.pts[1][0], c1.pts[1][1], c1.pts[3][0], c1.pts[3][1])
-            
-        print("get_extra_point : ", x1, y1, x2, y2)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1]]), axis=0)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length/2]]), axis=0)
-        c0.pts_extra = np.append(c0.pts_extra, np.array([[x1, y1 - df.virtual_rod_length]]), axis=0)        
-        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2]]), axis=0)
-        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length/2]]), axis=0)
-        c1.pts_extra = np.append(c1.pts_extra, np.array([[x2, y2 - df.virtual_rod_length]]), axis=0)
-
-        print(c0.pts_extra)
-
-        extra_3d = self.adjust.make_3D_extra(c0, c1)
-        print("extra 3D : ", extra_3d)
-
-        for i in range(len(self.cameras)):
-            viewname = get_viewname(self.cameras[i].view.name, self.ext)            
-            if viewname == viewname1 or viewname == viewname2:
-                continue
-
-            self.adjust.reproject_3D_extra(extra_3d, self.cameras[i])
 
 
     def generate_adjust(self) :

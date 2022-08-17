@@ -49,7 +49,7 @@ class Pair:
 
         view1_pt = cv2.drawKeypoints(self.camera1.view.image, self.camera1.view.keypoints, 1, (255, 0, 0))
         view2_pt = cv2.drawKeypoints(self.camera2.view.image, self.camera2.view.keypoints, 1, (255, 255, 0))        
-        filename = os.path.join(self.camera1.view.root_path +'/draw' , self.image_name1 + '_' + self.image_name2 + '_match.png')
+        filename = os.path.join(self.camera1.view.root_path +'/draw' , self.image_name1 + '_' + self.image_name2 + '_match.jpg')
         drw_match = np.concatenate((view1_pt, view2_pt), axis=1)
         print("draw_matches.. name : ", self.image_name1, len(self.inliers1))
 
@@ -300,7 +300,7 @@ class Pair:
 
         dst = np.full((self.camera1.view.image_height, self.camera1.view.image_width, 3), 255, np.uint8)
         dst = cv2.warpPerspective(self.camera1.view.image, H, (self.camera1.view.image_width, self.camera1.view.image_height))
-        cv2.imwrite("warp_dist_test1.png", dst)
+        cv2.imwrite("warp_dist_test1.jpg", dst)
 
         return H
 
