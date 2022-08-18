@@ -143,6 +143,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
     time_s = time.time()
     float_2d = []
     float_3d = []
+    l.get().w.info('prepare generate jobid {} cal_type {} '.format(job_id, cal_type))
     if cal_type == '3D' and len(pts_3d) < 16:
         return finish_query(job_id, -301)
     elif cal_type == '2D' and len(pts_2d) < 8:
