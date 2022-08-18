@@ -114,12 +114,12 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
                     from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
                     from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
                 else:
-                    from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts[0][0]
-                    from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts[0][1]
+                    from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0]
+                    from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1]
                     from_data['points'][j]['pts_2d']['MiddlePosX'] = -1.0
                     from_data['points'][j]['pts_2d']['MiddlePosY'] = -1.0
-                    from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts[1][0]
-                    from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts[1][1]
+                    from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
+                    from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1]
                 break
 
         '''
@@ -310,10 +310,24 @@ def save_point_image(preset):
     for i in range(len(preset.cameras)):
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         file_name = os.path.join(output_path, viewname + "_pt.jpg")
-        pt_int = preset.cameras[i].pts.astype(np.int32)
 
-        for j in range(preset.cameras[i].pts.shape[0]):
-            pt_2d = preset.cameras[i].pts[j, :]
+
+        for j in range(preset.cameras[i].pts_3d.shape[0]):
+            pt_int = preset.cameras[i].pts_3d.astype(np.int32)
+            pt_2d = preset.cameras[i].pts_3d[j, :]
+            cv2.circle(preset.cameras[i].view.image, (int(
+                pt_2d[0]), int(pt_2d[1])), 5, (0, 255, 0), -1)
+
+            if j > 0:
+                cv2.line(preset.cameras[i].view.image,
+                         pt_int[j-1], pt_int[j], (255, 0, 0), 3)
+            if j == (preset.cameras[i].pts.shape[0] - 1):
+                cv2.line(preset.cameras[i].view.image,
+                         pt_int[j], pt_int[0], (255, 255, 0), 3)
+
+        for j in range(preset.cameras[i].pts_2d.shape[0]):
+            pt_int = preset.cameras[i].pts_2d.astype(np.int32)
+            pt_2d = preset.cameras[i].pts_2d[j, :]
             cv2.circle(preset.cameras[i].view.image, (int(
                 pt_2d[0]), int(pt_2d[1])), 5, (0, 255, 0), -1)
 
