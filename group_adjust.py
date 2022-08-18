@@ -3,7 +3,7 @@ import math
 from logger import Logger as l
 from mathutil import *
 from intrn_util import *
-
+from extn_util import *
 
 class GroupAdjust(object):
 
@@ -23,8 +23,8 @@ class GroupAdjust(object):
             dist = 0
             diffx = self.cameras[i].pts_extra[0][0] - \
                 self.cameras[i].pts_extra[1][0]
-            diffy = self.cameras[i].pts_extra[0][1] - \
-                self.cameras[i].pts_extra[1][1]
+            diffy = self.cameras[i].pts_extra[1][1] - \
+                self.cameras[i].pts_extra[0][1]
             if diffx == 0:
                 dist = diffy
             else:
@@ -182,7 +182,7 @@ class GroupAdjust(object):
 
         for i in range(len(self.cameras)):
             file_name = os.path.join(output_path, get_viewname(
-                self.cameras[i].view.name, ext) + '_adj.png')
+                self.cameras[i].view.name, ext) + '_adj.jpg')
             mat = self.get_affine_matrix(self.cameras[i])
 
             dst_img = cv2.warpAffine(

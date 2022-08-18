@@ -70,7 +70,7 @@ class Commander(object):
 
             if query == df.TaskCategory.ANALYSIS:
                 result = analysis_mode(
-                    obj[0], cal_type, obj[2]['pts_3d'], obj[2]['pts_2d'], obj[2]['world'])
+                    obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'], obj[2]['world'])
 
             elif query == df.TaskCategory.GENERATE_PTS:
                 result, _ = generate_pts(
@@ -173,7 +173,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
         return finish_query(job_id, result), None
 
     preset1.read_cameras()
-    result, _ = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
+    result  = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -199,16 +199,15 @@ def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):
     float_world = []
     result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
     if result < 0:
-        return finish_query(job_id, result), None
+        return result
 
     for wp in world_pts:
         float_world.append(float(wp))
 
-    if (cal_type == '3D' or cal_type == '2D3D') and len(world_pts) < 11:
+    if cal_type == '3D' and len(world_pts) < 8:
         return -305
 
     preset.generate_extra_point(cal_type, float_world)
-
     preset.generate_adjust()
     return 0
 

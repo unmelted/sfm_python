@@ -183,7 +183,7 @@ class visualize(Resource):
 analysis = api.model('analysis', {
     'job_id': fields.Integer,
     "pts_2d": fields.List(fields.Float),
-    "pts_3d": fields.List(fields.Float)
+    "pts_3d": fields.List(fields.Float),
     "world": fields.List(fields.Float)
 })
 

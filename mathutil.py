@@ -369,7 +369,6 @@ def get_normalized_point(world) :
     minz = 100000.0
 
     for point in world :
-        print(point)
         if point[0] > maxx :
             maxx = point[0]
         if point[1] > maxy :
