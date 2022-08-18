@@ -71,6 +71,7 @@ def get_err_msg(err_code):
         -302: "Base points should be greater than 0",
         -303: "Answer pts can't refer (no answer pts)",
         -304: "Points count is abnormal",
+        -305: "World reference point is abnormal",
 
         -501: "There is no answer for err calculation"
     }

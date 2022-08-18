@@ -53,12 +53,8 @@ class Commander(object):
             status = 100
             result = visualize_mode(obj[0])
 
-        elif query == df.TaskCategory.ANALYSIS:
+        elif query == df.TaskCategory.ANALYSIS or query == df.TaskCategory.GENERATE_PTS:
             status = 100
-            result = analysis_mode(
-                obj[0], obj[2]['pts_3d'], obj[2]['pts_2d'], obj[2]['world'])
-
-        elif query == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(
                 " Task Generate start obj : {} {} ".format(obj[0], obj[2]))
             if len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) > 15:
@@ -72,9 +68,14 @@ class Commander(object):
                 status = 0
                 return status, result, contents
 
-            result = generate_pts(
-                obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'])
-            status = 100
+            if query == df.TaskCategory.ANALYSIS:
+                result = analysis_mode(
+                    obj[0], cal_type, obj[2]['pts_3d'], obj[2]['pts_2d'], obj[2]['world'])
+
+            elif query == df.TaskCategory.GENERATE_PTS:
+                result, _ = generate_pts(
+                    obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'])
+                status = 100
 
         elif query == df.TaskCategory.GET_PAIR:
             result, image1, image2 = get_pair(obj[0])
@@ -138,44 +139,43 @@ def visualize_mode(job_id):
     return 0
 
 
-def generate_pts(job_id, cal_type, pts_2d, pts_3d):
-    l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
+def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
     time_s = time.time()
     float_2d = []
     float_3d = []
     if cal_type == '3D' and len(pts_3d) < 16:
         return finish_query(job_id, -301)
     elif cal_type == '2D' and len(pts_2d) < 8:
-        return finish_query(job_id, -301)
+        return finish_query(job_id, -301), None
 
     if cal_type == '2D3D' or cal_type == '3D':
         for val in pts_3d:
             if float(val) < 0:
-                return finish_query(job_id, -302)
+                return finish_query(job_id, -302), None
             else:
                 float_3d.append(float(val))
 
     if cal_type == '2D3D' or cal_type == '2D':
         for val in pts_2d:
             if float(val) < 0:
-                return finish_query(job_id, -302)
+                return finish_query(job_id, -302), None
             else:
                 float_2d.append(float(val))
 
     preset1 = Group()
     result, root_path = DbManager.getInstance().getRootPath(job_id)
     if result < 0:
-        return finish_query(job_id, result)
+        return finish_query(job_id, result), None
 
     result = preset1.create_group(
         root_path, df.DEFINITION.run_mode, 'colmap_db')
     if result < 0:
-        return finish_query(job_id, result)
+        return finish_query(job_id, result), None
 
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
+    result, _ = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
     if result < 0:
-        return finish_query(job_id, result)
+        return finish_query(job_id, result), None
 
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
@@ -185,56 +185,31 @@ def generate_pts(job_id, cal_type, pts_2d, pts_3d):
 
     result = preset1.export(job_id, cal_type)
     if result < 0:
-        return finish_query(job_id, result)
+        return finish_query(job_id, result), None
 
-    status_update(job_id, 200)
-
-    return 0
+    return 0, preset1
 
 
-def analysis_mode(job_id, base_pts_3d, base_pts_2d, world_pts):
-    cal_type = '3D'
-    l.get().w.info("analysis  start : {} ".format(job_id))
-    float_3d_base = []
-    float_2d_base = []
+def generate_pts(job_id, cal_type, pts_2d, pts_3d):
+    l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
+    return prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+
+
+def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):
     float_world = []
-
-    preset1 = Group()
-    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
     if result < 0:
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))
-        return 0
+        return finish_query(job_id, result), None
 
-    result = preset1.create_group(
-        root_path, df.DEFINITION.run_mode, 'colmap_db')
-    if result < 0:
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))
-        return 0
-
-    for bp in base_pts_3d:
-        float_3d_base.append(float(bp))
-    for bp in base_pts_2d:
-        float_2d_base.append(float(bp))
     for wp in world_pts:
         float_world.append(float(wp))
 
-    preset1.read_cameras()
-    result = preset1.generate_points(job_id, float_3d_base)
-    if result < 0:
-        l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))
-        return 0
+    if (cal_type == '3D' or cal_type == '2D3D') and len(world_pts) < 11:
+        return -305
 
-    # result = preset1.calculate_real_error()
-    # if result < 0 :
-        # l.get().w.error("analysis err: {} ".format(df.get_err_msg(result)))
-        # return 0
+    preset.generate_extra_point(cal_type, float_world)
 
-    preset1.generate_extra_point(job_id, float_2d_base, float_world)
-    # preset1.colmap.make_sequential_homography(preset1.cameras, preset1.answer, preset1.ext)
-    preset1.export(os.path.join(root_path, 'output'), job_id, cal_type)
-    # preset1.save_answer_image()
-    preset1.generate_adjust()
-
+    preset.generate_adjust()
     return 0
 
 
