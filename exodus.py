@@ -73,7 +73,7 @@ class Commander(object):
                     obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'], obj[2]['world'])
 
             elif query == df.TaskCategory.GENERATE_PTS:
-                result, _ = generate_pts(
+                result  = generate_pts(
                     obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'])
                 status = 100
 
@@ -193,7 +193,9 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
 
 def generate_pts(job_id, cal_type, pts_2d, pts_3d):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
-    return prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+    result, preset =  prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+    save_point_image(preset)    
+    return result
 
 
 def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):

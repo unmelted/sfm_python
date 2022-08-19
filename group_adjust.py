@@ -1,3 +1,4 @@
+import subprocess
 import numpy as np
 import math
 from logger import Logger as l
@@ -23,8 +24,8 @@ class GroupAdjust(object):
             dist = 0
             diffx = self.cameras[i].pts_extra[0][0] - \
                 self.cameras[i].pts_extra[1][0]
-            diffy = self.cameras[i].pts_extra[1][1] - \
-                self.cameras[i].pts_extra[0][1]
+            diffy = self.cameras[i].pts_extra[0][1] - \
+                self.cameras[i].pts_extra[1][1]
             if diffx == 0:
                 dist = diffy
             else:
@@ -40,7 +41,7 @@ class GroupAdjust(object):
 
             self.cameras[i].radian = degree * math.pi / 180
             l.get().w.debug("camera {} diffx {} diffy {} degree {} radian {} ".format(
-                i, diffx, diffy, degree, self.cameras[i].radian))
+                self.cameras[i].view.name, diffx, diffy, degree, self.cameras[i].radian))
 
     def calculate_scaleshift(self):
         sumx = 0
@@ -75,7 +76,7 @@ class GroupAdjust(object):
             self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
             self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
             l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(
-                i, self.cameras[i].scale, self.cameras[i].adjust_x, self.cameras[i].adjust_y))
+                self.cameras[i].view.name, self.cameras[i].scale, self.cameras[i].adjust_x, self.cameras[i].adjust_y))
 
     def calculate_margin(self):
         left = []
@@ -146,6 +147,7 @@ class GroupAdjust(object):
                 margin_top = margin_bottom
                 margin_bottom = t
 
+            # print(margin_left, margin_right, margin_top, margin_bottom)
             left.append(margin_left)
             right.append(margin_right)
             top.append(margin_top)
@@ -184,7 +186,54 @@ class GroupAdjust(object):
             file_name = os.path.join(output_path, get_viewname(
                 self.cameras[i].view.name, ext) + '_adj.jpg')
             mat = self.get_affine_matrix(self.cameras[i])
+            # l.get().w.debug("view name adjust : {} matrix {} ".format(self.cameras[i].view.name, mat))
+
+            for j in range(self.cameras[i].pts_3d.shape[0]):
+                pt_int = self.cameras[i].pts_3d.astype(np.int32)
+                pt_3d = self.cameras[i].pts_3d[j, :]
+                cv2.circle(self.cameras[i].view.image, (int(
+                    pt_3d[0]), int(pt_3d[1])), 5, (0, 255, 0), -1)
+
+                if j > 0:
+                    cv2.line(self.cameras[i].view.image,
+                            pt_int[j-1], pt_int[j], (255, 0, 0), 3)
+                if j == (self.cameras[i].pts_3d.shape[0] - 1):
+                    cv2.line(self.cameras[i].view.image,
+                            pt_int[j], pt_int[0], (255, 255, 0), 3)
+                    cv2.circle(self.cameras[i].view.image, (int(
+                                    pt_3d[0]), int(pt_3d[1])), 10, (0, 0, 255), -1)
+
+
+            for j in range(self.cameras[i].pts_2d.shape[0]):
+                pt_int = self.cameras[i].pts_2d.astype(np.int32)
+                pt_2d = self.cameras[i].pts_2d[j, :]
+                cv2.circle(self.cameras[i].view.image, (int(
+                    pt_2d[0]), int(pt_2d[1])), 5, (0, 255, 0), -1)
+
+                if j > 0:
+                    cv2.line(self.cameras[i].view.image,
+                            pt_int[j-1], pt_int[j], (255, 0, 0), 3)
+                if j == (self.cameras[i].pts_2d.shape[0] - 1):
+                    cv2.line(self.cameras[i].view.image,
+                            pt_int[j], pt_int[0], (255, 255, 0), 3)
+
+            if (self.cameras[i].pts_extra.shape[0]) > 1:
+                pt_ex = self.cameras[i].pts_extra
+                cv2.circle(self.cameras[i].view.image, (int(
+                    pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
+                cv2.circle(self.cameras[i].view.image, (int(
+                    pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)
+                #cv2.circle(self.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)
+                cv2.line(self.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])),
+                        (255, 0, 0), 3)
+                print("extra point ! :",  int(pt_ex[0][0]), int(pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
+
+
 
             dst_img = cv2.warpAffine(
                 self.cameras[i].view.image, mat[:2, :3], (w, h))
             cv2.imwrite(file_name, dst_img)
+
+        cli = "convert -delay 25 -resize 960x540 -loop 0 " + output_path +"/*.jpg "+ output_path + "/animated.gif"
+        print(cli)
+        process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)        

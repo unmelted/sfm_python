@@ -390,12 +390,7 @@ class Group(object):
 
         export_points(self, df.export_point_type,
                       job_id, cal_type, target_path)
-        save_point_image(self)
-
         return 0
-
-    def save_answer_image(self):
-        save_ex_answer_image(self)
 
     def generate_extra_point(self, cal_type, world_pts):
         if cal_type == '3D':
@@ -404,7 +399,7 @@ class Group(object):
             p = get_normalized_point(world_p)
             world = np.array(p)
             dist_coeff = np.zeros((4, 1))
-            print("world " , world)
+            # print("world " , world)
 
             for i in range(len(self.cameras)):
                 result, vector_rotation, vector_translation = cv2.solvePnP(
@@ -412,9 +407,11 @@ class Group(object):
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
                     50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
+                l.get().w.info("3d make extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra ))
         else:
             for i in range(len(self.cameras)):
                 self.cameras[i].pts_extra = self.cameras[i].pts_2d
+                l.get().w.info("2d set extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra ))                
 
     def generate_adjust(self):
         gadj = GroupAdjust(self.cameras)

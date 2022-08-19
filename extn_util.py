@@ -311,12 +311,13 @@ def save_point_image(preset):
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         file_name = os.path.join(output_path, viewname + "_pt.jpg")
 
+        print(preset.cameras[i].pts_3d.shape[0], preset.cameras[i].pts_2d.shape[0], preset.cameras[i].pts_extra.shape[0])
 
         for j in range(preset.cameras[i].pts_3d.shape[0]):
             pt_int = preset.cameras[i].pts_3d.astype(np.int32)
-            pt_2d = preset.cameras[i].pts_3d[j, :]
+            pt_3d = preset.cameras[i].pts_3d[j, :]
             cv2.circle(preset.cameras[i].view.image, (int(
-                pt_2d[0]), int(pt_2d[1])), 5, (0, 255, 0), -1)
+                pt_3d[0]), int(pt_3d[1])), 5, (0, 255, 0), -1)
 
             if j > 0:
                 cv2.line(preset.cameras[i].view.image,
@@ -324,6 +325,9 @@ def save_point_image(preset):
             if j == (preset.cameras[i].pts.shape[0] - 1):
                 cv2.line(preset.cameras[i].view.image,
                          pt_int[j], pt_int[0], (255, 255, 0), 3)
+                cv2.circle(preset.cameras[i].view.image, (int(
+                                pt_3d[0]), int(pt_3d[1])), 5, (0, 255, 255), -1)
+
 
         for j in range(preset.cameras[i].pts_2d.shape[0]):
             pt_int = preset.cameras[i].pts_2d.astype(np.int32)
@@ -338,7 +342,7 @@ def save_point_image(preset):
                 cv2.line(preset.cameras[i].view.image,
                          pt_int[j], pt_int[0], (255, 255, 0), 3)
 
-        if len(preset.cameras[i].pts_extra) > 1:
+        if (preset.cameras[i].pts_extra.shape[0]) > 1:
             pt_ex = preset.cameras[i].pts_extra
             cv2.circle(preset.cameras[i].view.image, (int(
                 pt_ex[0][0]), int(pt_ex[0][1])), 5, (0, 255, 0), -1)
@@ -347,6 +351,7 @@ def save_point_image(preset):
             #cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)
             cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])),
                      (255, 0, 0), 3)
+            print("extra point ! :",  int(pt_ex[0][0]), int(pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
 
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
@@ -451,24 +456,3 @@ def get_initpair(root_path):
     id1 = ids[0]
     id2 = ids[1]
     return 0, id1, id2
-
-
-def making_gif(from_path, output_path):
-    writer = imageio.get_writer(os.path.join(
-        output_path, 'preview.gif'), mode='I')
-    imgs = glob.glob(f"{from_path}/*.jpg")
-    imgs.sort()
-    frames = []
-    for i in imgs:
-        #        new_frame = Image.open(i)
-        print(i)
-        new_frame = imageio.imread(i)
-        frames.append(new_frame)
-#        frames.append(new_frame)
-
-    imageio.mimsave(os.path.join(output_path, 'preview.gif'), frames, fps=2)
-    '''
-    print("making_gif framecount : ", len(frames))
-    frame_one = frames[0]
-    frame_one.save(os.path.join(output_path, 'preview.gif'), format="GIF", append_iamge=frames[1:], save_all=True, duration=500, loop=0)
-    '''
