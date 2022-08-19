@@ -9,5 +9,6 @@
     "query_root_path_ex" : " ORDER BY datetime DESC ",
     "query_job_id" : "SELECT job_id FROM command ORDER BY job_id DESC",
     "query_status" : "SELECT status, result_id FROM command where job_id = ",
-    "query_getpair" : "SELECT image_pair1, image_pair2 FROM command where job_id = "
+    "query_getpair" : "SELECT image_pair1, image_pair2 FROM command where job_id = ",
+    "query_gettarget" : "SELECT input_path FROM command where job_id = "
 }

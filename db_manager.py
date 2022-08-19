@@ -71,7 +71,7 @@ class DbManager(object) :
         q = self.sql_list['query_root_path'] + str(id) + self.sql_list['query_root_path_ex']
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
-        print(rows)
+        l.get().w.debug(rows)
         if rows == None or len(rows) == 0:
             return -151, None
                 
@@ -98,7 +98,7 @@ class DbManager(object) :
         if len(rows) > 1 :
             return -201, 0
         else : 
-            print(rows[0][0], rows[0][1])
+            l.get().w.debug("status : {} {} ".format(str(rows[0][0]), str(rows[0][1])))
                 
         return rows[0][0], rows[0][1]
 
@@ -111,7 +111,23 @@ class DbManager(object) :
         
         if len(rows) > 1 :
             return -201, None, None
+        elif rows[0][0] == None or  rows[0][1] == None or rows[0][0] == '' or rows[0][1] == '' :
+            return -144, None, None
         else : 
             l.get().w.info("Get Pair success : {} {}".format(rows[0][0], rows[0][1]))
                 
         return 0, rows[0][0], rows[0][1]
+
+    def getTargetPath(self, id) :
+        q = self.sql_list['query_gettarget'] + str(id)
+        l.get().w.info("Get targetpath Query: {} ".format(q))
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+        
+        if len(rows) > 1 :
+            return -201, 0
+        else : 
+            l.get().w.debug("target path : {} ".format(rows[0][0]))
+                
+        return 0, rows[0][0]
+        

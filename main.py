@@ -8,95 +8,118 @@ import definition as df
 from exodus import *
 
 app = Flask(__name__)
-api = Api(app, version='0.1', title='AUTO CALIB.', description='exodus from slavery')
+api = Api(app, version='0.1', title='AUTO CALIB.',
+          description='exodus from slavery')
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
-recon_args = api.model('recon_args' , {
-    'input_dir' : fields.String, #directory in storage
-    'group' : fields.String # 캘리브레이션 진행할 그룹
+recon_args = api.model('recon_args', {
+    'input_dir': fields.String,  # directory in storage
+    'group': fields.String  # 캘리브레이션 진행할 그룹
 })
+
 
 @api.route('/exodus/autocalib')
 @api.doc()
-class calib_run(Resource) : 
+class calib_run(Resource):
     @api.expect(recon_args)
     def post(self, model=recon_args):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
+        print("ip of requestor ", ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
-        parser.add_argument('group', type=str)        
+        parser.add_argument('group', type=str)
         args = parser.parse_args()
-        
+
         print(args['input_dir'])
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB, (args['input_dir'], args['group'], ip_addr))
+        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB,
+                                                  (args['input_dir'], args['group'], ip_addr))
 
         result = {
             'status': 0,
             'job_id': job_id,
-            'message': 'SUCCESS',
+            'message': '',
         }
+
+        if job_id < 0:
+            message = df.get_err_msg(job_id)
+            result = {
+                'status': -1,
+                'job_id': job_id,
+                'message': message,
+            }
+        else:
+            result = {
+                'status': 0,
+                'job_id': job_id,
+                'message': 'SUCCESS',
+            }
 
         return result
 
 
-gen_args = api.model('gen_args' , {
-    "job_id" : fields.Integer,
-    "type" : fields.String,    
-    "pts" : fields.List(fields.Float)
+gen_args = api.model('gen_args', {
+    "job_id": fields.Integer,
+    "pts_2d": fields.List(fields.Float),
+    "pts_3d": fields.List(fields.Float)
 })
+
 
 @api.route('/exodus/generate')
 @api.doc()
-class generate_points(Resource) :
+class generate_points(Resource):
     @api.expect(gen_args)
     # @api.marshal_with(gen_args)
     def post(self, model=gen_args):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
+        print("ip of requestor ", ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
-        parser.add_argument('type', type=str)        
-        parser.add_argument('pts', default=list, action='append')
+        parser.add_argument('pts_2d', default=list, action='append')
+        parser.add_argument('pts_3d', default=list, action='append')
         args = parser.parse_args()
         job_id = args['job_id']
-        print(args['type'])
-        print(args['pts'])
+        print(args['pts_2d'])
+        print(args['pts_3d'])
 
-        status, err, _ = Commander.getInstance().send_query(df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        status, result, _ = Commander.getInstance().send_query(
+            df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+        msg = df.get_err_msg(result)
 
         result = {
             'job_id': job_id,
-            'status' : status,
-            'result' : err
+            'status': status,
+            'result': result,
+            'message': msg
         }
 
         return result
 
 
-jobid = api.model('jobid' , {
-    'job_id' : fields.Integer,
+jobid = api.model('jobid', {
+    'job_id': fields.Integer,
 })
+
 
 @api.route('/exodus/autocalib/status/<int:jobid>')
 @api.doc()
-class calib_status(Resource) : 
+class calib_status(Resource):
     @api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
-        
+        print("ip of requestor ", ip_addr)
+
         print(jobid)
-        # print("calib status  .. : " ,Commander.getInstance())        
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
+        # print("calib status  .. : " ,Commander.getInstance())
+        status, result, _ = Commander.getInstance().send_query(
+            df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
             'job_id': jobid,
-            'status' : status,
-            'result' : result,
+            'status': status,
+            'result': result,
             'message': msg,
         }
 
@@ -105,99 +128,129 @@ class calib_status(Resource) :
 
 @api.route('/exodus/autocalib/getpair/<int:jobid>')
 @api.doc()
-class get_pair(Resource) : 
+class get_pair(Resource):
     @api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)        
+        print("ip of requestor ", ip_addr)
         print(jobid)
 
         pair1 = None
         pair2 = None
 
-        status, result, contents = Commander.getInstance().send_query(df.TaskCategory.GET_PAIR, [jobid, ip_addr])
-        msg = df.get_err_msg(status)
-        if result == 0 :
+        status, result, contents = Commander.getInstance().send_query(
+            df.TaskCategory.GET_PAIR, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+        if result == 0:
             pair1 = contents[0]
             pair2 = contents[1]
             print("returned pair image : ", pair1, pair2)
 
         result = {
             'job_id': jobid,
-            'result' : result,
+            'result': result,
             'message': msg,
-            'first_image' : pair1,
-            'second_image' : pair2,
+            'first_image': pair1,
+            'second_image': pair2,
         }
 
         return result
 
-analysis = api.model('analysis' , {
-    'job_id' : fields.Integer,
-    "3d_pts" : fields.List(fields.Float),
-    "2d_pts" : fields.List(fields.Float),    
-    "world" : fields.List(fields.Float)
+
+@api.route('/exodus/autocalib/visualize/<int:jobid>')
+@api.doc()
+class visualize(Resource):
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
+
+        print(jobid)
+        status, result, _ = Commander.getInstance().send_query(
+            df.TaskCategory.VISUALIZE, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
+            'status': status,
+            'result': result,
+            'message': msg,
+        }
+
+        return result
+
+
+analysis = api.model('analysis', {
+    'job_id': fields.Integer,
+    "pts_2d": fields.List(fields.Float),
+    "pts_3d": fields.List(fields.Float),
+    "world": fields.List(fields.Float)
 })
+
 
 @api.route('/exodus/autocalib/analysis')
 @api.doc()
-class calib_analysis(Resource) : 
+class calib_analysis(Resource):
     @api.expect(analysis)
     def post(self, an=analysis):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
+        print("ip of requestor ", ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
-        parser.add_argument('3d_pts', default=list, action='append')
-        parser.add_argument('2d_pts', default=list, action='append')        
+        parser.add_argument('pts_3d', default=list, action='append')
+        parser.add_argument('pts_2d', default=list, action='append')
         parser.add_argument('world', default=list, action='append')
 
         args = parser.parse_args()
-        
+
         print(args['job_id'])
-        print(args['3d_pts'])
-        print(args['2d_pts'])        
-        print(args['world'])        
-        status, result, _ = Commander.getInstance().send_query(df.TaskCategory.ANALYSIS , (args['job_id'], ip_addr, args))
+        print(args['pts_3d'])
+        print(args['pts_2d'])
+        print(args['world'])
+        status, result, _ = Commander.getInstance().send_query(
+            df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
 
         msg = df.get_err_msg(result)
         result = {
             'job_id': args['job_id'],
-            'progress' : result,
+            'progress': result,
             'message': msg,
         }
 
         return result
 
 
-file_args = api.model('file_args' , {
-    'config_file' : fields.String
+file_args = api.model('file_args', {
+    'config_file': fields.String
 })
+
 
 @api.route('/exodus/autocalib/read_config')
 @api.doc()
-class read_config(Resource) : 
+class read_config(Resource):
     @api.expect(file_args)
     def post(self, an=file_args):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor " , ip_addr)
+        print("ip of requestor ", ip_addr)
 
         parser = reqparse.RequestParser()
-        parser.add_argument('config_file', type=str)        
+        parser.add_argument('config_file', type=str)
         args = parser.parse_args()
-        
+
         print(args['config_file'])
-        status, result, _ = Commander.getInstance().send_query(args['config_file'], ip_addr)
+        status, result, _ = Commander.getInstance(
+        ).send_query(args['config_file'], ip_addr)
 
         result = {
-            'result' : result,
+            'result': result,
         }
 
-        return result    
+        return result
 
-if __name__ == '__main__':    
-    pr = Process(target=Commander.getInstance().Receiver, args=(Commander.getInstance().index,))
+
+if __name__ == '__main__':
+    pr = Process(target=Commander.getInstance().Receiver,
+                 args=(Commander.getInstance().index,))
     pr.start()
     app.run(debug=False, host='0.0.0.0', port=9000)
-

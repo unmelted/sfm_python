@@ -11,19 +11,19 @@ class Camera(object):
         self.index = None
         self.P = None     # camera matrix
         self.EX = None
-        self.R = np.zeros((3,3), dtype=np.float64)     # rotation
-        self.t = np.zeros((3,1), dtype=np.float64)     # translation
-        self.F = np.zeros((3,3), dtype=np.float64)
-        self.E = np.zeros((3,3), dtype=np.float64)        
-        self.Rvec = np.zeros((3,1), dtype=np.float64)
+        self.R = np.zeros((3, 3), dtype=np.float64)     # rotation
+        self.t = np.zeros((3, 1), dtype=np.float64)     # translation
+        self.F = np.zeros((3, 3), dtype=np.float64)
+        self.E = np.zeros((3, 3), dtype=np.float64)
+        self.Rvec = np.zeros((3, 1), dtype=np.float64)
         self.c = None  # camera center
 
         feature_path = None
-        if run_mode == 'colmap' :
+        if run_mode == 'colmap':
             self.K = None
             self.focal = None
             feature_path = run_mode
-        else :
+        else:
             self.K = K        # intrinsic matrix
             self.focal = K[0][0]
             if os.path.exists(os.path.join(root_path, 'features')):
@@ -33,38 +33,38 @@ class Camera(object):
         self.view = View(image_name, root_path, feature_path=feature_path)
 
         ''' related adjust value '''
-        self.pts = np.empty((0 ,2), dtype=np.float64)    # 4points
-        self.pts_3D = np.empty((0,3), dtype=np.float64)
-        self.pts_back = np.empty((0,3), dtype=np.float64)
-        self.pts_extra = np.empty((0,2), dtype=np.float64)
+        self.pts = np.empty((0, 2), dtype=np.float64)
+        self.pts_3d = np.empty((0, 2), dtype=np.float64)
+        self.pts_2d = np.empty((0, 2), dtype=np.float64)
+        self.pts_back = np.empty((0, 3), dtype=np.float64)
+        self.pts_extra = np.empty((0, 2), dtype=np.float64)
 
-
-        self.center = [] # tracking center
+        self.center = []  # tracking center
         self.rod_length = 0
         self.radian = 0
-        self.scale = 0        
+        self.scale = 0
         self.adjust_x = 0
         self.adjust_y = 0
         self.rotate_x = 0
         self.rotate_y = 0
 
-    def calculate_p(self) :
+    def calculate_p(self):
         """ P = K[R|t] camera model. (3 x 4)
          Must either supply P or K, R, t """
         if self.P is None:
             try:
-                self.EX =  np.hstack([self.R, self.t])
+                self.EX = np.hstack([self.R, self.t])
                 self.P = np.dot(self.K, self.EX)
-                print('calculate P of camera ', self.view.name)
+                # print('calculate P of camera ', self.view.name)
             except TypeError as e:
-                print('Invalid parameters to Camera. Must either supply P or K, R, t')
+                l.get().w.error('Invalid parameters to Camera. Must either supply P or K, R, t')
                 raise
 
-    def project(self, X, H = None):
+    def project(self, X, H=None):
         """ Project 3D homogenous points X (4 * n) and normalize coordinates.
             Return projected 2D points (2 x n coordinates) """
 
-        x = np.dot(self.P, X) 
+        x = np.dot(self.P, X)
 
         # if len(H) > 1:
         #     print("cross .. ", H)
@@ -85,7 +85,7 @@ class Camera(object):
         #     x[0, :] = X[2] * x_lambda[0] + x[0, :] * x_lambda[1]
         #     x[1, :] = X[2] * y_lambda[0] + x[1, :] * y_lambda[1]
         #     print("apply lambda : ", x[0, :], x[1, :])
-            
+
         return x[:2, :]
 
     def qr_to_rq_decomposition(self):

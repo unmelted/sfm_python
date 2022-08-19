@@ -50,16 +50,18 @@ class Logger(object) :
             console.setFormatter(formatter)
             self.w.addHandler(console)
 
-
+        '''
         if 'viewer' in type:            
+
             socket_handler = SocketHandler(ip, 19996)  # default listening address
             socket_handler.setLevel(logging.DEBUG)                        
             socket_handler.setFormatter(formatter)
             self.w.addHandler(socket_handler)
+        '''
 
         if 'bot' in type:
             # telegram_log_handler = TelegramLoggingHandler(BOT_TOKEN, CHANNEL_NAME)
             telegram_log_handler = TelegramBotHandler(df.DEFINITION.BOT_TOKEN, df.DEFINITION.CHAT_ID)
-            formatter = logging.Formatter('%(asctime)s : %(name)s : %(message)s')            
-            telegram_log_handler.setLevel(logging.WARNING)
+            formatter = logging.Formatter('%(message)s')            
+            telegram_log_handler.setLevel(logging.WARN)
             self.w.addHandler(telegram_log_handler)

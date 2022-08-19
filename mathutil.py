@@ -275,7 +275,7 @@ def refine_outliers(view1, view2, inliers1, inliers2) :
 
     return points1, points2, inliers1, inliers2    
 
-def quaternion_rotation_matrix(Q):
+def quaternion_to_rotation(Q):
     """
     Covert a quaternion into a full three-dimensional rotation matrix.
  
@@ -315,6 +315,37 @@ def quaternion_rotation_matrix(Q):
                             
     return rot_matrix
 
+def quaternion_to_euler(Q):
+    """
+    Convert a quaternion into euler angles (roll, pitch, yaw)
+    roll is rotation around x in radians (counterclockwise)
+    pitch is rotation around y in radians (counterclockwise)
+    yaw is rotation around z in radians (counterclockwise)
+    """
+    w = Q[0]
+    x = Q[1]
+    y = Q[2]
+    z = Q[3]
+
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+
+    cam_roll = yaw_z
+    cam_yaw = pitch_y
+    cam_pitch = roll_x
+
+    return np.array([cam_roll, cam_yaw, cam_pitch]) # in radians
+
 def get_cross_point(x1, y1, x2, y2, x3, y3, x4, y4):
     cx = 0
     cy = 0
@@ -332,37 +363,41 @@ def get_normalized_point(world) :
     new_world = []
     maxx = 0.0
     maxy = 0.0
+    maxz = 0.0
     minx = 100000.0
     miny = 100000.0
+    minz = 100000.0
 
     for point in world :
-        print(point)
         if point[0] > maxx :
             maxx = point[0]
         if point[1] > maxy :
             maxy = point[1]
+        if point[2] > maxz :
+            maxz = point[2]
         if minx > point[0]:
             minx = point[0]
         if miny > point[1] :
             miny = point[1]
+        if minz > point[2] :
+            minz = point[2]
 
     print(minx, maxx, miny, maxy)
     max_range = 100.0
     range = 0.0
     margin_x = 0.0
     margin_y = 0.0
-
-    if (maxx - minx) > (maxy - miny) :
-        range = max_range / (maxx - minx)
-        margin_y = (max_range - (maxy - miny) * range) / 2.0
-    else :
-        range = max_range / (maxy - miny)
-        margin_x = (max_range - (maxx - minx) * range) / 2.0
+    margin_z = 0.0
+    max_diff = max([maxx - minx, maxy - miny, maxz - minz])
+    range = max_range / max_diff    
+    margin_y = (max_range - (maxy - miny) * range) / 2.0
+    margin_x = (max_range - (maxx - minx) * range) / 2.0
+    margin_z = (max_range - (maxz - minz) * range) / 2.0
 
     for point in world : 
         newx = (point[0] - minx) * range + margin_x
         newy = (point[1] - miny) * range + margin_y
-        newz = 0
+        newz = (point[2] - minz) * range + margin_z
         new_world.append([newx, newy, newz])
 
     print(new_world)

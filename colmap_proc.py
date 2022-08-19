@@ -5,12 +5,14 @@ import cv2
 import time
 import threading
 import queue
+import json
 from datetime import datetime
 import subprocess
 import numpy as np
 import sqlite3
-from mathutil import quaternion_rotation_matrix
+from mathutil import *
 from extn_util import * 
+from intrn_util import *
 from logger import Logger as l
 from definition import DEFINITION as df
 
@@ -77,12 +79,14 @@ class Colmap(object) :
     def __init__ (self, root_path) :
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
-        self.colmap_cmd = import_json(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'))
+        self.job_id = get_current_job()
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file =  os.path.join(self.root_path, 'images.txt')
         self.conn = sqlite3.connect(self.coldb_path, isolation_level = None)
         self.cursur = self.conn.cursor()    
-
+        json_file = open(os.path.join(os.getcwd(), 'json', 'calib_colmap.json'), 'r')
+        self.colmap_cmd = json.load(json_file)        
+        
     def recon_command(self, cam_count) :
         imgpath = os.path.join(self.root_path, 'images')
         outpath = os.path.join(self.root_path, 'sparse')
@@ -95,11 +99,12 @@ class Colmap(object) :
         if result < 0 :
             return result
 
+        status_update_quiet(get_current_job(), 40)
         cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)        
         shell_cmd(cmd)
         l.get().w.info("Colmap : Matcher Done")
-
+        status_update_quiet(get_current_job(), 60)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
@@ -108,8 +113,10 @@ class Colmap(object) :
         shell_cmd(cmd)
         result = 0
         l.get().w.info("Colmap : Mapper Done")
-        
+
+        status_update_quiet(get_current_job(), 80)        
         result = self.check_solution(cam_count)
+
         return result
 
     def check_solution(self, cam_count, nullcheck=False) :
@@ -134,7 +141,6 @@ class Colmap(object) :
                 return 0
 
     def check_keypoints(self) :
-        result = 0
         q = ('SELECT rows FROM keypoints ORDER BY rows')
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
@@ -192,7 +198,7 @@ class Colmap(object) :
             line = line.split()
             if line[0] == '#' : 
                 continue
-            print(line[9])
+            # print(line[9])
             if ext in line[9] :
                 id = int(line[8])
                 qw = float(line[1])
@@ -237,7 +243,8 @@ class Colmap(object) :
             poseT = np.append(poseT, np.array(row[0][5]).reshape((1)), axis = 0)
             poseT = np.append(poseT, np.array(row[0][6]).reshape((1)), axis = 0)                        
 
-            poseR = quaternion_rotation_matrix(poseR)
+            poseRT = quaternion_to_rotation(poseR)
+            poseEU = quaternion_to_euler(poseR) * 180 / np.pi
             poseT = poseT.reshape((3,1))        
 
             q = ('SELECT focal_length, skew, width, height  FROM cameras WHERE image = \'')
@@ -250,12 +257,13 @@ class Colmap(object) :
             camK[1][2] = int(row[0][3]/2)
             camK[2][2] = 1
 
-            cam.R = poseR
+            cam.R = poseRT
             cam.t = poseT
             cam.K = camK
             cam.focal = row[0][0]
             cam.calculate_p()      
-            # print(cam.R)
+            # print("camera pose : ", cam.view.name)
+            # print(poseEU)
             # print(cam.t)
             # print(cam.K)
 
@@ -279,7 +287,7 @@ class Colmap(object) :
 
         for file in file_names :
             file_name = file[file.rfind('/')+1:]
-            print(file_name)
+            l.get().w.debug(file_name)
             for row in rows : 
                 if row[0] in file_name : 
                     image_names.append(file)
@@ -375,7 +383,7 @@ class Colmap(object) :
 
 
     def pair_id_to_image_ids(self, pair_id):
-        print("received pair_id : ", pair_id)
+        # print("received pair_id : ", pair_id)
         image_id2 = pair_id % MAX_IMAGE_ID
         image_id1 = (pair_id - image_id2) / MAX_IMAGE_ID
         return image_id1, image_id2
@@ -396,13 +404,13 @@ class Colmap(object) :
 
     def getImagNamebyId(self, id) :
         q = ('SELECT name FROM images  WHERE image_id =  ' + str(id))
-        print(q)
+        # print(q)
         self.cursur.execute(q)
         row = self.cursur.fetchone()
 
         if row == None:
             l.get().w.error('no image name by image id')
             return -149, None
-        print("image name {} by id {} ".format(row[0], id))
+        # print("image name {} by id {} ".format(row[0], id))
 
         return 0, row[0]

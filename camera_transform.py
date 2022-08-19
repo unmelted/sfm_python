@@ -7,6 +7,7 @@ import logging
 import json
 from world import *
 from mathutil import *
+from logger import Logger as l
 
 class CameraTransform(object):
 
@@ -31,7 +32,7 @@ class CameraTransform(object):
         zc = np.array([[0, 1, 0]]).T
         cam_pos = R_inv.dot(target.t)
         zw = R_inv.dot(zc)
-        print("Camera pose z -- ", zw)
+
         pan = math.atan2 (zw[2], zw[0]) - math.pi / 2
         xc = np.array([1, 0, 0]).T
         xw = R_inv.dot(xc)
@@ -168,7 +169,7 @@ class CameraTransform(object):
         print(reproject)    
 
     def make_3D_byCam(self, c0, c1) :
-        print(" make_3D .... ", c0.view.name, c1.view.name)
+        l.get().w.debug(" make_3D .... {} {}".format(c0.view.name, c1.view.name))
 
         cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
@@ -186,30 +187,37 @@ class CameraTransform(object):
             # print("error " , error1, error2)
             c1.pts_3D = np.append(c1.pts_3D, np.array(point_3D).T, axis=0)        
 
-        print(c1.pts_3D)
+        l.get().w.debug(c1.pts_3D)
 
     def make_3D(self, c0, c1) :
-        print(" make_3D .... ", c0.view.name, c1.view.name)
+        l.get().w.debug(" make_3D .... {} {}".format(c0.view.name, c1.view.name))
+        pts_2d = []    
         pts_3d = []
-        cam0 = cv2.convertPointsToHomogeneous(c0.pts)[:, 0, :]
-        cam1 = cv2.convertPointsToHomogeneous(c1.pts)[:, 0, :]
+        K0_inv = np.linalg.inv(c0.K)            
+        K1_inv = np.linalg.inv(c1.K)
 
-        for i in range(c0.pts.shape[0]) :
-            K0_inv = np.linalg.inv(c0.K)            
-            K1_inv = np.linalg.inv(c1.K)
+        for i in range(c0.pts_2d.shape[0]) :
+            cam0 = cv2.convertPointsToHomogeneous(c0.pts_2d)[:, 0, :]
+            cam1 = cv2.convertPointsToHomogeneous(c1.pts_2d)[:, 0, :]
+            u1_normalized = K0_inv.dot(cam0[i, :])
+            u2_normalized = K1_inv.dot(cam1[i, :])
+
+            _2d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
+            pts_2d.append(np.array(_2d).T)        
+
+        for i in range(c0.pts_3d.shape[0]) :
+            cam0 = cv2.convertPointsToHomogeneous(c0.pts_3d)[:, 0, :]
+            cam1 = cv2.convertPointsToHomogeneous(c1.pts_3d)[:, 0, :]
             u1_normalized = K0_inv.dot(cam0[i, :])
             u2_normalized = K1_inv.dot(cam1[i, :])
 
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
             pts_3d.append(np.array(_3d).T)        
 
-        c0.pts_3D = pts_3d
-        c1.pts_3D = pts_3d        
-        print(pts_3d)
-        return pts_3d
+        return pts_2d, pts_3d
 
     def make_3D_extra(self, c0, c1) :
-        print(" make_3D extra .... ", c0.view.name, c1.view.name)
+        l.get().w.debug(" make_3D extra .... {} {}".format(c0.view.name, c1.view.name))
         pts_3d = np.empty((0,3), dtype=np.float64)
         cam0 = cv2.convertPointsToHomogeneous(c0.pts_extra)[:, 0, :]
         cam1 = cv2.convertPointsToHomogeneous(c1.pts_extra)[:, 0, :]
@@ -223,31 +231,21 @@ class CameraTransform(object):
             _3d = get_3D_point(u1_normalized, c0.EX, u2_normalized, c1.EX)
             pts_3d =np.append(pts_3d, np.array(_3d).T, axis=0)
 
-        print(pts_3d)
+        l.get().w.debug(pts_3d)
         return pts_3d
 
-    def reproject_3D_byCam(self, c0, c1) :
-        print("reproject_3D .. : ", c1.view.name)
+    def reproject(self, _pts, c1, type) :
+        l.get().w.debug("reproject points .. : {}".format(c1.view.name))
 
-        for i in range(c0.pts.shape[0]) :
-            cv_pts = c0.pts_3D[i, :]
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
-
-        print(c1.pts)            
-
-    def reproject_3D(self, pts_3d, c1) :
-        print("reproject_3D .. : ", c1.view.name)
-
-        for i in range(len(pts_3d)) :
-            cv_pts = np.array(pts_3d[i]).T
+        for i in range(len(_pts)) :
+            cv_pts = np.array(_pts[i]).T
             cv_pts = np.vstack([cv_pts, 1])
             reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+            if type == '2D' :
+                c1.pts_2d = np.append(c1.pts_2d, np.array(reproject).T, axis=0)        
+            elif type == '3D' :
+                c1.pts_3d = np.append(c1.pts_3d, np.array(reproject).T, axis=0)                        
 
-        print(c1.pts)            
 
     def reproject_3D_extra(self, pts_3d, c1) :
         print("reproject_3D extra .. : ", c1.view.name)
@@ -257,27 +255,27 @@ class CameraTransform(object):
             reproject = c1.project(cv_pts)
             c1.pts_extra = np.append(c1.pts_extra, np.array(reproject).T, axis=0)        
 
-        print(c1.pts_extra)
+        # print(c1.pts_extra)
 
 
-    def reproject(self, c0, c1) :
-        print("reproject .. : ", c1.view.name)
+    # def reproject(self, c0, c1) :
+    #     l.get().w.debug("reproject .. : {}".format(c1.view.name))
 
-        for i in range(c0.pts.shape[0]) :
-            cv_pts = c0.pts_back[i, :]
-            cv_pts = np.hstack([cv_pts, 1])
-            cv_pts = cv_pts.reshape((4,1))
-            reproject = c1.project(cv_pts)
-            c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
+    #     for i in range(c0.pts.shape[0]) :
+    #         cv_pts = c0.pts_back[i, :]
+    #         cv_pts = np.hstack([cv_pts, 1])
+    #         cv_pts = cv_pts.reshape((4,1))
+    #         reproject = c1.project(cv_pts)
+    #         c1.pts = np.append(c1.pts, np.array(reproject).T, axis=0)        
 
-        print(c1.pts)            
+        # print(c1.pts)            
 
     def backprojection(self, c):
         cam = cv2.convertPointsToHomogeneous(c.pts)[:, 0, :]
         K_inv = np.linalg.inv(c.K)
         R0_inv = np.linalg.inv(c.R)
 
-        print(" Back projection .. : ", c.view.name)
+        l.get().w.debug(" Back projection .. : {}".format(c.view.name))
 
         for i in range(c.pts.shape[0]) :        
             u1_normalized = K_inv.dot(cam[i, :])
@@ -285,7 +283,7 @@ class CameraTransform(object):
             c_wrld = np.dot(R0_inv, u1_normalized.reshape((3,1)))
             c.pts_back = np.append(c.pts_back, np.array(c_wrld).T, axis=0)
 
-            print(c_wrld.reshape((1,3)))
+            l.get().w.debug(c_wrld.reshape((1,3)))
 
     def find_homography(self, answer, c0) :
        H, mask = cv2.findHomography(c0.pts, answer, 1)
