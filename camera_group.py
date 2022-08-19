@@ -394,7 +394,8 @@ class Group(object):
 
     def generate_extra_point(self, cal_type, world_pts):
         if cal_type == '3D':
-            world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
+            world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
+                world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
 
             p = get_normalized_point(world_p)
             world = np.array(p)
@@ -405,13 +406,15 @@ class Group(object):
                 result, vector_rotation, vector_translation = cv2.solvePnP(
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff)
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
-                    50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+                    50.0, 50.0, -30.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
-                l.get().w.info("3d make extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra ))
+                l.get().w.info("3d make extra {} : {}".format(
+                    self.cameras[i].view.name, self.cameras[i].pts_extra))
         else:
             for i in range(len(self.cameras)):
                 self.cameras[i].pts_extra = self.cameras[i].pts_2d
-                l.get().w.info("2d set extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra ))                
+                l.get().w.info("2d set extra {} : {}".format(
+                    self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def generate_adjust(self):
         gadj = GroupAdjust(self.cameras)

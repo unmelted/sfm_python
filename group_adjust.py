@@ -6,6 +6,7 @@ from mathutil import *
 from intrn_util import *
 from extn_util import *
 
+
 class GroupAdjust(object):
 
     def __init__(self, cameras):
@@ -22,10 +23,10 @@ class GroupAdjust(object):
     def calculate_radian(self):
         for i in range(len(self.cameras)):
             dist = 0
-            diffx = self.cameras[i].pts_extra[0][0] - \
-                self.cameras[i].pts_extra[1][0]
-            diffy = self.cameras[i].pts_extra[0][1] - \
-                self.cameras[i].pts_extra[1][1]
+            diffx = self.cameras[i].pts_extra[1][0] - \
+                self.cameras[i].pts_extra[0][0]
+            diffy = self.cameras[i].pts_extra[1][1] - \
+                self.cameras[i].pts_extra[0][1]
             if diffx == 0:
                 dist = diffy
             else:
@@ -196,13 +197,12 @@ class GroupAdjust(object):
 
                 if j > 0:
                     cv2.line(self.cameras[i].view.image,
-                            pt_int[j-1], pt_int[j], (255, 0, 0), 3)
+                             pt_int[j-1], pt_int[j], (255, 0, 0), 3)
                 if j == (self.cameras[i].pts_3d.shape[0] - 1):
                     cv2.line(self.cameras[i].view.image,
-                            pt_int[j], pt_int[0], (255, 255, 0), 3)
+                             pt_int[j], pt_int[0], (255, 255, 0), 3)
                     cv2.circle(self.cameras[i].view.image, (int(
-                                    pt_3d[0]), int(pt_3d[1])), 10, (0, 0, 255), -1)
-
+                        pt_3d[0]), int(pt_3d[1])), 10, (0, 0, 255), -1)
 
             for j in range(self.cameras[i].pts_2d.shape[0]):
                 pt_int = self.cameras[i].pts_2d.astype(np.int32)
@@ -212,10 +212,10 @@ class GroupAdjust(object):
 
                 if j > 0:
                     cv2.line(self.cameras[i].view.image,
-                            pt_int[j-1], pt_int[j], (255, 0, 0), 3)
+                             pt_int[j-1], pt_int[j], (255, 0, 0), 3)
                 if j == (self.cameras[i].pts_2d.shape[0] - 1):
                     cv2.line(self.cameras[i].view.image,
-                            pt_int[j], pt_int[0], (255, 255, 0), 3)
+                             pt_int[j], pt_int[0], (255, 255, 0), 3)
 
             if (self.cameras[i].pts_extra.shape[0]) > 1:
                 pt_ex = self.cameras[i].pts_extra
@@ -225,15 +225,16 @@ class GroupAdjust(object):
                     pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)
                 #cv2.circle(self.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)
                 cv2.line(self.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])),
-                        (255, 0, 0), 3)
-                print("extra point ! :",  int(pt_ex[0][0]), int(pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
-
-
+                         (255, 0, 0), 3)
+                print("extra point ! :",  int(pt_ex[0][0]), int(
+                    pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
 
             dst_img = cv2.warpAffine(
                 self.cameras[i].view.image, mat[:2, :3], (w, h))
             cv2.imwrite(file_name, dst_img)
 
-        cli = "convert -delay 25 -resize 960x540 -loop 0 " + output_path +"/*.jpg "+ output_path + "/animated.gif"
+        cli = "convert -delay 25 -resize 960x540 -loop 0 " + \
+            output_path + "/*.jpg " + output_path + "/animated.gif"
         print(cli)
-        process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)        
+        process = subprocess.Popen(
+            cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)

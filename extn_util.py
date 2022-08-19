@@ -9,7 +9,6 @@ import json
 from definition import DEFINITION as df
 from intrn_util import *
 from PIL import Image
-import imageio
 
 
 def export_points(preset, output_type, job_id, cal_type, target_path=None):
@@ -49,7 +48,7 @@ def export_points_mct(preset, cal_type):
             _json['pts_2d'] = {}
             _json['pts_3d'] = {}
 
-        if cal_type == '3D':
+        if cal_type == '3D' or cal_type == '2D3D':
             _json['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0]
             _json['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1]
             _json['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0]
@@ -58,7 +57,7 @@ def export_points_mct(preset, cal_type):
             _json['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1]
             _json['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
             _json['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
-        else:
+        if cal_type == '2D' or cal_type == '2D3D':
             _json['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0]
             _json['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1]
             _json['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
@@ -104,7 +103,7 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
             if from_data['points'][j]['dsc_id'] == viewname:
                 l.get().w.info('cal_type {} camera view name : {}'.format(
                     cal_type, preset.cameras[i].view.name))
-                if cal_type == '3D':
+                if cal_type == '3D' or cal_type == '2D3D':
                     from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0]
                     from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1]
                     from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0]
@@ -113,7 +112,7 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
                     from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1]
                     from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
                     from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
-                else:
+                if cal_type == '2D' or cal_type == '2D3D':
                     from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0]
                     from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1]
                     from_data['points'][j]['pts_2d']['MiddlePosX'] = -1.0
@@ -311,7 +310,8 @@ def save_point_image(preset):
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
         file_name = os.path.join(output_path, viewname + "_pt.jpg")
 
-        print(preset.cameras[i].pts_3d.shape[0], preset.cameras[i].pts_2d.shape[0], preset.cameras[i].pts_extra.shape[0])
+        print(preset.cameras[i].pts_3d.shape[0],
+              preset.cameras[i].pts_2d.shape[0], preset.cameras[i].pts_extra.shape[0])
 
         for j in range(preset.cameras[i].pts_3d.shape[0]):
             pt_int = preset.cameras[i].pts_3d.astype(np.int32)
@@ -326,8 +326,7 @@ def save_point_image(preset):
                 cv2.line(preset.cameras[i].view.image,
                          pt_int[j], pt_int[0], (255, 255, 0), 3)
                 cv2.circle(preset.cameras[i].view.image, (int(
-                                pt_3d[0]), int(pt_3d[1])), 5, (0, 255, 255), -1)
-
+                    pt_3d[0]), int(pt_3d[1])), 5, (0, 255, 255), -1)
 
         for j in range(preset.cameras[i].pts_2d.shape[0]):
             pt_int = preset.cameras[i].pts_2d.astype(np.int32)
@@ -351,7 +350,8 @@ def save_point_image(preset):
             #cv2.circle(preset.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)
             cv2.line(preset.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])),
                      (255, 0, 0), 3)
-            print("extra point ! :",  int(pt_ex[0][0]), int(pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
+            print("extra point ! :",  int(pt_ex[0][0]), int(
+                pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
 
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
