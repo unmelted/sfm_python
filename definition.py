@@ -41,6 +41,7 @@ def get_err_msg(err_code):
         -13: "Image count is not match with dsc_id in pts",
         -21: "Input value is invalid",
         -22: "Can't add task. Now I'm busy..",
+        -23: "Acess Denied to System Process",
 
         -101: "Error on Autocalib Init. (create group)",
         -102: "Video (Camera) file is too small count",
@@ -95,11 +96,12 @@ class DEFINITION(object):
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
 
     pts_file_name = 'UserPointData.pts'
-    calib_sql_file = 'calib_sql.json'
+    calib_sq_file = 'calib_sq.json'
+    calib_pg_file = 'calib_pg.json'
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    export_point_type = 'dm'  # 'dm', 'mct'
+    export_point_type = 'mct'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
@@ -114,7 +116,7 @@ class DEFINITION(object):
 
     feature_minimum = 500
 
-    virtual_rod_length = 600
+    multijob_limit = 5
 
     class loglevel(Enum):
         CRITICAL = 50

@@ -26,6 +26,7 @@ class Commander(object):
         self.index = 0
         l.get().w.info("Commander initialized.")
         self.job_manager = JobManager.getInstance()
+        _ = DbManager.getInstance('pg')  # initialize
 
     def Receiver(self, t):
         while True:
@@ -47,7 +48,7 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.getInstance().getJobStatus(obj[0])
+            status, result = DbManager.getInstance('pg').getJobStatus(obj[0])
 
         elif query == df.TaskCategory.VISUALIZE:
             status = 100
@@ -73,7 +74,7 @@ class Commander(object):
                     obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'], obj[2]['world'])
 
             elif query == df.TaskCategory.GENERATE_PTS:
-                result  = generate_pts(
+                result = generate_pts(
                     obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'])
                 status = 100
 
@@ -84,12 +85,13 @@ class Commander(object):
                 contents.append(image1)
                 contents.append(image2)
 
-        if len(obj) > 2:
-            DbManager.getInstance().insert('request_history', job_id=int(
-                obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
-        else:
-            DbManager.getInstance().insert('request_history', job_id=int(
-                obj[0]), requestor=obj[1], task=query, desc='')
+        if query != df.TaskCategory.AUTOCALIB_STATUS:
+            if len(obj) > 2:
+                DbManager.getInstance('pg').insert('request_history', job_id=int(
+                    obj[0]), requestor=obj[1], task=query, etc=json.dumps(obj[2]))
+            else:
+                DbManager.getInstance('pg').insert('request_history', job_id=int(
+                    obj[0]), requestor=obj[1], task=query, etc='')
 
         gc.collect()
         return status, result, contents
@@ -97,7 +99,7 @@ class Commander(object):
     def add_task(self, task, obj):
         if self.job_manager.get_current_jobid() == -1:
             self.cmd_que.put((task, obj))
-            self.index = DbManager.getInstance().getJobIndex() + 1
+            self.index = DbManager.getInstance('pg').getJobIndex() + 1
             l.get().w.info("Alloc job id {} ".format(self.index))
             self.job_manager.set_current_jobid(self.index)
             return self.index
@@ -113,8 +115,8 @@ class Commander(object):
             ac = autocalib(obj[0], self.index, obj[1], obj[2])
             ac.run()
             desc = obj[0] + obj[1]
-            DbManager.getInstance().insert('request_history', job_id=self.index,
-                                           requestor=obj[2], task=task, desc=desc)
+            DbManager.getInstance('pg').insert('request_history', job_id=self.index,
+                                               requestor=obj[2], task=task, etc=desc)
             self.job_manager.release_current_jobid()
 
         gc.collect()
@@ -122,7 +124,7 @@ class Commander(object):
 
 def visualize_mode(job_id):
     l.get().w.info("Visualize start : {} ".format(job_id))
-    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    result, root_path = DbManager.getInstance('pg').getRootPath(job_id)
     if result < 0:
         l.get().w.error("visualize err: {} ".format(df.get_err_msg(result)))
         return 0
@@ -164,7 +166,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
                 float_2d.append(float(val))
 
     preset1 = Group()
-    result, root_path = DbManager.getInstance().getRootPath(job_id)
+    result, root_path = DbManager.getInstance('pg').getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -174,7 +176,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
         return finish_query(job_id, result), None
 
     preset1.read_cameras()
-    result  = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
+    result = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -193,8 +195,8 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
 
 def generate_pts(job_id, cal_type, pts_2d, pts_3d):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
-    result, preset =  prepare_generate(job_id, cal_type, pts_2d, pts_3d)
-    save_point_image(preset)    
+    result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+    save_point_image(preset)
     return result
 
 
@@ -228,8 +230,8 @@ class autocalib(object):
         self.group = group
 
     def run(self):
-        DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
-                                       input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
+        DbManager.getInstance('pg').insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
+                                           input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()
         preset1 = Group()
         result = self.checkDataValidity()
@@ -287,8 +289,8 @@ class autocalib(object):
             return err
 
         l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
-        DbManager.getInstance().update('command', image_pair1=image1,
-                                       image_pair2=image2, job_id=self.job_id)
+        DbManager.getInstance('pg').update('command', image_pair1=image1,
+                                           image_pair2=image2, job_id=self.job_id)
 
         return 0
 
@@ -329,6 +331,7 @@ class autocalib(object):
                 self.list_from = 'image_folder'
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DbManager.getInstance().update('command', root_path=self.root_dir, job_id=self.job_id)
+            DbManager.getInstance('pg').update(
+                'command', root_path=self.root_dir, job_id=self.job_id)
 
             return result

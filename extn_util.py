@@ -421,8 +421,6 @@ def get_caemra_info(from_path, cam_ids):
                 lens_model = _data["points"][i]["LensName"]
                 # don't use now
                 focal_length = _data["points"][i]["FocalLnegth"]
-                # DbManager.getInstance().insert('hw_info', type='camera', name=cam_model)
-                # DbManager.getInstance().insert('hw_info', type='lense', name=lens_model)
                 break
 
 
