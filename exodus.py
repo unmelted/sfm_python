@@ -88,10 +88,10 @@ class Commander(object):
         if query != df.TaskCategory.AUTOCALIB_STATUS:
             if len(obj) > 2:
                 DbManager.getInstance('pg').insert('request_history', job_id=int(
-                    obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
+                    obj[0]), requestor=obj[1], task=query, etc=json.dumps(obj[2]))
             else:
                 DbManager.getInstance('pg').insert('request_history', job_id=int(
-                    obj[0]), requestor=obj[1], task=query, desc='')
+                    obj[0]), requestor=obj[1], task=query, etc='')
 
         gc.collect()
         return status, result, contents
@@ -116,7 +116,7 @@ class Commander(object):
             ac.run()
             desc = obj[0] + obj[1]
             DbManager.getInstance('pg').insert('request_history', job_id=self.index,
-                                               requestor=obj[2], task=task, desc=desc)
+                                               requestor=obj[2], task=task, etc=desc)
             self.job_manager.release_current_jobid()
 
         gc.collect()

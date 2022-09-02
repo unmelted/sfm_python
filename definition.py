@@ -89,7 +89,7 @@ class DEFINITION(object):
     base_index = 1000
     run_mode = 'colmap'
     # list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']
-    cam_list = 'video_folder'
+    cam_list = 'image_folder'
 
     init_pair_mode = 'pair'  # zero : just #0, #1 camera, pair : selected camera by colmap
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web

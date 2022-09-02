@@ -31,7 +31,7 @@ class DbManagerPG(object):
         create = ["create_command_db",
                   "create_request_history", "create_hw_info"]
         for i in create:
-            print(self.sql_list[i])
+            # print(self.sql_list[i])
             self.cursur.execute(self.sql_list[i])
 
         self.conn.commit()
@@ -52,7 +52,7 @@ class DbManagerPG(object):
 
         self.cursur.execute(q)
         print("insert query finish ")
-        # self.conn.commit()
+        self.conn.commit()
 
     def update(self, table, **k):
         q = 'UPDATE ' + table + ' SET '
@@ -68,7 +68,7 @@ class DbManagerPG(object):
                 q = q[:-2]
                 q += 'WHERE ' + c[ii] + ' = ' + str(v[ii])
             else:
-                t = c[ii] + ' = \"' + str(v[ii]) + '\" ,'
+                t = c[ii] + ' = \'' + str(v[ii]) + '\' ,'
                 q += t
 
         l.get().w.info("Update Query: {} ".format(q))
