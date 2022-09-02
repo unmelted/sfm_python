@@ -95,7 +95,8 @@ class DEFINITION(object):
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
 
     pts_file_name = 'UserPointData.pts'
-    calib_sql_file = 'calib_sql.json'
+    calib_sq_file = 'calib_sq.json'
+    calib_pg_file = 'calib_pg.json'
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
