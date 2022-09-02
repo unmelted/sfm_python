@@ -29,7 +29,7 @@ class DbManagerPG(object):
         self.cursur = self.conn.cursor()
 
         create = ["create_command_db",
-                  "create_request_history", "create_hw_info"]
+                  "create_request_history", "create_hw_info", "create_job_manager"]
         for i in create:
             # print(self.sql_list[i])
             self.cursur.execute(self.sql_list[i])
@@ -144,3 +144,22 @@ class DbManagerPG(object):
             l.get().w.debug("target path : {} ".format(rows[0][0]))
 
         return 0, rows[0][0]
+
+    def getActiveJobs(self):
+        count = 0
+        q = self.sql_list['query_getactivejobs'] + str(id)
+        l.get().w.info("Get activejobs Query: {} ".format(q))
+
+        self.cursur.execute(q)
+        rows = self.cursur.fetchall()
+
+        if len(rows) == 0:
+            return 0, 0
+        else:
+            l.get().w.debug("active jobs : {} ".format(len(rows)))
+            count = len(rows)
+
+        return count, rows
+
+    def changeJobStatus(self, pid):
+        pass

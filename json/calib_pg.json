@@ -2,6 +2,7 @@
     "create_command_db": "CREATE TABLE IF NOT EXISTS command (no SERIAL PRIMARY KEY NOT NULL, datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, event_id TEXT, requestor TEXT NOT NULL, task TEXT NOT NULL, input_path TEXT, mode TEXT, cam_list TEXT, status INTEGER , root_path TEXT, image_pair1 TEXT, image_pair2 TEXT, result_id INTEGER, result_msg TEXT, terminate INTEGER);",
     "create_request_history": "CREATE TABLE IF NOT EXISTS request_history (datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, requestor TEXT,  task TEXT, etc TEXT);",
     "create_hw_info": "CREATE TABLE IF NOT EXISTS hw_info (no SERIAL PRIMARY KEY, type TEXT NOT NULL , name TEXT NOT NULL );",
+    "create_job_manager": "CREATE TABLE IF NOT EXISTS job_manager (job_id SERIAL PRIMARY KEY, pid1 TEXT, pid2 TEXT, cancel TEXT, cancel_date TIMESTAMP);",
     "query_root_path": "SELECT root_path FROM command where job_id = ",
     "query_root_path_ex": " ORDER BY datetime DESC ",
     "query_job_id": "SELECT job_id FROM command ORDER BY job_id DESC",

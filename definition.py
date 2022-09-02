@@ -41,6 +41,7 @@ def get_err_msg(err_code):
         -13: "Image count is not match with dsc_id in pts",
         -21: "Input value is invalid",
         -22: "Can't add task. Now I'm busy..",
+        -23: "Acess Denied to System Process",
 
         -101: "Error on Autocalib Init. (create group)",
         -102: "Video (Camera) file is too small count",
@@ -115,7 +116,7 @@ class DEFINITION(object):
 
     feature_minimum = 500
 
-    virtual_rod_length = 600
+    multijob_limit = 5
 
     class loglevel(Enum):
         CRITICAL = 50

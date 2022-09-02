@@ -38,3 +38,4 @@ pyTelegramBotAPI
 cutelog
 imageio
 psycopg2
+psutil
