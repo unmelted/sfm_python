@@ -89,7 +89,7 @@ class DEFINITION(object):
     base_index = 1000
     run_mode = 'colmap'
     # list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']
-    cam_list = 'image_folder'
+    cam_list = 'video_folder'
 
     init_pair_mode = 'pair'  # zero : just #0, #1 camera, pair : selected camera by colmap
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
@@ -99,7 +99,7 @@ class DEFINITION(object):
     main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    export_point_type = 'dm'  # 'dm', 'mct'
+    export_point_type = 'mct'  # 'dm', 'mct'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'

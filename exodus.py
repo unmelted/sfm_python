@@ -47,7 +47,7 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.getInstance().getJobStatus(obj[0])
+            status, result = DbManager.getInstance('external').getJobStatus(obj[0])
 
         elif query == df.TaskCategory.VISUALIZE:
             status = 100
@@ -84,12 +84,13 @@ class Commander(object):
                 contents.append(image1)
                 contents.append(image2)
 
-        if len(obj) > 2:
-            DbManager.getInstance().insert('request_history', job_id=int(
-                obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
-        else:
-            DbManager.getInstance().insert('request_history', job_id=int(
-                obj[0]), requestor=obj[1], task=query, desc='')
+        if query != df.TaskCategory.AUTOCALIB_STATUS:
+            if len(obj) > 2:
+                DbManager.getInstance().insert('request_history', job_id=int(
+                    obj[0]), requestor=obj[1], task=query, desc=json.dumps(obj[2]))
+            else:
+                DbManager.getInstance().insert('request_history', job_id=int(
+                    obj[0]), requestor=obj[1], task=query, desc='')
 
         gc.collect()
         return status, result, contents

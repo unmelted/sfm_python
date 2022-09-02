@@ -71,7 +71,7 @@ def finish(job_id, result) :
 
 def get_pair(job_id) :
     l.get().w.info("GetPair start : {} ".format(job_id))    
-    result, image_name1, image_name2 = DbManager.getInstance().getPair(job_id)
+    result, image_name1, image_name2 = DbManager.getInstance('external').getPair(job_id)
     if result < 0 :
         return finish_querys(job_id, result, 2)
     else : 

@@ -1,17 +1,27 @@
 import os
+import threading
 import sqlite3
 from extn_util import *
 from logger import Logger as l
 from definition import DEFINITION as df
 
 class DbManager(object) :
-    instance = None
+    instance_intn = None
+    instance_extn = None
 
     @staticmethod
-    def getInstance():
-        if DbManager.instance is None :
-            DbManager.instance = DbManager()
-        return DbManager.instance
+    def getInstance(type = None):
+        if DbManager.instance_intn is None :
+            DbManager.instance_intn = DbManager()
+        if DbManager.instance_extn is None :
+            DbManager.instance_extn = DbManager()
+
+        if type == 'internal' :
+            return DbManager.instance_intn
+        elif type == 'external' :
+            return DbManager.instance_extn
+        else :
+            return DbManager.instance_intn
 
     def __init__(self):
         self.cmd_db = 'command'
@@ -43,8 +53,11 @@ class DbManager(object) :
 
         q = q + c + v
         l.get().w.info("Inser Query: {} ".format(q))
+     
         self.cursur.execute(q)
-        self.conn.commit()
+        print("insert query finish ")
+        # self.conn.commit()
+
 
     def update(self, table, **k) :
         q = 'UPDATE ' + table + ' SET '
@@ -63,9 +76,11 @@ class DbManager(object) :
                 t = c[ii] + ' = \"' + str(v[ii]) + '\" ,'
                 q += t
 
-        l.get().w.info("Update Query: {} ".format(q))        
+        l.get().w.info("Update Query: {} ".format(q))    
+
         self.cursur.execute(q)
         self.conn.commit()
+
 
     def getRootPath(self, id) :
         q = self.sql_list['query_root_path'] + str(id) + self.sql_list['query_root_path_ex']
@@ -91,7 +106,8 @@ class DbManager(object) :
 
     def getJobStatus(self, id) :
         q = self.sql_list['query_status'] + str(id)
-        l.get().w.info("Get Status Query: {} ".format(q))
+        l.get().w.info("Get Status Query: {} ".format(q)) 
+
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
         
@@ -106,6 +122,7 @@ class DbManager(object) :
     def getPair(self, id):
         q = self.sql_list['query_getpair'] + str(id)
         l.get().w.info("Get Pair Query: {} ".format(q))
+       
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
         
@@ -121,6 +138,7 @@ class DbManager(object) :
     def getTargetPath(self, id) :
         q = self.sql_list['query_gettarget'] + str(id)
         l.get().w.info("Get targetpath Query: {} ".format(q))
+
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
         

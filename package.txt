@@ -37,3 +37,4 @@ Werkzeug==2.1.2
 pyTelegramBotAPI
 cutelog
 imageio
+psycopg2
