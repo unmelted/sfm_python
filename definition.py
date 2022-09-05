@@ -116,7 +116,7 @@ class DEFINITION(object):
 
     feature_minimum = 500
 
-    multijob_limit = 5
+    job_limit = 5
 
     class loglevel(Enum):
         CRITICAL = 50

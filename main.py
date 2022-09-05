@@ -83,7 +83,7 @@ class generate_points(Resource):
         print(args['pts_2d'])
         print(args['pts_3d'])
 
-        status, result, _ = Commander.getInstance().send_query(
+        status, result, _ = Commander.getInstance().add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)
 
@@ -111,7 +111,6 @@ class calib_status(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        # print("calib status  .. : " ,Commander.getInstance())
         status, result, _ = Commander.getInstance().send_query(
             df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)

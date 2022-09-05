@@ -1,15 +1,16 @@
 import os
 import time
 from datetime import datetime
-from multiprocessing.dummy import Queue
+from multiprocessing.dummy import Process, Queue
 import json
 from camera_group import *
 import definition as df
 from logger import Logger as l
 from db_manager import DbManager
-from prepare_proc import *
+from job_manager import JobManager
 from intrn_util import *
 import gc
+from auto_calib import Autocalib
 
 
 class Commander(object):
@@ -25,8 +26,8 @@ class Commander(object):
         self.cmd_que = Queue()
         self.index = 0
         l.get().w.info("Commander initialized.")
-        self.job_manager = JobManager.getInstance()
-        _ = DbManager.getInstance('pg')  # initialize
+        self.job_manager = JobManager.get()
+        _ = DbManager.get()  # initialize
 
     def Receiver(self, t):
         while True:
@@ -48,14 +49,90 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.getInstance('pg').getJobStatus(obj[0])
+            status, result = DbManager.get().getJobStatus(obj[0])
 
-        elif query == df.TaskCategory.VISUALIZE:
+        elif query == df.TaskCategory.GET_PAIR:
+            result, image1, image2 = get_pair(obj[0])
             status = 100
-            result = visualize_mode(obj[0])
+            if result == 0:
+                contents.append(image1)
+                contents.append(image2)
 
-        elif query == df.TaskCategory.ANALYSIS or query == df.TaskCategory.GENERATE_PTS:
-            status = 100
+        if query != df.TaskCategory.AUTOCALIB_STATUS:
+            if len(obj) > 2:
+                insertRequestHistory(
+                    int(obj[0]), obj[1], query, json.dumps(obj[2]))
+            else:
+                insertRequestHistory(int(obj[0]), obj[1], query, None)
+
+        gc.collect()
+        return status, result, contents
+
+    def add_task(self, task, obj):
+
+        if self.job_manager.checkJobsUnderLimit() == True:
+            self.cmd_que.put((task, obj))
+            self.index = DbManager.get().getJobIndex() + 1
+            l.get().w.info("Alloc job id {} ".format(self.index))
+            return self.index
+        else:
+            return -22
+
+    # def task_process(self, task, obj, index):
+    #     result = 0
+    #     status = 0
+    #     contents = []
+    #     l.get().w.info("Task Proc start : {} ".format(index))
+
+    #     if task == df.TaskCategory.AUTOCALIB:
+    #         l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
+    #             index, obj[0], obj[1]))
+    #         p = Process(target=calculate, args=(
+    #             obj[0], index, obj[1], obj[2]))
+    #         p.start()
+    #         p.join()
+
+    #         desc = obj[0] + obj[1]
+    #         DbManager.getInstance('pg').insert('request_history', job_id=index,
+    #                                            requestor=obj[2], task=task, desc=desc)
+    #     elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
+    #         status = 100
+    #         l.get().w.info(
+    #             " Task Generate start obj : {} {} ".format(obj[0], obj[2]))
+    #         if len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) > 15:
+    #             cal_type = '2D3D'
+    #         elif len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) < 15:
+    #             cal_type = '2D'
+    #         elif len(obj[2]['pts_2d']) < 7 and len(obj[2]['pts_3d']) > 15:
+    #             cal_type = '3D'
+    #         else:
+    #             result = -304
+    #             status = 0
+    #             return status, result, contents
+
+    #         if task == df.TaskCategory.ANALYSIS:
+    #             pass
+    #         elif task == df.TaskCategory.GENERATE_PTS:
+    #             pass
+
+    def processor(self, task, obj):
+        result = 0
+        status = 0
+        contents = []
+        l.get().w.info("Task Proc start : {} ".format(self.index))
+
+        if task == df.TaskCategory.AUTOCALIB:
+            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
+                self.index, obj[0], obj[1]))
+            desc = obj[1]
+            self.job_manager.insertRequestHistory(
+                self.index, obj[2], task, desc)
+            p = Process(target=calculate, args=(
+                obj[0], self.index, obj[1], obj[2]))
+            p.start()
+            p.join()
+
+        elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(
                 " Task Generate start obj : {} {} ".format(obj[0], obj[2]))
             if len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) > 15:
@@ -69,76 +146,49 @@ class Commander(object):
                 status = 0
                 return status, result, contents
 
-            if query == df.TaskCategory.ANALYSIS:
-                result = analysis_mode(
-                    obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'], obj[2]['world'])
+            desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
+            insertRequestHistory(self.index, obj[2], task, desc)
 
-            elif query == df.TaskCategory.GENERATE_PTS:
-                result = generate_pts(
-                    obj[0], cal_type, obj[2]['pts_2d'], obj[2]['pts_3d'])
-                status = 100
+            if task == df.TaskCategory.ANALYSIS:
+                p = Process(target=analysis, args=(obj[0], cal_type, obj[2]['pts_2d'],
+                                                   obj[2]['pts_3d'], obj[2]['world']))
+                p.start()
+                p.join()
 
-        elif query == df.TaskCategory.GET_PAIR:
-            result, image1, image2 = get_pair(obj[0])
-            status = 100
-            if result == 0:
-                contents.append(image1)
-                contents.append(image2)
-
-        if query != df.TaskCategory.AUTOCALIB_STATUS:
-            if len(obj) > 2:
-                DbManager.getInstance('pg').insert('request_history', job_id=int(
-                    obj[0]), requestor=obj[1], task=query, etc=json.dumps(obj[2]))
-            else:
-                DbManager.getInstance('pg').insert('request_history', job_id=int(
-                    obj[0]), requestor=obj[1], task=query, etc='')
-
-        gc.collect()
-        return status, result, contents
-
-    def add_task(self, task, obj):
-        if self.job_manager.get_current_jobid() == -1:
-            self.cmd_que.put((task, obj))
-            self.index = DbManager.getInstance('pg').getJobIndex() + 1
-            l.get().w.info("Alloc job id {} ".format(self.index))
-            self.job_manager.set_current_jobid(self.index)
-            return self.index
-        else:
-            return -22
-
-    def processor(self, task, obj):
-        l.get().w.info("Task Proc start : {} ".format(self.index))
-
-        if task == df.TaskCategory.AUTOCALIB:
-            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
-                self.index, obj[0], obj[1]))
-            ac = autocalib(obj[0], self.index, obj[1], obj[2])
-            ac.run()
-            desc = obj[0] + obj[1]
-            DbManager.getInstance('pg').insert('request_history', job_id=self.index,
-                                               requestor=obj[2], task=task, etc=desc)
-            self.job_manager.release_current_jobid()
+            elif task == df.TaskCategory.GENERATE_PTS:
+                p = Process(target=generate, args=(obj[0], cal_type, obj[2]['pts_2d'],
+                                                   obj[2]['pts_3d'], obj[2]['world']))
+                p.start()
+                p.join()
 
         gc.collect()
 
 
-def visualize_mode(job_id):
-    l.get().w.info("Visualize start : {} ".format(job_id))
-    result, root_path = DbManager.getInstance('pg').getRootPath(job_id)
-    if result < 0:
-        l.get().w.error("visualize err: {} ".format(df.get_err_msg(result)))
-        return 0
+def calculate(input_dir, job_id, group, ip):
+    print("calculated mode started pid : ", os.getpid())
+    JobManager.get().insertNewJob(job_id, os.getpid())
+    ac = Autocalib(input_dir, job_id, group, ip)
+    ac.run()
+    del ac
+    ac = None
 
-    preset1 = Group()
-    result = preset1.create_group(
-        root_path, df.DEFINITION.run_mode, 'colmap_db')
-    if result < 0:
-        return finish_query(job_id, result)
 
-    preset1.read_cameras()
-    preset1.visualize()
+def generate(job_id, cal_type, pts_2d, pts_3d):
+    print("generate mode started pid : ", os.getpid())
+    JobManager.get().insertNewJob(job_id, os.getpid())
+    ac = generate_pts(job_id, cal_type, pts_2d, pts_3d)
+    ac.run()
+    del ac
+    ac = None
 
-    return 0
+
+def analysis(job_id, cal_type, pts_2d, pts_3d, world_pts):
+    print("analysis mode started pid : ", os.getpid())
+    JobManager.get().insertNewJob(job_id, os.getpid())
+    analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts)
+    ac.run()
+    del ac
+    ac = None
 
 
 def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
@@ -166,7 +216,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
                 float_2d.append(float(val))
 
     preset1 = Group()
-    result, root_path = DbManager.getInstance('pg').getRootPath(job_id)
+    result, root_path = DbManager.get().getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -215,123 +265,3 @@ def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):
     preset.generate_extra_point(cal_type, float_world)
     preset.generate_adjust()
     return 0
-
-
-class autocalib(object):
-
-    def __init__(self, input_dir, job_id, group, ip):
-        self.input_dir = input_dir
-        self.root_dir = None
-        self.run_mode = df.DEFINITION.run_mode
-        self.list_from = df.DEFINITION.cam_list
-        self.mode = 0  # mode
-        self.job_id = job_id
-        self.ip = ip
-        self.group = group
-
-    def run(self):
-        DbManager.getInstance('pg').insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
-                                           input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
-        time_s = time.time()
-        preset1 = Group()
-        result = self.checkDataValidity()
-
-        if result != 0:
-            return finish(self.job_id, result)
-        status_update(self.job_id, 10)
-
-        l.get().w.error("list from type : {} ".format(self.list_from))
-        ret = preset1.create_group(
-            self.root_dir, self.run_mode, self.list_from, self.group)
-
-        if (ret < 0):
-            return finish(self.job_id, ret)
-        status_update(self.job_id, 30)
-        time_e1 = time.time()
-        l.get().w.critical("Spending time of create group (sec) : {}".format(time_e1 - time_s))
-
-        ret = preset1.run_sfm()
-        if (ret < 0):
-            return finish(self.job_id, ret)
-        status_update(self.job_id, 90)
-
-        ret = self.init_pair_update(preset1.colmap)
-        if (ret < 0):
-            return finish(self.job_id, ret)
-        status_update(self.job_id, 100)
-
-        # ret = preset1.read_cameras()
-        # if( ret < 0 ):
-        #     return finish(self.job_id, ret)
-
-        # preset1.generate_points(mode='colmap_zero')
-        # status_update(self.job_id, 90)
-        # preset1.export(self.input_dir, self.job_id)
-        # status_update(self.job_id, 100)
-
-        time_eg = time.time() - time_e1
-        l.get().w.critical("Spending time of post matching (sec) : {}".format(time_eg))
-        time_e2 = time.time() - time_s
-        l.get().w.critical("Spending time total (sec) : {}".format(time_e2))
-
-        return 0
-
-    def init_pair_update(self, cm):
-        err, img_id1, img_id2 = get_initpair(self.root_dir)
-        if err < 0:
-            return err
-
-        err, image1 = cm.getImagNamebyId(img_id1)
-        if err < 0:
-            return err
-        err, image2 = cm.getImagNamebyId(img_id2)
-        if err < 0:
-            return err
-
-        l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
-        DbManager.getInstance('pg').update('command', image_pair1=image1,
-                                           image_pair2=image2, job_id=self.job_id)
-
-        return 0
-
-    def checkDataValidity(self):
-        if self.mode == df.CommandMode.VISUALIZE or  \
-                self.mode == 'visualize' or \
-                self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or \
-                self.mode == 'analysis':
-
-            self.root_dir = self.input_dir
-
-            if not os.path.exists(self.root_dir) or \
-               not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'sparse')):
-                return finish(self.job_id, -104)
-
-        else:
-            if not os.path.exists(self.input_dir):
-                return -105
-
-            result = 0
-            now = datetime.now()
-            root = 'Cal' + \
-                datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
-            if not os.path.exists(os.path.join(os.getcwd(), root)):
-                os.makedirs(os.path.join(os.getcwd(), root))
-            self.root_dir = os.path.join(os.getcwd(), root)
-            if not os.path.exists(os.path.join(self.root_dir, 'images')):
-                os.makedirs(os.path.join(self.root_dir, 'images'))
-
-            result = prepare_job(self.input_dir, self.root_dir, self.list_from)
-            if result < 0:
-                return result
-
-            if self.list_from == 'video_folder':
-                self.list_from = 'image_folder'
-
-            l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DbManager.getInstance('pg').update(
-                'command', root_path=self.root_dir, job_id=self.job_id)
-
-            return result
