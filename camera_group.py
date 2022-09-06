@@ -6,7 +6,6 @@ import numpy as np
 from group_adjust import GroupAdjust
 
 from logger import Logger as l
-from definition import DEFINITION as df
 from camera import *
 from pair import *
 from view import *

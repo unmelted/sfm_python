@@ -7,6 +7,7 @@ class TaskCategory(Enum):
     INIT = 0
     AUTOCALIB = 100
     AUTOCALIB_STATUS = 200
+    AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
     VISUALIZE = 500
@@ -67,7 +68,7 @@ def get_err_msg(err_code):
         -154: "Keypoints from image is not general. Please check the images",
 
         -201: "Query job_is is ambigous",
-
+        -202: "This job can't be canceld. (condition is not enough)",
         -301: "Base points should be inserted 16 points",
         -302: "Base points should be greater than 0",
         -303: "Answer pts can't refer (no answer pts)",
@@ -87,7 +88,7 @@ def get_err_msg(err_code):
 
 class DEFINITION(object):
 
-    base_index = 1000
+    base_index = 2000
     run_mode = 'colmap'
     # list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']
     cam_list = 'image_folder'
@@ -96,9 +97,6 @@ class DEFINITION(object):
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
 
     pts_file_name = 'UserPointData.pts'
-    calib_sq_file = 'calib_sq.json'
-    calib_pg_file = 'calib_pg.json'
-    main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
     export_point_type = 'mct'  # 'dm', 'mct'
@@ -117,14 +115,3 @@ class DEFINITION(object):
     feature_minimum = 500
 
     job_limit = 5
-
-    class loglevel(Enum):
-        CRITICAL = 50
-        FATAL = CRITICAL
-        ERROR = 40
-        WARNING = 30
-        IMPORTANT = WARNING
-        WARN = WARNING
-        INFO = 20
-        DEBUG = 10
-        NOTSET = 0

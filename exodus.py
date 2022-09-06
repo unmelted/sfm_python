@@ -1,15 +1,15 @@
 import os
 import time
 from datetime import datetime
+import gc
 from multiprocessing.dummy import Process, Queue
 import json
 from camera_group import *
 import definition as df
 from logger import Logger as l
-from db_manager import DbManager
 from job_manager import JobManager
 from intrn_util import *
-import gc
+from db_uplayer import DBM
 from auto_calib import Autocalib
 
 
@@ -17,7 +17,7 @@ class Commander(object):
     instance = None
 
     @staticmethod
-    def getInstance():
+    def get():
         if Commander.instance is None:
             Commander.instance = Commander()
         return Commander.instance
@@ -27,7 +27,7 @@ class Commander(object):
         self.index = 0
         l.get().w.info("Commander initialized.")
         self.job_manager = JobManager.get()
-        _ = DbManager.get()  # initialize
+        _ = DBM.get()  # initialize
 
     def Receiver(self, t):
         while True:
@@ -49,7 +49,7 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.get().getJobStatus(obj[0])
+            status, result = DBM.get().getJobStatus(obj[0])
 
         elif query == df.TaskCategory.GET_PAIR:
             result, image1, image2 = get_pair(obj[0])
@@ -57,6 +57,16 @@ class Commander(object):
             if result == 0:
                 contents.append(image1)
                 contents.append(image2)
+
+        elif query == df.TaskCategory.AUTOCALIB_CANCEL:
+            result = self.job_manager.checkJobStatus(obj[0])
+            print("cancle job result : ", result)
+            if result == 0:
+                print('can push cancel ')
+                self.job_manager.pushCancelJob(int(obj[0]))
+            else:
+                l.get().w.info('push cancle is failed result {} '.format(result))
+                return status, result, contents
 
         if query != df.TaskCategory.AUTOCALIB_STATUS:
             if len(obj) > 2:
@@ -72,7 +82,7 @@ class Commander(object):
 
         if self.job_manager.checkJobsUnderLimit() == True:
             self.cmd_que.put((task, obj))
-            self.index = DbManager.get().getJobIndex() + 1
+            self.index = DBM.get().getJobIndex() + 1
             l.get().w.info("Alloc job id {} ".format(self.index))
             return self.index
         else:
@@ -93,7 +103,7 @@ class Commander(object):
     #         p.join()
 
     #         desc = obj[0] + obj[1]
-    #         DbManager.getInstance('pg').insert('request_history', job_id=index,
+    #         df.DBM.getInstance('pg').insert('request_history', job_id=index,
     #                                            requestor=obj[2], task=task, desc=desc)
     #     elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
     #         status = 100
@@ -125,8 +135,7 @@ class Commander(object):
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
                 self.index, obj[0], obj[1]))
             desc = obj[1]
-            self.job_manager.insertRequestHistory(
-                self.index, obj[2], task, desc)
+            insertRequestHistory(self.index, obj[2], task, desc)
             p = Process(target=calculate, args=(
                 obj[0], self.index, obj[1], obj[2]))
             p.start()
@@ -216,7 +225,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d):
                 float_2d.append(float(val))
 
     preset1 = Group()
-    result, root_path = DbManager.get().getRootPath(job_id)
+    result, root_path = DBM.get().getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
 

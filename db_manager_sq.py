@@ -1,29 +1,19 @@
 import os
-import threading
+import json
 import sqlite3
-from extn_util import *
 from logger import Logger as l
-from definition import DEFINITION as df
 from db_manager import DbManager
 
 
 class DbManagerSQ(DbManager):
     instance = None
-
-    @staticmethod
-    def getInstance(type=None):
-        if DbManager.instance_sq is None:
-            DbManager.instance = DbManagerSQ()
-
-            return DbManager.instance
+    calib_sq_file = 'calib_sq.json'
 
     def __init__(self):
-        self.cmd_db = 'command'
-        self.log_db = 'log'
-        self.calib_history_db = 'calib_history'
-        self.sql_list = import_json(os.path.join(
-            os.getcwd(), 'json', df.calib_sq_file))
-        self.db_name = df.main_db_name
+        json_file = open(os.path.join(
+            os.getcwd(), 'json', self.calib_sq_file), 'r')
+        self.sql_list = json.load(json_file)
+        self.db_name = self.main_db_name
         if not os.path.exists(os.path.join(os.getcwd(), 'db')):
             os.makedirs(os.path.join(os.getcwd(), 'db'))
 

@@ -6,6 +6,7 @@ import definition as df
 from logger import Logger as l
 from intrn_util import *
 from prepare_proc import *
+from db_uplayer import DBM
 
 
 class Autocalib(object):
@@ -21,8 +22,8 @@ class Autocalib(object):
         self.group = group
 
     def run(self):
-        DbManager.get().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
-                               input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
+        DBM.get().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
+                         input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()
         preset1 = Group()
         result = self.checkDataValidity()
@@ -80,8 +81,8 @@ class Autocalib(object):
             return err
 
         l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
-        DbManager.get().update('command', image_pair1=image1,
-                               image_pair2=image2, job_id=self.job_id)
+        DBM.get().update('command', image_pair1=image1,
+                         image_pair2=image2, job_id=self.job_id)
 
         return 0
 
@@ -122,7 +123,6 @@ class Autocalib(object):
                 self.list_from = 'image_folder'
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DbManager.get().update(
-                'command', root_path=self.root_dir, job_id=self.job_id)
+            DBM.get().update('command', root_path=self.root_dir, job_id=self.job_id)
 
             return result

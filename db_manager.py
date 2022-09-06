@@ -1,31 +1,8 @@
-import os
-import threading
-import sqlite3
-from extn_util import *
 from logger import Logger as l
-from definition import DEFINITION as df
-from db_manager_sq import DbManagerSQ as SQ
-from db_manager_pg import DbManagerPG as PG
 
 
 class DbManager(object):
-    instance_sq = None
-    instance_pg = None
-    type = 'pg'
-
-    @staticmethod
-    def get(type=None):
-        if DbManager.instance_sq is None:
-            DbManager.instance_sq = SQ()
-        if DbManager.instance_pg is None:
-            DbManager.instance_pg = PG()
-
-        if DbManager.type == 'sq':
-            return DbManager.instance_sq
-        elif DbManager.type == 'pg':
-            return DbManager.instance_pg
-        else:
-            return DbManager.instance_pg
+    main_db_name = 'autocalib.db'
 
     def getRootPath(self, id):
         q = self.sql_list['query_root_path'] + \
@@ -39,13 +16,14 @@ class DbManager(object):
         return 0, rows[0][0]
 
     def getJobIndex(self):
+        from definition import DEFINITION as defn
         index = 0
         self.cursur.execute(self.sql_list['query_job_id'])
         rows = self.cursur.fetchone()
         if rows == None:
-            return df.base_index
+            return defn .base_index
         if len(rows) == 0:
-            return df.base_index
+            return defn.base_index
 
         index = rows[0]
         return index

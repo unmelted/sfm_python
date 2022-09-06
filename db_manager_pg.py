@@ -1,30 +1,18 @@
 import os
 import psycopg2 as pg
-from extn_util import *
 from logger import Logger as l
-from definition import DEFINITION as df
 from db_manager import DbManager
+import json
 
 
 class DbManagerPG(DbManager):
     instance = None
-
-    @staticmethod
-    def getInstance(type=None):
-        if DbManager.instance is None:
-            DbManager.instance = DbManager()
-
-            return DbManager.instance
+    calib_pg_file = 'calib_pg.json'
 
     def __init__(self):
-        self.cmd_db = 'command'
-        self.log_db = 'log'
-        self.calib_history_db = 'calib_history'
-        self.sql_list = import_json(os.path.join(
-            os.getcwd(), 'json', df.calib_pg_file))
-        self.db_name = df.main_db_name
-        if not os.path.exists(os.path.join(os.getcwd(), 'db')):
-            os.makedirs(os.path.join(os.getcwd(), 'db'))
+        json_file = open(os.path.join(
+            os.getcwd(), 'json', self.calib_pg_file), 'r')
+        self.sql_list = json.load(json_file)
 
         self.conn = pg.connect("dbname=autocalib user=admin password=1234")
         self.cursur = self.conn.cursor()
@@ -52,7 +40,6 @@ class DbManagerPG(DbManager):
         l.get().w.info("Inser Query: {} ".format(q))
 
         self.cursur.execute(q)
-        print("insert query finish ")
         self.conn.commit()
 
     def update(self, table, **k):
