@@ -18,7 +18,7 @@ class DbManagerPG(DbManager):
         self.cursur = self.conn.cursor()
 
         create = ["create_command_db",
-                  "create_request_history", "create_hw_info", "create_job_manager"]
+                  "create_request_history", "create_job_manager", "create_generate_data"]
         for i in create:
             # print(self.sql_list[i])
             self.cursur.execute(self.sql_list[i])

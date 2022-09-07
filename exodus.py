@@ -2,7 +2,7 @@ import os
 import time
 from datetime import datetime
 import gc
-from multiprocessing.dummy import Process, Queue
+from multiprocessing.dummy import Process, Queue, current_process
 import json
 from camera_group import *
 import definition as df
@@ -59,7 +59,7 @@ class Commander(object):
                 contents.append(image2)
 
         elif query == df.TaskCategory.AUTOCALIB_CANCEL:
-            result = self.job_manager.checkJobStatus(obj[0])
+            result = self.job_manager.checkJobStatusForCancel(obj[0])
             print("cancle job result : ", result)
             if result == 0:
                 print('can push cancel ')
@@ -75,7 +75,6 @@ class Commander(object):
             else:
                 insertRequestHistory(int(obj[0]), obj[1], query, None)
 
-        gc.collect()
         return status, result, contents
 
     def add_task(self, task, obj):
@@ -139,7 +138,10 @@ class Commander(object):
             p = Process(target=calculate, args=(
                 obj[0], self.index, obj[1], obj[2]))
             p.start()
-            p.join()
+            # p.join()
+            print("--------------AUTOCALIB1-------------")
+            print(os.getpid())
+            print("------------------------------")
 
         elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(
@@ -159,45 +161,44 @@ class Commander(object):
             insertRequestHistory(self.index, obj[2], task, desc)
 
             if task == df.TaskCategory.ANALYSIS:
-                p = Process(target=analysis, args=(obj[0], cal_type, obj[2]['pts_2d'],
+                p = Process(target=analysis, args=(self.index, obj[0], cal_type, obj[2]['pts_2d'],
                                                    obj[2]['pts_3d'], obj[2]['world']))
                 p.start()
-                p.join()
+                # p.join()
 
             elif task == df.TaskCategory.GENERATE_PTS:
-                p = Process(target=generate, args=(obj[0], cal_type, obj[2]['pts_2d'],
+                p = Process(target=generate, args=(self.index, obj[0], cal_type, obj[2]['pts_2d'],
                                                    obj[2]['pts_3d'], obj[2]['world']))
                 p.start()
-                p.join()
-
-        gc.collect()
+                # p.join()
 
 
 def calculate(input_dir, job_id, group, ip):
     print("calculated mode started pid : ", os.getpid())
     JobManager.get().insertNewJob(job_id, os.getpid())
+    print("--------------AUTOCALIB2-------------")
+    print(os.getpid())
+    print("------------------------------")
+
     ac = Autocalib(input_dir, job_id, group, ip)
     ac.run()
     del ac
     ac = None
+    JobManager.get().updateJob(job_id, 'complete')
 
 
-def generate(job_id, cal_type, pts_2d, pts_3d):
+def generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     print("generate mode started pid : ", os.getpid())
     JobManager.get().insertNewJob(job_id, os.getpid())
-    ac = generate_pts(job_id, cal_type, pts_2d, pts_3d)
-    ac.run()
-    del ac
-    ac = None
+    result = generate_pts(job_id, cal_type, pts_2d, pts_3d)
+    JobManager.get().updateJob(job_id, 'complete')
 
 
-def analysis(job_id, cal_type, pts_2d, pts_3d, world_pts):
+def analysis(myjob_id, job_id, cal_type, pts_2d, pts_3d, world_pts):
     print("analysis mode started pid : ", os.getpid())
     JobManager.get().insertNewJob(job_id, os.getpid())
     analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts)
-    ac.run()
-    del ac
-    ac = None
+    JobManager.get().updateJob(job_id, 'complete')
 
 
 def prepare_generate(job_id, cal_type, pts_2d, pts_3d):

@@ -22,10 +22,14 @@ class Autocalib(object):
         self.group = group
 
     def run(self):
+        print("--------------AUTOCALIB3------")
+        print(os.getpid())
+        print("------------------------------")
+
         DBM.get().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
                          input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()
-        preset1 = Group()
+        preset1 = Group(self.job_id)
         result = self.checkDataValidity()
 
         if result != 0:

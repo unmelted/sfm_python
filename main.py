@@ -83,16 +83,29 @@ class generate_points(Resource):
         print(args['pts_2d'])
         print(args['pts_3d'])
 
-        status, result, _ = Commander.get().add_task(
+        job_id = Commander.get().add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)
 
         result = {
+            'status': 0,
             'job_id': job_id,
-            'status': status,
-            'result': result,
-            'message': msg
+            'message': '',
         }
+
+        if job_id < 0:
+            message = df.get_err_msg(job_id)
+            result = {
+                'status': -1,
+                'job_id': job_id,
+                'message': message,
+            }
+        else:
+            result = {
+                'status': 0,
+                'job_id': job_id,
+                'message': 'SUCCESS',
+            }
 
         return result
 
@@ -102,10 +115,10 @@ jobid = api.model('jobid', {
 })
 
 
-@api.route('/exodus/autocalib/status/<int:jobid>')
-@api.doc()
+@ api.route('/exodus/autocalib/status/<int:jobid>')
+@ api.doc()
 class calib_status(Resource):
-    @api.expect()
+    @ api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)

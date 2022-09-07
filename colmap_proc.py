@@ -15,6 +15,7 @@ from extn_util import *
 from intrn_util import *
 from logger import Logger as l
 from definition import DEFINITION as df
+from job_manager import JobManager
 
 
 IS_PYTHON3 = sys.version_info[0] >= 3
@@ -36,13 +37,14 @@ def _monitor_readline(process, q):
             break
 
 
-def shell_cmd(cmd):
+def shell_cmd(cmd, job_id):
     # Kick off the command
     process = subprocess.Popen(
         cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     print("------------------------------")
     print(process.pid)
     print("------------------------------")
+    JobManager.get().updateJob(job_id, 'updatepid2', process.pid)
     for line in iter(process.stdout.readline, b''):
         print(line)
     process.stdout.close()
@@ -81,7 +83,7 @@ def shell_cmd(cmd):
 
 class Colmap(object):
 
-    def __init__(self, root_path):
+    def __init__(self, job_id, root_path):
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
         self.job_id = get_current_job()
@@ -89,6 +91,7 @@ class Colmap(object):
         self.image_file = os.path.join(self.root_path, 'images.txt')
         self.conn = sqlite3.connect(self.coldb_path, isolation_level=None)
         self.cursur = self.conn.cursor()
+        self.job_id = job_id
         json_file = open(os.path.join(
             os.getcwd(), 'json', 'calib_colmap.json'), 'r')
         self.colmap_cmd = json.load(json_file)
@@ -99,7 +102,7 @@ class Colmap(object):
         cmd = self.colmap_cmd['extract_cmd'] + self.colmap_cmd['extract_param1'] + \
             self.coldb_path + self.colmap_cmd['extract_param2'] + imgpath
         # cmd = self.colmap_cmd['extract_cmd'] +  self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.feature_ini)
-        shell_cmd(cmd)
+        shell_cmd(cmd, self.job_id)
         l.get().w.info("Colmap : Extract Done")
 
         result = self.check_keypoints()
@@ -110,7 +113,7 @@ class Colmap(object):
         cmd = self.colmap_cmd['matcher_cmd'] + \
             self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)
-        shell_cmd(cmd)
+        shell_cmd(cmd, self.job_id)
         l.get().w.info("Colmap : Matcher Done")
         status_update_quiet(get_current_job(), 60)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
@@ -120,13 +123,13 @@ class Colmap(object):
             self.colmap_cmd['mapper_param2'] + imgpath + \
             self.colmap_cmd['mapper_param3'] + outpath
         # cmd = self.colmap_cmd['mapper_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.mapper_ini)
-        shell_cmd(cmd)
+        shell_cmd(cmd, self.job_id)
         result = 0
         l.get().w.info("Colmap : Mapper Done")
 
         status_update_quiet(get_current_job(), 80)
         result = self.check_solution(cam_count)
-
+        JobManager.get().updateJob(self.job_id, 'updatepid2', None)
         return result
 
     def check_solution(self, cam_count, nullcheck=False):

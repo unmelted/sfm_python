@@ -59,21 +59,18 @@ class JobManager(DbManagerPG):
 
     def cancelProcess(self, job_id, pid1, pid2):
 
-        for i in [0, 1]:
-            pid = pid1 if i == 0 else pid2
-            if pid == -1:
-                continue
-            try:
-                p = psutil.Process(pid)
-                print(p)
-                p.terminate()
-            except psutil.NoSuchProcess:
-                print("NoSuchProcess : ", pid)
-                l.get().w.info("No such process pid {}. already disappeared.".format(pid))
+        pid = pid2
+        try:
+            p = psutil.Process(pid)
+            print(p)
+            p.terminate()
+        except psutil.NoSuchProcess:
+            print("NoSuchProcess : ", pid)
+            l.get().w.info("No such process pid {}. already disappeared.".format(pid))
 
-            except psutil.AccessDenied:
-                l.get().w.critical("Acess Deineid to SystemProcess")
-                result = -23
+        except psutil.AccessDenied:
+            l.get().w.critical("Acess Deineid to SystemProcess")
+            result = -23
 
         # q = self.sql_list['query_deletejobs'] + str(job_id)
         # l.get().w.debug("delte jobs Query: {} ".format(q))
@@ -141,25 +138,33 @@ class JobManager(DbManagerPG):
         else:
             return False
 
-    def checkJobStatus(self, job_id):
-        q = self.sql_list['query_jobstatus'] + str(job_id)
+    def checkJobStatusForCancel(self, job_id):
+        q = self.sql_list['query_jobstatusforcancel'] + str(job_id)
         l.get().w.info("Jobstatus Query before cancel: {} ".format(q))
         print(q)
         self.cursur.execute(q)
         rows = self.cursur.fetchone()
-        print(rows)
-        print(rows[0], rows[1])
+
+        print(rows[0], rows[1], rows[2])
         if len(rows) == 0:
             return -151
         else:
-            if rows[0] == None:
-                print("same none")
-            if rows[1] == 'running':
-                print("same running")
+            if rows[0] == None and rows[1] == 'running' and rows[2] != None:
                 return 0
             else:
+                if rows[0] != None:
+                    return -401
+                if rows[2] == None:
+                    return -402
                 return -202
 
     def insertNewJob(self, job_id, pid1=None, pid2=None):
         self.insert('job_manager', job_id=job_id, pid1=pid1,
                     pid2=pid2, complete='running')
+
+    def updateJob(self, job_id, type, param=None):
+        if type == 'complete':
+            self.update('job_manager', complete='done',
+                        complete_date='NOW()', job_id=job_id)
+        elif type == 'updatepid2':
+            self.update('job_manager', pid2=param,  job_id=job_id)
