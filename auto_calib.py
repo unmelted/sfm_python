@@ -22,9 +22,9 @@ class Autocalib(object):
         self.group = group
 
     def run(self):
-        print("--------------AUTOCALIB3------")
-        print(os.getpid())
-        print("------------------------------")
+        # print("--------------AUTOCALIB3------")
+        # print(os.getpid())
+        # print("------------------------------")
 
         DBM.get().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
                          input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
@@ -91,9 +91,9 @@ class Autocalib(object):
         return 0
 
     def checkDataValidity(self):
-        if self.mode == df.CommandMode.VISUALIZE or  \
+        if self.mode == df.TaskCategory.VISUALIZE or  \
                 self.mode == 'visualize' or \
-                self.mode == df.CommandMode.PTS_ERROR_ANALYSIS or \
+                self.mode == df.TaskCategory.ANALYSIS or \
                 self.mode == 'analysis':
 
             self.root_dir = self.input_dir

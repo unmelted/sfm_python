@@ -138,10 +138,9 @@ class Commander(object):
             p = Process(target=calculate, args=(
                 obj[0], self.index, obj[1], obj[2]))
             p.start()
-            # p.join()
-            print("--------------AUTOCALIB1-------------")
-            print(os.getpid())
-            print("------------------------------")
+            # print("--------------AUTOCALIB1-------------")
+            # print(os.getpid())
+            # print("------------------------------")
 
         elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(

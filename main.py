@@ -157,6 +157,8 @@ class cancel_job(Resource):
             'message': msg,
         }
 
+        return result
+
 
 @api.route('/exodus/autocalib/getpair/<int:jobid>')
 @api.doc()

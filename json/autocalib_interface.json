@@ -1,0 +1,214 @@
+{
+    "swagger": "2.0",
+    "basePath": "/",
+    "paths": {
+        "/exodus/autocalib": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "post_calib_run",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/recon_args"
+                        }
+                    }
+                ],
+                "tags": [
+                    "default"
+                ]
+            }
+        },
+        "/exodus/autocalib/analysis": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "post_calib_analysis",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/analysis"
+                        }
+                    }
+                ],
+                "tags": [
+                    "default"
+                ]
+            }
+        },
+        "/exodus/autocalib/getpair/{jobid}": {
+            "parameters": [
+                {
+                    "name": "jobid",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_get_pair",
+                "tags": [
+                    "default"
+                ]
+            }
+        },
+        "/exodus/autocalib/read_config": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "post_read_config",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/file_args"
+                        }
+                    }
+                ],
+                "tags": [
+                    "default"
+                ]
+            }
+        },
+        "/exodus/autocalib/status/{jobid}": {
+            "parameters": [
+                {
+                    "name": "jobid",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_calib_status",
+                "tags": [
+                    "default"
+                ]
+            }
+        },
+        "/exodus/generate": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "post_generate_points",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/gen_args"
+                        }
+                    }
+                ],
+                "tags": [
+                    "default"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "AUTO CALIB.",
+        "version": "0.1",
+        "description": "exodus from slavery"
+    },
+    "produces": [
+        "application/json"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "tags": [
+        {
+            "name": "default",
+            "description": "Default namespace"
+        }
+    ],
+    "definitions": {
+        "recon_args": {
+            "properties": {
+                "input_dir": {
+                    "type": "string"
+                },
+                "group": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "gen_args": {
+            "properties": {
+                "job_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "pts": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            },
+            "type": "object"
+        },
+        "analysis": {
+            "properties": {
+                "job_id": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "file_args": {
+            "properties": {
+                "config_file": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "responses": {
+        "ParseError": {
+            "description": "When a mask can't be parsed"
+        },
+        "MaskError": {
+            "description": "When any error occurs on mask"
+        }
+    }
+}

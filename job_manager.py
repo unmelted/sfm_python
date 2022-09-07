@@ -60,6 +60,12 @@ class JobManager(DbManagerPG):
     def cancelProcess(self, job_id, pid1, pid2):
 
         pid = pid2
+        if pid < 0:
+            l.get().w.critical("cancel malfuction minus pid: {} ".format(job_id))
+            self.update('job_manager', cancel='done',
+                        cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+            return
+
         try:
             p = psutil.Process(pid)
             print(p)
@@ -86,7 +92,7 @@ class JobManager(DbManagerPG):
         pid1s = []
         pid2s = []
         q = self.sql_list['query_getactivejobs']
-        l.get().w.debug("Get activejobs Query: {} ".format(q))
+        # l.get().w.debug("Get activejobs Query: {} ".format(q))
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
 
@@ -149,6 +155,7 @@ class JobManager(DbManagerPG):
         if len(rows) == 0:
             return -151
         else:
+            #cancel / complete / pid2
             if rows[0] == None and rows[1] == 'running' and rows[2] != None:
                 return 0
             else:
@@ -158,9 +165,9 @@ class JobManager(DbManagerPG):
                     return -402
                 return -202
 
-    def insertNewJob(self, job_id, pid1=None, pid2=None):
-        self.insert('job_manager', job_id=job_id, pid1=pid1,
-                    pid2=pid2, complete='running')
+    def insertNewJob(self, job_id, pid1=None):
+        self.insert('job_manager', job_id=job_id,
+                    pid1=pid1, pid2='None', complete='running')
 
     def updateJob(self, job_id, type, param=None):
         if type == 'complete':
