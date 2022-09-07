@@ -26,3 +26,34 @@ tz REAL
 
 
 colmap gui --import_path data/nba/ --database_path data/nba/colmap.db --image_path data/nba/images
+
+
+
+------------------ 09/05 written postgreSQL query ---------------------
+--CREATE TABLE IF NOT EXISTS command 
+--(no SERIAL PRIMARY KEY NOT NULL, datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, event_id TEXT, requestor TEXT NOT NULL, task TEXT NOT NULL, input_path TEXT, mode TEXT, cam_list TEXT, status INTEGER , root_path TEXT, image_pair1 TEXT, image_pair2 TEXT, result_id INTEGER, result_msg TEXT, terminate INTEGER);
+
+--CREATE TABLE IF NOT EXISTS request_history (datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, requestor TEXT,  task TEXT, etc TEXT);
+
+
+-- CREATE TABLE IF NOT EXISTS hw_info (no SERIAL PRIMARY KEY, type TEXT NOT NULL , name TEXT NOT NULL );
+
+--INSERT INTO request_history(job_id, requestor, task, etc)VALUES ('1037', '10.82.5.119', 'TaskCategory.AUTOCALIB', '/media/replay/Data/LET_Backup/_30string') 
+
+--INSERT INTO command(job_id, requestor, task, input_path, mode, cam_list)VALUES ('1035', '10.82.5.119', 'AUTOCALIB', '/mnt/share/studio_usa', 'colmap', 'image_folder') 
+--update command set root_path ='/work/sfm_ptyhon/20220808/'where job_id =1035;
+--select root_path from command order by datetime DESC;
+
+--DROP table hw_info;
+
+
+--UPDATE command SET status = '100' ,result_msg = 'Video (Camera) file is too small count' ,result_id = '-102' WHERE job_id = 1035;
+
+-- CREATE TABLE IF NOT EXISTS job_manager (job_id SERIAL PRIMARY KEY, pid1 TEXT, pid2 TEXT, cancel TEXT, cancel_date TIMESTAMP);
+
+--CREATE TABLE IF NOT EXISTS job_manager (job_id INTEGER PRIMARY KEY, pid1 TEXT, pid2 TEXT, cancel TEXT, cancel_date TIMESTAMP, complete TEXT, complete_date TIMESTAMP);
+--SELECT * FROM public.job_manager;
+--UPDATE job_manager set complete = 'running' where job_id ='998'
+--SELECT count(*) from job_manager WHERE complete='running'
+--INSERT INTO job_manager(job_id, pid1, pid2) VALUES ('998', '10112', '101032');
+SELECT pid1, pid2 from job_manager WHERE complete='running'

@@ -6,7 +6,7 @@ from mathutil import *
 import cv2
 from logger import Logger as l
 import json
-from definition import DEFINITION as df
+from definition import DEFINITION as defn
 from intrn_util import *
 from PIL import Image
 
@@ -22,7 +22,7 @@ def export_points(preset, output_type, job_id, cal_type, target_path=None):
 
 def export_points_mct(preset, cal_type):
 
-    filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
+    filename = os.path.join(preset.root_path, 'images', defn.pts_file_name)
     with open(filename, 'r') as json_file:
         from_data = json.load(json_file)
 
@@ -85,7 +85,7 @@ def export_points_mct(preset, cal_type):
 
 def export_points_dm(preset, job_id, cal_type, output_path, target_path):
 
-    filename = os.path.join(preset.root_path, 'images', df.pts_file_name)
+    filename = os.path.join(preset.root_path, 'images', defn.pts_file_name)
     with open(filename, 'r') as json_file:
         from_data = json.load(json_file)
 
@@ -164,8 +164,8 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
             break                
         '''
 
-    outfile = df.output_pts_file_name[:df.output_pts_file_name.rfind(
-        '.')] + str(job_id) + df.output_pts_file_name[df.output_pts_file_name.rfind('.'):]
+    outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
+        '.')] + str(job_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
     bn_json = json.dumps(from_data, indent=4)
@@ -365,7 +365,7 @@ def import_json(path):
 
 def make_cam_list_in_pts(from_path, group_id):
     cam_inpts = []
-    filename = os.path.join(from_path, df.pts_file_name)
+    filename = os.path.join(from_path, defn.pts_file_name)
     with open(filename, 'r') as json_file:
         _data = json.load(json_file)
 
@@ -410,7 +410,7 @@ def get_camera_list_in_both(from_path, group_id, ext):
 
 
 def get_caemra_info(from_path, cam_ids):
-    filename = os.path.join(from_path, df.pts_file_name)
+    filename = os.path.join(from_path, defn.pts_file_name)
     with open(filename, 'r') as json_file:
         _data = json.load(json_file)
 
@@ -440,7 +440,7 @@ def get_initpair(root_path):
     id1 = -1
     id2 = -1
 
-    filename = os.path.join(root_path, df.initpair_file)
+    filename = os.path.join(root_path, defn.initpair_file)
     if not os.path.exists(filename):
         return -152, id1, id2
 

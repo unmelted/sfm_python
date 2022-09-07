@@ -2,52 +2,26 @@ import os
 import glob
 import time
 from logger import Logger as l
-from db_manager import DbManager
 import definition as df
-
-
-class JobManager(object):
-
-    instance = None
-
-    @staticmethod
-    def getInstance():
-        if JobManager.instance is None:
-            JobManager.instance = JobManager()
-        return JobManager.instance
-
-    def __init__(self):
-        self.job_id = -1
-
-    def set_current_jobid(self, job_id):
-        print("set current jobid : ", job_id)
-        self.job_id = job_id
-
-    def release_current_jobid(self):
-        print("called release_current_jobid() ")
-        self.job_id = -1
-
-    def get_current_jobid(self):
-        print("called Jobmanager getcurrent_jobid : ", self.job_id)
-        return self.job_id
+from db_uplayer import DBM
 
 
 def get_current_job():
-    id = JobManager.getInstance().get_current_jobid()
+    id = 0  # JobManager.getInstance().get_current_jobid() should implement
     l.get().w.info("Called get_current_job : {} ".format(id))
     return id
 
 
 def status_update(job_id, status):
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
-    DbManager.getInstance('pg').update('command', status=status, job_id=job_id)
+    DBM.get().update('command', status=status, job_id=job_id)
     if status == 100:
         finish(job_id, 100)
 
 
 def status_update_quiet(job_id, status):
     l.get().w.info("Quiet tatus update. JOB_ID: {} Status: {} ".format(job_id, status))
-    DbManager.getInstance('pg').update('command', status=status, job_id=job_id)
+    DBM.get().update('command', status=status, job_id=job_id)
 
 
 def finish_querys(job_id, result, count):
@@ -70,15 +44,14 @@ def finish_query(job_id, result):
 def finish(job_id, result):
     msg = df.get_err_msg(result)
     l.get().w.warning("JOB_ID: {} Result: {} Message: {}".format(job_id, result, msg))
-    DbManager.getInstance('pg').update(
+    DBM.get().update(
         'command', status=100, result_msg=msg, result_id=result, job_id=job_id)
     return result
 
 
 def get_pair(job_id):
     l.get().w.info("GetPair start : {} ".format(job_id))
-    result, image_name1, image_name2 = DbManager.getInstance(
-        'pg').getPair(job_id)
+    result, image_name1, image_name2 = DBM.get().getPair(job_id)
     if result < 0:
         return finish_querys(job_id, result, 2)
     else:
@@ -87,7 +60,7 @@ def get_pair(job_id):
 
 def get_targetpath(job_id):
     l.get().w.info("Get target path start : {} ".format(job_id))
-    result, target_path = DbManager.getInstance('pg').getTargetPath(job_id)
+    result, target_path = DBM.get().getTargetPath(job_id)
     if result < 0:
         return finish_query(job_id, result)
     else:
@@ -108,3 +81,8 @@ def check_image_format(path):
         elif ext == 'jpg':
             return 'jpg'
     return 'png'
+
+
+def insertRequestHistory(job_id, ip, query, etc):
+    DBM.get().insert(
+        'request_history', job_id=job_id, requestor=ip, task=query, etc=etc)

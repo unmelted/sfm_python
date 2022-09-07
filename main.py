@@ -32,8 +32,8 @@ class calib_run(Resource):
         args = parser.parse_args()
 
         print(args['input_dir'])
-        job_id = Commander.getInstance().add_task(df.TaskCategory.AUTOCALIB,
-                                                  (args['input_dir'], args['group'], ip_addr))
+        job_id = Commander.get().add_task(df.TaskCategory.AUTOCALIB,
+                                          (args['input_dir'], args['group'], ip_addr))
 
         result = {
             'status': 0,
@@ -83,16 +83,29 @@ class generate_points(Resource):
         print(args['pts_2d'])
         print(args['pts_3d'])
 
-        status, result, _ = Commander.getInstance().send_query(
+        job_id = Commander.get().add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)
 
         result = {
+            'status': 0,
             'job_id': job_id,
-            'status': status,
-            'result': result,
-            'message': msg
+            'message': '',
         }
+
+        if job_id < 0:
+            message = df.get_err_msg(job_id)
+            result = {
+                'status': -1,
+                'job_id': job_id,
+                'message': message,
+            }
+        else:
+            result = {
+                'status': 0,
+                'job_id': job_id,
+                'message': 'SUCCESS',
+            }
 
         return result
 
@@ -102,23 +115,44 @@ jobid = api.model('jobid', {
 })
 
 
-@api.route('/exodus/autocalib/status/<int:jobid>')
-@api.doc()
+@ api.route('/exodus/autocalib/status/<int:jobid>')
+@ api.doc()
 class calib_status(Resource):
-    @api.expect()
+    @ api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        # print("calib status  .. : " ,Commander.getInstance())
-        status, result, _ = Commander.getInstance().send_query(
+        status, result, _ = Commander.get().send_query(
             df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
             'job_id': jobid,
             'status': status,
+            'result': result,
+            'message': msg,
+        }
+
+        return result
+
+
+@api.route('/exodus/autocalib/cancel/<int:jobid>')
+@api.doc()
+class cancel_job(Resource):
+    @api.expect()
+    def delete(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
+
+        print(jobid)
+        _, result, _ = Commander.get().send_query(
+            df.TaskCategory.AUTOCALIB_CANCEL, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
             'result': result,
             'message': msg,
         }
@@ -138,7 +172,7 @@ class get_pair(Resource):
         pair1 = None
         pair2 = None
 
-        status, result, contents = Commander.getInstance().send_query(
+        status, result, contents = Commander.get().send_query(
             df.TaskCategory.GET_PAIR, [jobid, ip_addr])
         msg = df.get_err_msg(result)
         if result == 0:
@@ -166,7 +200,7 @@ class visualize(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        status, result, _ = Commander.getInstance().send_query(
+        status, result, _ = Commander.get().send_query(
             df.TaskCategory.VISUALIZE, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
@@ -208,7 +242,7 @@ class calib_analysis(Resource):
         print(args['pts_3d'])
         print(args['pts_2d'])
         print(args['world'])
-        status, result, _ = Commander.getInstance().send_query(
+        status, result, _ = Commander.get().send_query(
             df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
 
         msg = df.get_err_msg(result)
@@ -239,8 +273,8 @@ class read_config(Resource):
         args = parser.parse_args()
 
         print(args['config_file'])
-        status, result, _ = Commander.getInstance(
-        ).send_query(args['config_file'], ip_addr)
+        status, result, _ = Commander.get().send_query(
+            args['config_file'], ip_addr)
 
         result = {
             'result': result,
@@ -250,9 +284,9 @@ class read_config(Resource):
 
 
 if __name__ == '__main__':
-    pr = Process(target=Commander.getInstance().Receiver,
-                 args=(Commander.getInstance().index,))
-    jr = Process(target=JobManager.getInstance().Watcher)
+    pr = Process(target=Commander.get().Receiver,
+                 args=(Commander.get().index,))
+    jr = Process(target=JobManager.get().Watcher)
     pr.start()
     jr.start()
     app.run(debug=False, host='0.0.0.0', port=9000)

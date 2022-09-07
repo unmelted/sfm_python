@@ -7,25 +7,12 @@ class TaskCategory(Enum):
     INIT = 0
     AUTOCALIB = 100
     AUTOCALIB_STATUS = 200
+    AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
     VISUALIZE = 500
     ANALYSIS = 600
     FINISH = 1
-
-
-class CommandMode(Enum):
-    PREPROCESS = 10
-    FEATURE = 20
-    MATCHER = 30
-    MAPPER = 40
-    BA = 50
-    HALF = 55
-    MODEL_CONVERT = 60
-    GENERATE_PTS = 70
-    FULL = 75
-    PTS_ERROR_ANALYSIS = 80
-    VISUALIZE = 90
 
 
 def get_err_msg(err_code):
@@ -37,19 +24,19 @@ def get_err_msg(err_code):
 
         -1: "PROC ERR",
         -11: "Create Preset Error",
-        -12: "Can't open and read pts file",
+        -12: "Can not open and read pts file",
         -13: "Image count is not match with dsc_id in pts",
         -21: "Input value is invalid",
-        -22: "Can't add task. Now I'm busy..",
+        -22: "Can not add task. Now I'm busy..",
         -23: "Acess Denied to System Process",
 
         -101: "Error on Autocalib Init. (create group)",
         -102: "Video (Camera) file is too small count",
         -103: "Making Snapshot error",
         -104: "There is no model info in root_dir",
-        -105: "Can't access to input directory",
+        -105: "Can not access to input directory",
         -106: "There is no pts file",
-        -107: "Can't read images",
+        -107: "Can not read images",
         -140: "Convert model error ",
         -141: "Camera info duplicated with image name",
         -142: "There is no cameras in colmap db",
@@ -67,13 +54,15 @@ def get_err_msg(err_code):
         -154: "Keypoints from image is not general. Please check the images",
 
         -201: "Query job_is is ambigous",
-
+        -202: "This job can't be canceld. (condition is not enough)",
         -301: "Base points should be inserted 16 points",
         -302: "Base points should be greater than 0",
         -303: "Answer pts can't refer (no answer pts)",
         -304: "Points count is abnormal",
         -305: "World reference point is abnormal",
 
+        -401: "Job is already requested to be canceled",
+        -402: "Requested job will be finished soon. can't cancel",
         -501: "There is no answer for err calculation"
     }
 
@@ -87,7 +76,7 @@ def get_err_msg(err_code):
 
 class DEFINITION(object):
 
-    base_index = 1000
+    base_index = 2000
     run_mode = 'colmap'
     # list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']
     cam_list = 'image_folder'
@@ -96,17 +85,13 @@ class DEFINITION(object):
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
 
     pts_file_name = 'UserPointData.pts'
-    calib_sq_file = 'calib_sq.json'
-    calib_pg_file = 'calib_pg.json'
-    main_db_name = 'autocalib.db'
     colmap_db_name = 'colmap.db'
 
-    export_point_type = 'mct'  # 'dm', 'mct'
+    export_point_type = 'mct'  # 'dm', 'mct' , 'json'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
     CHAT_ID = '1140943041'  # '5623435982'
-    log_viewer_ip = '127.0.0.1'
 
     feature_ini = 'colmap_feature.ini'
     matcher_ini = 'colmap_matcher.ini'
@@ -116,15 +101,4 @@ class DEFINITION(object):
 
     feature_minimum = 500
 
-    multijob_limit = 5
-
-    class loglevel(Enum):
-        CRITICAL = 50
-        FATAL = CRITICAL
-        ERROR = 40
-        WARNING = 30
-        IMPORTANT = WARNING
-        WARN = WARNING
-        INFO = 20
-        DEBUG = 10
-        NOTSET = 0
+    job_limit = 5

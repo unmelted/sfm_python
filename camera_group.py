@@ -6,7 +6,6 @@ import numpy as np
 from group_adjust import GroupAdjust
 
 from logger import Logger as l
-from definition import DEFINITION as df
 from camera import *
 from pair import *
 from view import *
@@ -22,8 +21,9 @@ from sfm import *
 
 class Group(object):
 
-    def __init__(self):
+    def __init__(self, job_id):
         self.cameras = []
+
         self.views = []
         self.pairs = None
         self.matches = {}
@@ -38,12 +38,11 @@ class Group(object):
         self.root_path = None
         self.run_mode = None
         self.answer = {}
-        self.db = None
         self.colmap = None
         self.ext = None
 
         self.cam_count = 0
-
+        self.job_id = job_id
         self.left = 0
         self.right = 0
         self.top = 0
@@ -69,7 +68,7 @@ class Group(object):
             return result
 
         if self.run_mode == 'colmap':
-            self.colmap = Colmap(self.root_path)
+            self.colmap = Colmap(self.job_id, self.root_path)
         else:
             self.K = np.loadtxt(os.path.join(
                 self.root_path, 'images', 'K.txt'))
