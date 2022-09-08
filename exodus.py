@@ -89,6 +89,9 @@ class Commander(object) :
         l.get().w.info("Task Proc start : {} ".format(index))
         print("task_process pid : ", os.getpid())
         if task == df.TaskCategory.AUTOCALIB :
+            print("--------------AUTOCALIB1-------------")
+            print(os.getpid())
+            print("------------------------------")    
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(index, obj[0], obj[1]))
             p = Process(target=calculate_mode, args= (obj[0], index, obj[1], obj[2]))
             p.start()
@@ -100,6 +103,9 @@ class Commander(object) :
 
 def calculate_mode(input_dir, job_id, group, ip):
     print("calculated mode started pid : ", os.getpid())
+    print("--------------AUTOCALIB2-------------")
+    print(os.getpid())
+    print("------------------------------")    
     ac = autocalib( input_dir, job_id, group, ip)
     ac.run()         
     del ac
@@ -233,6 +239,9 @@ class autocalib(object) :
 
 
     def run(self) :
+        print("--------------AUTOCALIB3-------------")
+        print(os.getpid())
+        print("------------------------------")    
         DbManager.getInstance().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name, input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()                
         self.preset = Group()        
