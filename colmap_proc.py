@@ -3,7 +3,6 @@ import sys
 import os
 import cv2
 import time
-import threading
 import queue
 import json
 from datetime import datetime
