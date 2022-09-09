@@ -3,9 +3,9 @@ from multiprocessing.dummy import Process
 from flask import Flask
 from flask import request, jsonify
 from flask_restx import fields, Resource, Api, reqparse, marshal
-import json
 import definition as df
 from exodus import *
+# from db_layer import NewPool
 
 app = Flask(__name__)
 api = Api(app, version='0.1', title='AUTO CALIB.',
@@ -284,9 +284,10 @@ class read_config(Resource):
 
 
 if __name__ == '__main__':
-    pr = Process(target=Commander.get().Receiver,
-                 args=(Commander.get().index,))
+
+    pr = Process(target=Commander.get().Receiver)
     jr = Process(target=JobManager.get().Watcher)
+
     pr.start()
-    jr.start()
+    # jr.start()
     app.run(debug=False, host='0.0.0.0', port=9000)

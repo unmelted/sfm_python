@@ -6,12 +6,13 @@ import definition as df
 from logger import Logger as l
 from intrn_util import *
 from prepare_proc import *
-from db_uplayer import DBM
+from db_layer import NewPool
+from db_manager import DbManager
 
 
 class Autocalib(object):
 
-    def __init__(self, input_dir, job_id, group, ip):
+    def __init__(self, input_dir, job_id, group, ip, db=None):
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
@@ -21,13 +22,19 @@ class Autocalib(object):
         self.ip = ip
         self.group = group
 
+        if db == None:
+            self.newcon = NewPool().get()
+            self.db = DbManager(self.newconn).get()
+        else:
+            self.db = db
+
     def run(self):
         # print("--------------AUTOCALIB3------")
         # print(os.getpid())
         # print("------------------------------")
 
-        DBM.get().insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
-                         input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
+        self.db.insert('command', job_id=self.job_id, requestor=self.ip, task=df.TaskCategory.AUTOCALIB.name,
+                       input_path=self.input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         time_s = time.time()
         preset1 = Group(self.job_id)
         result = self.checkDataValidity()
@@ -85,8 +92,8 @@ class Autocalib(object):
             return err
 
         l.get().w.info("JOB_ID: {} update initial pair {} {}".format(self.job_id, image1, image2))
-        DBM.get().update('command', image_pair1=image1,
-                         image_pair2=image2, job_id=self.job_id)
+        self.db.update('command', image_pair1=image1,
+                       image_pair2=image2, job_id=self.job_id)
 
         return 0
 
@@ -127,6 +134,7 @@ class Autocalib(object):
                 self.list_from = 'image_folder'
 
             l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DBM.get().update('command', root_path=self.root_dir, job_id=self.job_id)
+            self.db.update('command', root_path=self.root_dir,
+                           job_id=self.job_id)
 
             return result

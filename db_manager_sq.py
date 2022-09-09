@@ -1,3 +1,4 @@
+'''
 import os
 import json
 import sqlite3
@@ -66,3 +67,4 @@ class DbManagerSQ(DbManager):
 
         self.cursur.execute(q)
         self.conn.commit()
+'''

@@ -1,30 +1,33 @@
 import os
 import psutil
-import psycopg2 as pg
 import time
 import json
 from definition import DEFINITION as defn
 from logger import Logger as l
-from db_manager_pg import DbManagerPG
+from db_layer import NewPool, DBLayer, BaseQuery
 
 
-class JobManager(DbManagerPG):
+class JobManager(BaseQuery):
     instance = None
+    conn = None
+
+    def __init__(self, connection):
+        self.conn = connection  # NewPool().get()
+        print("job manager : ", self.conn)
+        self.loadjson()
 
     @staticmethod
-    def get():
-        if JobManager.instance == None:
-            JobManager.instance = JobManager()
+    def get(connection=None):
+        if JobManager.instance == None and connection != None:
+            JobManager.conn = connection
+            JobManager.instance = JobManager(connection)
+        elif JobManager.instance == None and connection == None:
+            print('JobManager Get fail. connection is necessary')
+            return -1
 
         return JobManager.instance
 
-    def __init__(self):
-        self.conn = pg.connect("dbname=autocalib user=admin password=1234")
-        self.cursur = self.conn.cursor()
-        json_file = open(os.path.join(
-            os.getcwd(), 'json', self.calib_pg_file), 'r')
-        self.sql_list = json.load(json_file)
-
+    @staticmethod
     def Watcher(self):
         while (True):
             time.sleep(1.5)
@@ -49,8 +52,9 @@ class JobManager(DbManagerPG):
         cids = []
         q = self.sql_list['query_getcanceljobs']
         l.get().w.debug("Get canceljobs Query: {} ".format(q))
-        self.cursur.execute(q)
-        rows = self.cursur.fetchall()
+
+        rows = DBLayer().queryWorker(self.conn, 'select-all', q)
+
         for i in range(len(rows)):
             cids.append(int(rows[i][0]))
 
@@ -62,8 +66,9 @@ class JobManager(DbManagerPG):
         pid = pid2
         if pid < 0:
             l.get().w.critical("cancel malfuction minus pid: {} ".format(job_id))
-            self.update('job_manager', cancel='done',
-                        cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+            q = self.update('job_manager', cancel='done',
+                            cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+            resutl = DBLayer().queryWorker(self.conn, 'update', q)
             return
 
         try:
@@ -82,8 +87,9 @@ class JobManager(DbManagerPG):
         # l.get().w.debug("delte jobs Query: {} ".format(q))
         # self.cursur2.execute(q)
         # self.conn2.commit()
-        self.update('job_manager', cancel='done',
-                    cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+        q = self.update('job_manager', cancel='done',
+                        cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+        result = DBLayer().queryWorker(self.conn, 'update', q)
         return 0
 
     def getActiveJobs(self):
@@ -92,9 +98,7 @@ class JobManager(DbManagerPG):
         pid1s = []
         pid2s = []
         q = self.sql_list['query_getactivejobs']
-        # l.get().w.debug("Get activejobs Query: {} ".format(q))
-        self.cursur.execute(q)
-        rows = self.cursur.fetchall()
+        rows = DBLayer().queryWorker(self.conn, 'select-all', q)
 
         if len(rows) == 0:
             return 0, 0, 0, 0
@@ -119,21 +123,19 @@ class JobManager(DbManagerPG):
         return count, jids, pid1s, pid2s
 
     def pushCancelJob(self, job_id):
-        self.update('job_manager', cancel='try', job_id=job_id)
+        q = self.update('job_manager', cancel='try', job_id=job_id)
+        result = DBLayer().queryWorker(self.conn, 'update', q)
 
     def countActiveJobs(self):
-        count = 0
         q = self.sql_list['query_countactivejobs']
         l.get().w.info("Count activejobs Query: {} ".format(q))
-
-        self.cursur.execute(q)
-        rows = self.cursur.fetchall()
+        rows = DBLayer().queryWorker(self.conn, 'select-one', q)
 
         if len(rows) == 0:
-            return 0, 0
+            return 0
         else:
-            l.get().w.debug("active jobs : {} ".format(rows[0][0]))
-            count = rows[0][0]
+            l.get().w.debug("active jobs : {} ".format(rows[0]))
+            count = rows[0]
 
         return count
 
@@ -148,8 +150,7 @@ class JobManager(DbManagerPG):
         q = self.sql_list['query_jobstatusforcancel'] + str(job_id)
         l.get().w.info("Jobstatus Query before cancel: {} ".format(q))
         print(q)
-        self.cursur.execute(q)
-        rows = self.cursur.fetchone()
+        rows = DBLayer().queryWorker(self.conn, 'select-one', q)
 
         print(rows[0], rows[1], rows[2])
         if len(rows) == 0:
@@ -166,12 +167,15 @@ class JobManager(DbManagerPG):
                 return -202
 
     def insertNewJob(self, job_id, pid1=None):
-        self.insert('job_manager', job_id=job_id,
-                    pid1=pid1, pid2='None', complete='running')
+        q = self.insert('job_manager', job_id=job_id,
+                        pid1=pid1, pid2='None', complete='running')
+        result = DBLayer().queryWorker(self.conn, 'insert', q)
 
     def updateJob(self, job_id, type, param=None):
         if type == 'complete':
-            self.update('job_manager', complete='done',
-                        complete_date='NOW()', job_id=job_id)
+            q = self.update('job_manager', complete='done',
+                            complete_date='NOW()', job_id=job_id)
         elif type == 'updatepid2':
-            self.update('job_manager', pid2=param,  job_id=job_id)
+            q = self.update('job_manager', pid2=param,  job_id=job_id)
+
+        result = DBLayer().queryWorker(self.conn, 'update', q)
