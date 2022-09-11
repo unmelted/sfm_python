@@ -17,6 +17,12 @@ from auto_calib import Autocalib
 def NewProcessBase():
     return DbManager.get(NewPool.get()), JobManager.get(NewPool.get())
 
+def init() :
+    pr = Process(target=Commander.get().Receiver)
+    jr = Process(target=JobManager.get().Watcher)
+
+    pr.start()
+    # jr.start()
 
 class Commander(object):
     instance = None

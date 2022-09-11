@@ -284,10 +284,10 @@ class read_config(Resource):
 
 
 if __name__ == '__main__':
+    init()
+    # pr = Process(target=Commander.get().Receiver)
+    # jr = Process(target=JobManager.get().Watcher)
 
-    pr = Process(target=Commander.get().Receiver)
-    jr = Process(target=JobManager.get().Watcher)
-
-    pr.start()
+    # pr.start()
     # jr.start()
     app.run(debug=False, host='0.0.0.0', port=9000)
