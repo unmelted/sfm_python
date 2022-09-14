@@ -1,16 +1,18 @@
+from ast import arg
 import os
-from multiprocessing.dummy import Process
+from multiprocessing import Process, Queue
 from flask import Flask
 from flask import request, jsonify
 from flask_restx import fields, Resource, Api, reqparse, marshal
 import definition as df
 from exodus import *
-# from db_layer import NewPool
+from db_layer import NewPool, DBLayer
 
 app = Flask(__name__)
 api = Api(app, version='0.1', title='AUTO CALIB.',
           description='exodus from slavery')
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
+# cmd_que = Queue()
 
 recon_args = api.model('recon_args', {
     'input_dir': fields.String,  # directory in storage
@@ -32,8 +34,13 @@ class calib_run(Resource):
         args = parser.parse_args()
 
         print(args['input_dir'])
-        job_id = Commander.get().add_task(df.TaskCategory.AUTOCALIB,
-                                          (args['input_dir'], args['group'], ip_addr))
+        # cmd_que.put((df.TaskCategory.AUTOCALIB,
+        #             (args['input_dir'], args['group'], ip_addr)))
+        que = Commander.getQue()
+        print("commander get que : ", que)
+
+        job_id = Commander.add_task(df.TaskCategory.AUTOCALIB,
+                                    (args['input_dir'], args['group'], ip_addr))
 
         result = {
             'status': 0,
@@ -83,7 +90,7 @@ class generate_points(Resource):
         print(args['pts_2d'])
         print(args['pts_3d'])
 
-        job_id = Commander.get().add_task(
+        job_id = Commander.add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
         msg = df.get_err_msg(result)
 
@@ -124,7 +131,7 @@ class calib_status(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        status, result, _ = Commander.get().send_query(
+        status, result, _ = Commander.send_query(
             df.TaskCategory.AUTOCALIB_STATUS, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
@@ -147,7 +154,7 @@ class cancel_job(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        _, result, _ = Commander.get().send_query(
+        _, result, _ = Commander.send_query(
             df.TaskCategory.AUTOCALIB_CANCEL, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
@@ -172,7 +179,7 @@ class get_pair(Resource):
         pair1 = None
         pair2 = None
 
-        status, result, contents = Commander.get().send_query(
+        status, result, contents = Commander.send_query(
             df.TaskCategory.GET_PAIR, [jobid, ip_addr])
         msg = df.get_err_msg(result)
         if result == 0:
@@ -200,7 +207,7 @@ class visualize(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        status, result, _ = Commander.get().send_query(
+        status, result, _ = Commander.send_query(
             df.TaskCategory.VISUALIZE, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
@@ -242,7 +249,7 @@ class calib_analysis(Resource):
         print(args['pts_3d'])
         print(args['pts_2d'])
         print(args['world'])
-        status, result, _ = Commander.get().send_query(
+        status, result, _ = Commander.send_query(
             df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
 
         msg = df.get_err_msg(result)
@@ -273,7 +280,7 @@ class read_config(Resource):
         args = parser.parse_args()
 
         print(args['config_file'])
-        status, result, _ = Commander.get().send_query(
+        status, result, _ = Commander.send_query(
             args['config_file'], ip_addr)
 
         result = {
@@ -284,10 +291,11 @@ class read_config(Resource):
 
 
 if __name__ == '__main__':
-    init()
-    # pr = Process(target=Commander.get().Receiver)
-    # jr = Process(target=JobManager.get().Watcher)
+    DBLayer.initialize(NewPool.getConnection())
+    que = Commander.getQue()
+    pr = Process(target=Commander.Receiver, args=(que, ))
+    jr = Process(target=JobManager.Watcher)
 
-    # pr.start()
-    # jr.start()
+    pr.start()
+    jr.start()
     app.run(debug=False, host='0.0.0.0', port=9000)

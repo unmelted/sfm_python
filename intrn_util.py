@@ -8,14 +8,14 @@ from db_manager import DbManager as Db
 
 def status_update(job_id, status):
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.get().status_update(status, job_id)
+    Db.status_update(status, job_id)
     if status == 100:
         finish(job_id, 100)
 
 
 def status_update_quiet(job_id, status):
     l.get().w.info("Quiet tatus update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.get().status_update(status, job_id)
+    Db.status_update(status, job_id)
 
 
 def finish_querys(job_id, result, count):
@@ -38,14 +38,14 @@ def finish_query(job_id, result):
 def finish(job_id, result):
     msg = df.get_err_msg(result)
     l.get().w.warning("JOB_ID: {} Result: {} Message: {}".format(job_id, result, msg))
-    Db.get().status_update_withresult(100, msg, result, job_id)
+    Db.status_update_withresult(100, msg, result, job_id)
 
     return result
 
 
 def get_pair(job_id):
     l.get().w.info("GetPair start : {} ".format(job_id))
-    result, image_name1, image_name2 = Db.get().getPair(job_id)
+    result, image_name1, image_name2 = Db.getPair(job_id)
     if result < 0:
         return finish_querys(job_id, result, 2)
     else:
@@ -54,7 +54,7 @@ def get_pair(job_id):
 
 def get_targetpath(job_id):
     l.get().w.info("Get target path start : {} ".format(job_id))
-    result, target_path = Db.get().getTargetPath(job_id)
+    result, target_path = Db.getTargetPath(job_id)
     if result < 0:
         return finish_query(job_id, result)
     else:

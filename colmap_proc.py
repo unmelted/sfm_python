@@ -40,10 +40,10 @@ def shell_cmd(cmd, job_id):
     # Kick off the command
     process = subprocess.Popen(
         cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-    print("------------------------------")
+    print("--------------AUTOCALIB4-------------")
     print(process.pid)
-    print("------------------------------")
-    JobManager.get().updateJob(job_id, 'updatepid2', process.pid)
+    print("-------------------------------------")
+    JobManager.updateJob(job_id, 'updatepid2', process.pid)
     for line in iter(process.stdout.readline, b''):
         print(line)
     process.stdout.close()
@@ -128,7 +128,7 @@ class Colmap(object):
 
         status_update_quiet(self.job_id, 80)
         result = self.check_solution(cam_count)
-        JobManager.get().updateJob(self.job_id, 'updatepid2', None)
+        JobManager.updateJob(self.job_id, 'updatepid2', None)
         return result
 
     def check_solution(self, cam_count, nullcheck=False):
