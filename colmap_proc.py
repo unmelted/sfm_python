@@ -21,32 +21,17 @@ IS_PYTHON3 = sys.version_info[0] >= 3
 MAX_IMAGE_ID = 2**31 - 1
 
 
-def _monitor_readline(process, q):
-    while True:
-        bail = True
-        if process.poll() is None:
-            bail = False
-        out = ""
-        if sys.version_info[0] >= 3:
-            out = process.stdout.readline().decode('utf-8')
-        else:
-            out = process.stdout.readline()
-        q.put(out)
-        if q.empty() and bail:
-            break
-
-
 def shell_cmd(cmd, job_id):
     # Kick off the command
     process = subprocess.Popen(
-        cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        cmd, bufsize=1, stdout=None, stderr=None, shell=True)
     print("--------------AUTOCALIB4-------------")
     print(process.pid)
     print("-------------------------------------")
     JobManager.updateJob(job_id, 'updatepid2', process.pid)
-    for line in iter(process.stdout.readline, b''):
-        print(line)
-    process.stdout.close()
+    # for line in iter(process.stdout.readline, b''):
+    #     print(line)
+    # process.stdout.close()
     process.wait()
 
     '''
@@ -156,7 +141,8 @@ class Colmap(object):
         q = ('SELECT rows FROM keypoints ORDER BY rows')
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
-
+        print("check keypoints .. : ")
+        print(rows)
         min = rows[0][0]
         max = rows[len(rows) - 1]
         # print("check keypoints : ", min, max)

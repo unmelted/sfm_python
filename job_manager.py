@@ -14,7 +14,7 @@ class JobManager(BaseQuery):
     @classmethod
     def Watcher(cls):
         while (True):
-            time.sleep(1.5)
+            time.sleep(1)
             JobManager.check_pid()
             print(".. ")
 
@@ -55,9 +55,9 @@ class JobManager(BaseQuery):
 
         for i in range(0, 2):
             if i == 0:
-                pid = pid2
-            elif i == 1:
                 pid = pid1
+            elif i == 1:
+                pid = pid2
 
             if pid < 0:
                 l.get().w.critical("cancel malfuction minus pid: {} ".format(job_id))
@@ -70,9 +70,10 @@ class JobManager(BaseQuery):
                 p = psutil.Process(pid)
                 print(p)
                 p.terminate()
+                l.get().w.critical("cancel process : {}".format(pid))
+                time.sleep(1)
             except psutil.NoSuchProcess:
-                print("NoSuchProcess : ", pid)
-                l.get().w.info("No such process pid {}. already disappeared.".format(pid))
+                l.get().w.critical("No such process pid {}. already disappeared.".format(pid))
 
             except psutil.AccessDenied:
                 l.get().w.critical("Acess Deineid to SystemProcess")
