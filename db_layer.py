@@ -1,16 +1,23 @@
 import os
 import time
+import psycopg2 as pg
 from psycopg2 import pool, extras
 import json
 from logger import Logger as l
 
-connection_pool = pool.ThreadedConnectionPool(
-    1, 50, host='127.0.0.1', database='autocalib', user='admin', password='1234')
+keepalive_kwargs = {
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 5,
+    "keepalives_count": 5,
+}
+# connection_pool = pool.ThreadedConnectionPool(
+#     1, 50, host='127.0.0.1', database='autocalib', user='admin', password='1234', **keepalive_kwargs)
 
 
 class NewPool(object):
-    # connection_pool = pool.ThreadedConnectionPool(
-    #     1, 50, host='127.0.0.1', database='autocalib', user='admin', password='1234')
+    connection_pool = pool.ThreadedConnectionPool(
+        1, 50, host='127.0.0.1', database='autocalib', user='admin', password='1234')
 
     # @staticmethod
     # def get():
@@ -20,7 +27,8 @@ class NewPool(object):
 
     @classmethod
     def getConnection(cls):
-        con = connection_pool.getconn()
+        con = pg.connect(database='autocalib', user='admin', password='1234')
+        # con = NewPool.connection_pool.getconn()
         print("New Pool return : ", con)
         return con
 

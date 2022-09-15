@@ -55,22 +55,19 @@ class JobManager(BaseQuery):
 
         for i in range(0, 2):
             if i == 0:
-                pid = pid1
-            elif i == 1:
                 pid = pid2
+            elif i == 1:
+                pid = pid1
 
             if pid < 0:
                 l.get().w.critical("cancel malfuction minus pid: {} ".format(job_id))
-                q = BaseQuery.update('job_manager', cancel='done',
-                                     cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
-                resutl = DBLayer.queryWorker(cls.conn, 'update', q)
-                return 0
+                continue
 
             try:
                 p = psutil.Process(pid)
                 print(p)
                 p.terminate()
-                l.get().w.critical("cancel process : {}".format(pid))
+                l.get().w.critical("---------------------cancel process : {}".format(pid))
                 time.sleep(1)
             except psutil.NoSuchProcess:
                 l.get().w.critical("No such process pid {}. already disappeared.".format(pid))

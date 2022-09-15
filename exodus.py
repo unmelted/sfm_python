@@ -7,7 +7,7 @@ import json
 from camera_group import *
 import definition as df
 from logger import Logger as l
-from db_layer import NewPool
+# from db_layer import NewPool
 from job_manager import JobManager
 from db_manager import DbManager
 from intrn_util import *
