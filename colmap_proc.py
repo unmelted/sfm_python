@@ -3,7 +3,6 @@ import sys
 import os
 import cv2
 import time
-import threading
 import queue
 import json
 from datetime import datetime
@@ -22,32 +21,17 @@ IS_PYTHON3 = sys.version_info[0] >= 3
 MAX_IMAGE_ID = 2**31 - 1
 
 
-def _monitor_readline(process, q):
-    while True:
-        bail = True
-        if process.poll() is None:
-            bail = False
-        out = ""
-        if sys.version_info[0] >= 3:
-            out = process.stdout.readline().decode('utf-8')
-        else:
-            out = process.stdout.readline()
-        q.put(out)
-        if q.empty() and bail:
-            break
-
-
 def shell_cmd(cmd, job_id):
     # Kick off the command
     process = subprocess.Popen(
-        cmd, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-    print("------------------------------")
+        cmd, bufsize=1, stdout=None, stderr=None, shell=True)
+    print("--------------AUTOCALIB4-------------")
     print(process.pid)
-    print("------------------------------")
-    JobManager.get().updateJob(job_id, 'updatepid2', process.pid)
-    for line in iter(process.stdout.readline, b''):
-        print(line)
-    process.stdout.close()
+    print("-------------------------------------")
+    JobManager.updateJob(job_id, 'updatepid2', process.pid)
+    # for line in iter(process.stdout.readline, b''):
+    #     print(line)
+    # process.stdout.close()
     process.wait()
 
     '''
@@ -86,7 +70,7 @@ class Colmap(object):
     def __init__(self, job_id, root_path):
         self.root_path = root_path
         self.coldb_path = os.path.join(self.root_path, df.colmap_db_name)
-        self.job_id = get_current_job()
+        self.job_id = job_id
         self.camera_file = os.path.join(self.root_path, 'cameras.txt')
         self.image_file = os.path.join(self.root_path, 'images.txt')
         self.conn = sqlite3.connect(self.coldb_path, isolation_level=None)
@@ -109,13 +93,13 @@ class Colmap(object):
         if result < 0:
             return result
 
-        status_update_quiet(get_current_job(), 40)
+        status_update_quiet(self.job_id, 40)
         cmd = self.colmap_cmd['matcher_cmd'] + \
             self.colmap_cmd['matcher_param1'] + self.coldb_path
         # cmd = self.colmap_cmd['matcher_cmd'] + self.colmap_cmd['common_param'] + os.path.join(self.root_path, df.matcher_ini)
         shell_cmd(cmd, self.job_id)
         l.get().w.info("Colmap : Matcher Done")
-        status_update_quiet(get_current_job(), 60)
+        status_update_quiet(self.job_id, 60)
         if not os.path.exists(os.path.join(self.root_path, 'sparse')):
             os.makedirs(os.path.join(self.root_path, 'sparse'))
 
@@ -127,9 +111,9 @@ class Colmap(object):
         result = 0
         l.get().w.info("Colmap : Mapper Done")
 
-        status_update_quiet(get_current_job(), 80)
+        status_update_quiet(self.job_id, 80)
         result = self.check_solution(cam_count)
-        JobManager.get().updateJob(self.job_id, 'updatepid2', None)
+        JobManager.updateJob(self.job_id, 'updatepid2', None)
         return result
 
     def check_solution(self, cam_count, nullcheck=False):
@@ -157,7 +141,8 @@ class Colmap(object):
         q = ('SELECT rows FROM keypoints ORDER BY rows')
         self.cursur.execute(q)
         rows = self.cursur.fetchall()
-
+        print("check keypoints .. : ")
+        print(rows)
         min = rows[0][0]
         max = rows[len(rows) - 1]
         # print("check keypoints : ", min, max)
