@@ -1,11 +1,7 @@
-from socket import inet_aton
 import sys
 import os
 import cv2
-import time
-import queue
 import json
-from datetime import datetime
 import subprocess
 import numpy as np
 import sqlite3
@@ -113,7 +109,7 @@ class Colmap(object):
 
         status_update_quiet(self.job_id, 80)
         result = self.check_solution(cam_count)
-        JobManager.updateJob(self.job_id, 'updatepid2', None)
+        # JobManager.updateJob(self.job_id, 'updatepid2', None)
         return result
 
     def check_solution(self, cam_count, nullcheck=False):

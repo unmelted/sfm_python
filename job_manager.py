@@ -1,6 +1,7 @@
 import os
 import psutil
 import time
+import subprocess
 import json
 from definition import DEFINITION as defn
 from logger import Logger as l
@@ -53,12 +54,14 @@ class JobManager(BaseQuery):
     @ classmethod
     def cancelProcess(cls, job_id, pid1, pid2):
 
-        for i in range(0, 2):
+        for i in range(0, 3):
             if i == 0:
-                pid = pid2
-            elif i == 1:
                 pid = pid1
-
+            elif i == 1:
+                pid = pid2
+            elif i == 2 :
+                pid += 1
+                
             if pid < 0:
                 l.get().w.critical("cancel malfuction minus pid: {} ".format(job_id))
                 continue
@@ -80,6 +83,10 @@ class JobManager(BaseQuery):
         # l.get().w.debug("delte jobs Query: {} ".format(q))
         # self.cursur2.execute(q)
         # cls.conn2.commit()
+        # pid += 1
+        # cmd = 'kill -9 `pgrep -f colmap -P ' + str(pid) +'`'
+        # clear = os.system(cmd)
+        # l.get().w.critical("Kill cmd -- {} : result {}".format(cmd, clear))
         q = BaseQuery.update('job_manager', cancel='done',
                              cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
         result = DBLayer.queryWorker(cls.conn, 'update', q)
