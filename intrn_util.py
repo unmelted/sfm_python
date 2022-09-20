@@ -8,14 +8,14 @@ from db_manager import DbManager as Db
 
 def status_update(job_id, status):
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.status_update(status, job_id)
+    Db.status_update(job_id, status)
     if status == 100:
         finish(job_id, 100)
 
 
 def status_update_quiet(job_id, status):
     l.get().w.info("Quiet tatus update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.status_update(status, job_id)
+    Db.status_update(job_id, status)
 
 
 def finish_querys(job_id, result, count):
