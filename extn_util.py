@@ -9,6 +9,7 @@ import json
 from definition import DEFINITION as defn
 from intrn_util import *
 from PIL import Image
+from db_manager import DbManager
 
 
 def export_points(preset, output_type, job_id, cal_type, target_path=None):
@@ -164,6 +165,7 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
             break                
         '''
 
+    DbManager.insert_calibdata(job_id, from_data)
     outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
         '.')] + str(job_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))

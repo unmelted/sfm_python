@@ -26,6 +26,11 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker(cls.conn, 'insert', q)
 
     @classmethod
+    def insert_calibdata(cls, job_id, output):
+        q = BaseQuery.insert('calib_data', job_id=job_id, result=output)
+        result = DBLayer.queryWorker(cls.conn, 'insert', q)
+
+    @classmethod
     def insert_newcommand(cls, job_id, ip, task, input_dir, mode, cam_list):
         q = BaseQuery.insert('command', job_id=job_id, requestor=ip, task=df.TaskCategory.AUTOCALIB.name,
                              input_path=input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
