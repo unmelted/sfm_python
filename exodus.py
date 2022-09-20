@@ -65,6 +65,10 @@ class Commander(object):
                 l.get().w.info('push cancle is failed result {} '.format(result))
                 return status, result, contents
 
+        elif query == df.TaskCategory.GET_PTS:
+            result, contents = get_pts(obj[0])
+            status = 100
+
         if query != df.TaskCategory.AUTOCALIB_STATUS:
             if len(obj) > 2:
                 DbManager.insert_requesthistory(
@@ -152,7 +156,7 @@ def generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     print("generate mode started pid : ", os.getpid())
     JobManager.insertNewJob(myjob_id, os.getpid())
     DbManager.insert_newcommand(myjob_id, job_id, df.TaskCategory.GENERATE_PTS.name,
-                            'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)    
+                                'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
     result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d)
     JobManager.updateJob(myjob_id, 'complete')
 
@@ -198,6 +202,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     if result < 0:
         return finish_query(job_id, result), None
 
+    status_update(myjob_id, 20)
     preset1.read_cameras()
     result = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
     if result < 0:
@@ -205,21 +210,24 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
 
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
-
+    status_update(job_id, 50)
     if not os.path.exists(os.path.join(root_path, 'output')):
         os.makedirs(os.path.join(root_path, 'output'))
 
     result = preset1.export(job_id, cal_type)
     if result < 0:
         return finish_query(job_id, result), None
-
+    status_update(myjob_id, 80)
     return 0, preset1
 
 
 def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
-    result, preset = prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d)
+    status_update(job_id, 10)
+    result, preset = prepare_generate(
+        myjob_id, job_id, cal_type, pts_2d, pts_3d)
     save_point_image(preset)
+    status_update(myjob_id, 100)
     return result
 
 

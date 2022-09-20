@@ -10,8 +10,9 @@ class TaskCategory(Enum):
     AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
-    VISUALIZE = 500
-    ANALYSIS = 600
+    GET_PTS = 500
+    VISUALIZE = 600
+    ANALYSIS = 700
     FINISH = 1
 
 
@@ -60,6 +61,7 @@ def get_err_msg(err_code):
         -303: "Answer pts can't refer (no answer pts)",
         -304: "Points count is abnormal",
         -305: "World reference point is abnormal",
+        -306: "No generated pts data",
 
         -401: "Job is already requested to be canceled",
         -402: "Requested job will be finished soon. can't cancel",

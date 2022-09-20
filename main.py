@@ -183,6 +183,29 @@ class get_pair(Resource):
         return result
 
 
+@api.route('/exodus/autocalib/getresult/<int:jobid>')
+@api.doc()
+class get_result(Resource):
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
+        print(jobid)
+
+        status, result, contents = Commander.send_query(
+            df.TaskCategory.GET_PTS, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
+            'result': result,
+            'message': msg,
+            'contents': contents,
+        }
+
+        return result
+
+
 @api.route('/exodus/autocalib/visualize/<int:jobid>')
 @api.doc()
 class visualize(Resource):

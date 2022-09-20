@@ -106,6 +106,18 @@ class DbManager(BaseQuery):
         return 0, rows[0][0], rows[0][1]
 
     @classmethod
+    def getPts(cls, id):
+        q = cls.sql_list['query_getpts'] + str(id)
+        l.get().w.info("Get Pts result  Query: {} ".format(q))
+
+        rows = DBLayer.queryWorker(cls.conn, 'select-one', q)
+
+        if len(rows) == 0:
+            return -306, None
+
+        return 0, rows[0]
+
+    @classmethod
     def getTargetPath(cls, id):
         q = cls.sql_list['query_gettarget'] + str(id)
         l.get().w.info("Get targetpath Query: {} ".format(q))

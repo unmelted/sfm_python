@@ -52,6 +52,13 @@ def get_pair(job_id):
         return 0, image_name1, image_name2
 
 
+def get_pts(job_id):
+    contents = None
+    l.get().w.info("GetPts start : {} ".format(job_id))
+    result, contents = Db.getPts(job_id)
+    return result, contents
+
+
 def get_targetpath(job_id):
     l.get().w.info("Get target path start : {} ".format(job_id))
     result, target_path = Db.getTargetPath(job_id)

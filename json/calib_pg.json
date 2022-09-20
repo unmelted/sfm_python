@@ -13,5 +13,6 @@
     "query_getactivejobs": "SELECT job_id, pid1, pid2 from job_manager WHERE complete='running'",
     "query_getcanceljobs": "SELECT job_id from job_manager WHERE cancel='try'",
     "query_deletejobs": "DELETE FROM job_manager WHERE job_id = ",
-    "query_jobstatusforcancel": "SELECT cancel, complete, pid2 FROM job_manager WHERE job_id = "
+    "query_jobstatusforcancel": "SELECT cancel, complete, pid2 FROM job_manager WHERE job_id = ",
+    "query_getpts": "SELECT result FROM calib_data where job_id = "
 }
