@@ -101,7 +101,7 @@ class Group(object):
         elif list_from == 'colmap_db':
             file_names = sorted(glob.glob(os.path.join(
                 self.root_path, 'images', '*.' + self.ext)))
-            t_colmap = Colmap(self.root_path)
+            t_colmap = Colmap(self.job_id, self.root_path)
             result, image_names = t_colmap.import_colmap_cameras(file_names)
             if result < 0:
                 return result

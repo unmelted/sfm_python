@@ -87,7 +87,7 @@ class DEFINITION(object):
     pts_file_name = 'UserPointData.pts'
     colmap_db_name = 'colmap.db'
 
-    export_point_type = 'mct'  # 'dm', 'mct' , 'json'
+    export_point_type = 'dm'  # 'dm', 'mct' , 'json'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'

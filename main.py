@@ -92,27 +92,12 @@ class generate_points(Resource):
 
         job_id = Commander.add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
-        msg = df.get_err_msg(result)
 
         result = {
             'status': 0,
             'job_id': job_id,
-            'message': '',
+            'message': 'SUCCESS',
         }
-
-        if job_id < 0:
-            message = df.get_err_msg(job_id)
-            result = {
-                'status': -1,
-                'job_id': job_id,
-                'message': message,
-            }
-        else:
-            result = {
-                'status': 0,
-                'job_id': job_id,
-                'message': 'SUCCESS',
-            }
 
         return result
 
