@@ -1,5 +1,5 @@
 {
-    "create_command_db": "CREATE TABLE IF NOT EXISTS command (no SERIAL PRIMARY KEY NOT NULL, datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, event_id TEXT, requestor TEXT NOT NULL, task TEXT NOT NULL, input_path TEXT, mode TEXT, cam_list TEXT, status INTEGER , root_path TEXT, image_pair1 TEXT, image_pair2 TEXT, result_id INTEGER, result_msg TEXT, terminate INTEGER);",
+    "create_command_db": "CREATE TABLE IF NOT EXISTS command (no SERIAL PRIMARY KEY NOT NULL, datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, parent_job INTEGER, vent_id TEXT, requestor TEXT NOT NULL, task TEXT NOT NULL, input_path TEXT, mode TEXT, cam_list TEXT, status INTEGER , root_path TEXT, image_pair1 TEXT, image_pair2 TEXT, result_id INTEGER, result_msg TEXT, terminate INTEGER);",
     "create_request_history": "CREATE TABLE IF NOT EXISTS request_history (datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, requestor TEXT,  task TEXT, etc TEXT);",
     "create_job_manager": "CREATE TABLE IF NOT EXISTS job_manager (job_id INTEGER PRIMARY KEY, pid1 TEXT, pid2 TEXT, cancel TEXT, cancel_date TIMESTAMP, complete TEXT, complete_date TIMESTAMP);",
     "create_generate_data": "CREATE TABLE IF NOT EXISTS calib_data (job_id INTEGER PRIMARY KEY, datetime TIMESTAMP DEFAULT NOW(), result JSON );",

@@ -133,7 +133,7 @@ class Commander(object):
                 p.start()
 
             elif task == df.TaskCategory.GENERATE_PTS:
-                p = Process(target=generate, args=(job_id, obj[0], cal_type, obj[2]['pts_2d'],
+                p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
                                                    obj[2]['pts_3d']))
                 p.start()
 
@@ -152,10 +152,10 @@ def calculate(input_dir, job_id, group, ip):
     JobManager.updateJob(job_id, 'complete')
 
 
-def generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
+def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d):
     print("generate mode started pid : ", os.getpid())
     JobManager.insertNewJob(myjob_id, os.getpid())
-    DbManager.insert_newcommand(myjob_id, job_id, df.TaskCategory.GENERATE_PTS.name,
+    DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
                                 'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
     result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d)
     JobManager.updateJob(myjob_id, 'complete')
