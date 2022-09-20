@@ -12,10 +12,10 @@ from PIL import Image
 from db_manager import DbManager
 
 
-def export_points(preset, output_type, job_id, cal_type, target_path=None):
+def export_points(preset, output_type, myjob_id, cal_type, target_path=None):
     if output_type == 'dm':
         output_path = os.path.join(preset.root_path, 'output')
-        export_points_dm(preset, job_id, cal_type, output_path, target_path)
+        export_points_dm(preset, myjob_id, cal_type, output_path, target_path)
 
     elif output_type == 'mct':
         export_points_mct(preset, cal_type)
@@ -84,7 +84,7 @@ def export_points_mct(preset, cal_type):
     ofile.close()
 
 
-def export_points_dm(preset, job_id, cal_type, output_path, target_path):
+def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
 
     filename = os.path.join(preset.root_path, 'images', defn.pts_file_name)
     with open(filename, 'r') as json_file:
@@ -166,11 +166,11 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
         '''
 
     outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
-        '.')] + str(job_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
+        '.')] + str(myjob_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
     bn_json = json.dumps(from_data, indent=4)
-    DbManager.insert_calibdata(job_id, bn_json)    
+    DbManager.insert_calibdata(myjob_id, bn_json)
     output = os.path.join(output_path, outfile)
     ofile = open(output, 'w')
     ofile.write(bn_json)

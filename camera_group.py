@@ -380,7 +380,7 @@ class Group(object):
     def visualize(self, mode='colmap'):
         plot_scene(self.cameras)
 
-    def export(self, job_id, cal_type):
+    def export(self, myjob_id, job_id, cal_type):
         target_path = None
         if df.export_point_type == 'dm':
             result, target_path = get_targetpath(job_id)
@@ -388,7 +388,7 @@ class Group(object):
                 return result
 
         export_points(self, df.export_point_type,
-                      job_id, cal_type, target_path)
+                      myjob_id, cal_type, target_path)
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):

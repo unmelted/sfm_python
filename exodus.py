@@ -214,7 +214,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     if not os.path.exists(os.path.join(root_path, 'output')):
         os.makedirs(os.path.join(root_path, 'output'))
 
-    result = preset1.export(job_id, cal_type)
+    result = preset1.export(myjob_id, job_id, cal_type)
     if result < 0:
         return finish_query(job_id, result), None
     status_update(myjob_id, 80)
