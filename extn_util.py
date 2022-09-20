@@ -165,12 +165,12 @@ def export_points_dm(preset, job_id, cal_type, output_path, target_path):
             break                
         '''
 
-    DbManager.insert_calibdata(job_id, from_data)
     outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
         '.')] + str(job_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
     l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
 
     bn_json = json.dumps(from_data, indent=4)
+    DbManager.insert_calibdata(job_id, bn_json)    
     output = os.path.join(output_path, outfile)
     ofile = open(output, 'w')
     ofile.write(bn_json)
