@@ -210,7 +210,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
 
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
-    status_update(job_id, 50)
+    status_update(myjob_id, 50)
     if not os.path.exists(os.path.join(root_path, 'output')):
         os.makedirs(os.path.join(root_path, 'output'))
 
