@@ -95,6 +95,7 @@ def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
         return -12
 
     l.get().w.info("Write dm pts file.. ")
+    new_data = {'points': []}
 
     for j in range(len(from_data['points'])):
         l.get().w.debug('pts dsc_id : {}'.format(
@@ -120,63 +121,22 @@ def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
                     from_data['points'][j]['pts_2d']['MiddlePosY'] = -1.0
                     from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
                     from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1]
+
+                new_data['points'].append(from_data['poinats'][j])
                 break
 
-        '''
-        point_json['pts_2d']['Upper'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_2d']['Upper']['IsEmpty'] = False
-        point_json['pts_2d']['Upper']['X'] = -1.0
-        point_json['pts_2d']['Upper']['Y'] = -1.0
-        point_json['pts_2d']['Middle'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_2d']['Middle']['IsEmpty'] = False
-        point_json['pts_2d']['Middle']['X'] = -1.0
-        point_json['pts_2d']['Middle']['Y'] = -1.0
-        point_json['pts_2d']['Lower'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_2d']['Lower']['IsEmpty'] = False
-        point_json['pts_2d']['Lower']['X'] = -1.0
-        point_json['pts_2d']['Lower']['Y'] = -1.0
-
-        point_json['pts_3d']['Point1'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_3d']['Point1']['IsEmpty'] = False
-        point_json['pts_3d']['Point1']['X'] = preset.cameras[i].pts[0][0]
-        point_json['pts_3d']['Point1']['Y'] = preset.cameras[i].pts[0][1]
-        point_json['pts_3d']['Point2'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_3d']['Point2']['IsEmpty'] = False
-        point_json['pts_3d']['Point2']['X'] = preset.cameras[i].pts[1][0]
-        point_json['pts_3d']['Point2']['Y'] = preset.cameras[i].pts[1][1]
-        point_json['pts_3d']['Point3'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_3d']['Point3']['IsEmpty'] = False
-        point_json['pts_3d']['Point3']['X'] = preset.cameras[i].pts[2][0]
-        point_json['pts_3d']['Point3']['Y'] = preset.cameras[i].pts[2][1]
-        point_json['pts_3d']['Point4'] = {"IsEmpty":None,"X":0,"Y":0}
-        point_json['pts_3d']['Point4']['IsEmpty'] = False
-        point_json['pts_3d']['Point4']['X'] = preset.cameras[i].pts[3][0]
-        point_json['pts_3d']['Point4']['Y'] = preset.cameras[i].pts[3][1]
-        
-        point_json['pts_swipe'] = {"X1" : 0, "Y1":0, "X2": 0 , "Y2": 0}
-        point_json['pts_swipe']['X1']=-1.0
-        point_json['pts_swipe']['Y1']=-1.0
-        point_json['pts_swipe']['X2']=-1.0
-        point_json['pts_swipe']['Y2']=-1.0
-
-        json_data['points'].append(point_json)
-
-        if preset.limit != 0 and i == preset.limit :
-            break                
-        '''
-
-    outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
-        '.')] + str(myjob_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
-    l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
-
-    bn_json = json.dumps(from_data, indent=4)
+    bn_json = json.dumps(new_data, indent=4)
     DbManager.insert_calibdata(myjob_id, bn_json)
-    output = os.path.join(output_path, outfile)
-    ofile = open(output, 'w')
-    ofile.write(bn_json)
-    ofile.close()
 
-    shutil.copy(output, target_path)
+    # outfile = defn.output_pts_file_name[:defn.output_pts_file_name.rfind(
+    #     '.')] + str(myjob_id) + defn.output_pts_file_name[defn.output_pts_file_name.rfind('.'):]
+    # l.get().w.info("output pts file path {} name {} ".format(output_path, outfile))
+    # output = os.path.join(output_path, outfile)
+    # ofile = open(output, 'w')
+    # ofile.write(bn_json)
+    # ofile.close()
+
+    # shutil.copy(output, target_path)
     l.get().w.warn("output pts file copy done to {} ".format(target_path))
 
 
