@@ -15,7 +15,7 @@ class JobManager(BaseQuery):
     @classmethod
     def Watcher(cls):
         while (True):
-            time.sleep(1)
+            time.sleep(2)
             JobManager.check_pid()
             print(".. ")
 
@@ -41,7 +41,7 @@ class JobManager(BaseQuery):
     def getCancelJobs(cls):
         cids = []
         q = JobManager.sql_list['query_getcanceljobs']
-        l.get().w.debug("Get canceljobs Query: {} ".format(q))
+        # l.get().w.debug("Get canceljobs Query: {} ".format(q))
 
         rows = DBLayer.queryWorker(cls.conn, 'select-all', q)
 
