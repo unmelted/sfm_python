@@ -122,7 +122,7 @@ def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
                     from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
                     from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1]
 
-                new_data['points'].append(from_data['poinats'][j])
+                new_data['points'].append(from_data['points'][j])
                 break
 
     bn_json = json.dumps(new_data, indent=4)
