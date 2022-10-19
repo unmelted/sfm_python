@@ -223,7 +223,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
 
 def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
-    status_update(job_id, 10)
+    status_update(myjob_id, 10)
     result, preset = prepare_generate(
         myjob_id, job_id, cal_type, pts_2d, pts_3d)
     save_point_image(preset)
