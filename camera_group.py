@@ -107,6 +107,14 @@ class Group(object):
                 return result
 
         index = 0
+        #check image before set camera
+        for image_name in image_names :
+            image  = cv2.imread(image_name)
+            if (hasattr(image, 'shape') == False) :
+                l.get().w.error("Image abnormal err. retrun -24")
+                return -24
+
+
         for image_name in image_names:
             tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
             self.cameras.append(tcam)
@@ -137,7 +145,7 @@ class Group(object):
     def read_cameras(self, mode='colmap'):
         if mode == 'colmap':
             if self.colmap == None:
-                logging.error("there is no colmap data")
+                l.get().w.error("there is no colmap data")
                 return -10
 
             result = self.colmap.read_colmap_cameras(self.cameras)
@@ -153,7 +161,7 @@ class Group(object):
                         )
                     )
                 except FileNotFoundError:
-                    logging.error(
+                    l.get().w.error(
                         "Pkl file not found for camera %s. Computing from scratch {} ".format(cam.view.name))
                     break
 

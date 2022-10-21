@@ -363,7 +363,7 @@ def get_camera_list_in_both(from_path, group_id, ext):
         if cam_id in cam_inpts:
             image_names.append(img_file)
         else:
-            target = from_path + img_file
+            target = img_file
             print('this file is not in group. remove.', target)
             os.remove(target)
 
