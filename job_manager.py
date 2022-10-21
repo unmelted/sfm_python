@@ -88,8 +88,11 @@ class JobManager(BaseQuery):
         # clear = os.system(cmd)
         # l.get().w.critical("Kill cmd -- {} : result {}".format(cmd, clear))
         q = BaseQuery.update('job_manager', cancel='done',
-                             cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)
+                             cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)                             
         result = DBLayer.queryWorker(cls.conn, 'update', q)
+        q = BaseQuery.update('command', result_id=-25, result_msg='Canceled Job', terminate=1, job_id=job_id)
+        result = DBLayer.queryWorker(cls.conn, 'update', q)
+
         return 0
 
     @classmethod

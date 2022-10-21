@@ -31,6 +31,7 @@ def get_err_msg(err_code):
         -22: "Can not add task. Now I'm busy..",
         -23: "Acess Denied to System Process",
         -24: "There is image file problem - Upload again",
+        -25: "Canceled Job",
 
         -101: "Error on Autocalib Init. (create group)",
         -102: "Video (Camera) file is too small count",
