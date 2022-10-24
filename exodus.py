@@ -46,7 +46,7 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.getJobStatus(None, obj[0])
+            status, result = DbManager.getJobStatus(obj[0])
 
         elif query == df.TaskCategory.GET_PAIR:
             result, image1, image2 = get_pair(obj[0])
@@ -64,6 +64,10 @@ class Commander(object):
             else:
                 l.get().w.info('push cancle is failed result {} '.format(result))
                 return status, result, contents
+
+        elif query == df.TaskCategory.GET_PTS:
+            result, contents = get_pts(obj[0])
+            status = 100
 
         if query != df.TaskCategory.AUTOCALIB_STATUS:
             if len(obj) > 2:
@@ -121,7 +125,7 @@ class Commander(object):
                 return status, result, contents
 
             desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
-            DbManager.insert_requesthistory(job_id, obj[2], task, desc)
+            DbManager.insert_requesthistory(job_id, obj[1], task, None)
 
             if task == df.TaskCategory.ANALYSIS:
                 p = Process(target=analysis, args=(job_id, obj[0], cal_type, obj[2]['pts_2d'],
@@ -129,8 +133,8 @@ class Commander(object):
                 p.start()
 
             elif task == df.TaskCategory.GENERATE_PTS:
-                p = Process(target=generate, args=(job_id, obj[0], cal_type, obj[2]['pts_2d'],
-                                                   obj[2]['pts_3d'], obj[2]['world']))
+                p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
+                                                   obj[2]['pts_3d']))
                 p.start()
 
 
@@ -148,21 +152,23 @@ def calculate(input_dir, job_id, group, ip):
     JobManager.updateJob(job_id, 'complete')
 
 
-def generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
+def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d):
     print("generate mode started pid : ", os.getpid())
-    JobManager.insertNewJob(job_id, os.getpid())
-    result = generate_pts(job_id, cal_type, pts_2d, pts_3d)
-    JobManager.updateJob(job_id, 'complete')
+    JobManager.insertNewJob(myjob_id, os.getpid())
+    DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
+                                'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
+    result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d)
+    JobManager.updateJob(myjob_id, 'complete')
 
 
 def analysis(myjob_id, job_id, cal_type, pts_2d, pts_3d, world_pts):
     print("analysis mode started pid : ", os.getpid())
-    JobManager.insertNewJob(job_id, os.getpid())
+    JobManager.insertNewJob(myjob_id, os.getpid())
     analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts)
-    JobManager.updateJob(job_id, 'complete')
+    JobManager.updateJob(myjob_id, 'complete')
 
 
-def prepare_generate(job_id, cal_type, pts_2d, pts_3d, db):
+def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     time_s = time.time()
     float_2d = []
     float_3d = []
@@ -186,8 +192,8 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d, db):
             else:
                 float_2d.append(float(val))
 
-    preset1 = Group()
-    result, root_path = db.getRootPath(job_id)
+    preset1 = Group(myjob_id)
+    result, root_path = DbManager.getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -196,6 +202,7 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d, db):
     if result < 0:
         return finish_query(job_id, result), None
 
+    status_update(myjob_id, 20)
     preset1.read_cameras()
     result = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
     if result < 0:
@@ -203,25 +210,28 @@ def prepare_generate(job_id, cal_type, pts_2d, pts_3d, db):
 
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
-
+    status_update(myjob_id, 50)
     if not os.path.exists(os.path.join(root_path, 'output')):
         os.makedirs(os.path.join(root_path, 'output'))
 
-    result = preset1.export(job_id, cal_type)
+    result = preset1.export(myjob_id, job_id, cal_type)
     if result < 0:
         return finish_query(job_id, result), None
-
+    status_update(myjob_id, 80)
     return 0, preset1
 
 
-def generate_pts(job_id, cal_type, pts_2d, pts_3d, db):
+def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
-    result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+    status_update(myjob_id, 10)
+    result, preset = prepare_generate(
+        myjob_id, job_id, cal_type, pts_2d, pts_3d)
     save_point_image(preset)
+    status_update(myjob_id, 100)
     return result
 
 
-def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts, db):
+def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):
     float_world = []
     result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
     if result < 0:

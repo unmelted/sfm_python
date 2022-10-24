@@ -92,27 +92,12 @@ class generate_points(Resource):
 
         job_id = Commander.add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
-        msg = df.get_err_msg(result)
 
         result = {
             'status': 0,
             'job_id': job_id,
-            'message': '',
+            'message': 'SUCCESS',
         }
-
-        if job_id < 0:
-            message = df.get_err_msg(job_id)
-            result = {
-                'status': -1,
-                'job_id': job_id,
-                'message': message,
-            }
-        else:
-            result = {
-                'status': 0,
-                'job_id': job_id,
-                'message': 'SUCCESS',
-            }
 
         return result
 
@@ -193,6 +178,29 @@ class get_pair(Resource):
             'message': msg,
             'first_image': pair1,
             'second_image': pair2,
+        }
+
+        return result
+
+
+@api.route('/exodus/autocalib/getresult/<int:jobid>')
+@api.doc()
+class get_result(Resource):
+    @api.expect()
+    def get(self, jobid=jobid):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
+        print(jobid)
+
+        status, result, contents = Commander.send_query(
+            df.TaskCategory.GET_PTS, [jobid, ip_addr])
+        msg = df.get_err_msg(result)
+
+        result = {
+            'job_id': jobid,
+            'result': result,
+            'message': msg,
+            'contents': contents,
         }
 
         return result

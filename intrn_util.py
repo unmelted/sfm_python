@@ -8,14 +8,14 @@ from db_manager import DbManager as Db
 
 def status_update(job_id, status):
     l.get().w.info("Status update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.status_update(status, job_id)
+    Db.status_update(job_id, status)
     if status == 100:
         finish(job_id, 100)
 
 
 def status_update_quiet(job_id, status):
     l.get().w.info("Quiet tatus update. JOB_ID: {} Status: {} ".format(job_id, status))
-    Db.status_update(status, job_id)
+    Db.status_update(job_id, status)
 
 
 def finish_querys(job_id, result, count):
@@ -50,6 +50,13 @@ def get_pair(job_id):
         return finish_querys(job_id, result, 2)
     else:
         return 0, image_name1, image_name2
+
+
+def get_pts(job_id):
+    contents = None
+    l.get().w.info("GetPts start : {} ".format(job_id))
+    result, contents = Db.getPts(job_id)
+    return result, contents
 
 
 def get_targetpath(job_id):

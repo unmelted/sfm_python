@@ -101,12 +101,20 @@ class Group(object):
         elif list_from == 'colmap_db':
             file_names = sorted(glob.glob(os.path.join(
                 self.root_path, 'images', '*.' + self.ext)))
-            t_colmap = Colmap(self.root_path)
+            t_colmap = Colmap(self.job_id, self.root_path)
             result, image_names = t_colmap.import_colmap_cameras(file_names)
             if result < 0:
                 return result
 
         index = 0
+        #check image before set camera
+        for image_name in image_names :
+            image  = cv2.imread(image_name)
+            if (hasattr(image, 'shape') == False) :
+                l.get().w.error("Image abnormal err. retrun -24")
+                return -24
+
+
         for image_name in image_names:
             tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
             self.cameras.append(tcam)
@@ -137,7 +145,7 @@ class Group(object):
     def read_cameras(self, mode='colmap'):
         if mode == 'colmap':
             if self.colmap == None:
-                logging.error("there is no colmap data")
+                l.get().w.error("there is no colmap data")
                 return -10
 
             result = self.colmap.read_colmap_cameras(self.cameras)
@@ -153,7 +161,7 @@ class Group(object):
                         )
                     )
                 except FileNotFoundError:
-                    logging.error(
+                    l.get().w.error(
                         "Pkl file not found for camera %s. Computing from scratch {} ".format(cam.view.name))
                     break
 
@@ -380,7 +388,7 @@ class Group(object):
     def visualize(self, mode='colmap'):
         plot_scene(self.cameras)
 
-    def export(self, job_id, cal_type):
+    def export(self, myjob_id, job_id, cal_type):
         target_path = None
         if df.export_point_type == 'dm':
             result, target_path = get_targetpath(job_id)
@@ -388,7 +396,7 @@ class Group(object):
                 return result
 
         export_points(self, df.export_point_type,
-                      job_id, cal_type, target_path)
+                      myjob_id, cal_type, target_path)
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):

@@ -97,7 +97,7 @@ class DBLayer(object):
 
     @staticmethod
     def queryWorker(connection, type, query):
-        l.get().w.info("query worker : {}".format(query))
+        # l.get().w.info("query worker : {}".format(query))
         result = -1
         cursor = connection.cursor(cursor_factory=extras.NamedTupleCursor)
         # print("query worker : ", connection, cursor)

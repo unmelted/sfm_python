@@ -10,8 +10,9 @@ class TaskCategory(Enum):
     AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
-    VISUALIZE = 500
-    ANALYSIS = 600
+    GET_PTS = 500
+    VISUALIZE = 600
+    ANALYSIS = 700
     FINISH = 1
 
 
@@ -29,6 +30,8 @@ def get_err_msg(err_code):
         -21: "Input value is invalid",
         -22: "Can not add task. Now I'm busy..",
         -23: "Acess Denied to System Process",
+        -24: "There is image file problem - Upload again",
+        -25: "Canceled Job",
 
         -101: "Error on Autocalib Init. (create group)",
         -102: "Video (Camera) file is too small count",
@@ -60,6 +63,7 @@ def get_err_msg(err_code):
         -303: "Answer pts can't refer (no answer pts)",
         -304: "Points count is abnormal",
         -305: "World reference point is abnormal",
+        -306: "No generated pts data",
 
         -401: "Job is already requested to be canceled",
         -402: "Requested job will be finished soon. can't cancel",
@@ -79,7 +83,7 @@ class DEFINITION(object):
     base_index = 2000
     run_mode = 'colmap'
     # list_from = ['video_folder' , 'image_folder', 'pts_file', 'colmap_db']
-    cam_list = 'image_folder'
+    cam_list = 'pts_file'
 
     init_pair_mode = 'pair'  # zero : just #0, #1 camera, pair : selected camera by colmap
     answer_from = 'input'  # pts : UserPointData.pts , input : UserInput through web
@@ -87,7 +91,7 @@ class DEFINITION(object):
     pts_file_name = 'UserPointData.pts'
     colmap_db_name = 'colmap.db'
 
-    export_point_type = 'mct'  # 'dm', 'mct' , 'json'
+    export_point_type = 'dm'  # 'dm', 'mct' , 'json'
     output_pts_file_name = 'UserPointData_.pts'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'

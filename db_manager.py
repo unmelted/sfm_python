@@ -26,8 +26,13 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker(cls.conn, 'insert', q)
 
     @classmethod
-    def insert_newcommand(cls, job_id, ip, task, input_dir, mode, cam_list):
-        q = BaseQuery.insert('command', job_id=job_id, requestor=ip, task=df.TaskCategory.AUTOCALIB.name,
+    def insert_calibdata(cls, job_id, output):
+        q = BaseQuery.insert('calib_data', job_id=job_id, result=output)
+        result = DBLayer.queryWorker(cls.conn, 'insert', q)
+
+    @classmethod
+    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, mode, cam_list):
+        q = BaseQuery.insert('command', job_id=job_id, parent_job=parent_id, requestor=ip, task=task,
                              input_path=input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
         result = DBLayer.queryWorker(cls.conn, 'insert', q)
 
@@ -99,6 +104,18 @@ class DbManager(BaseQuery):
                 rows[0][0], rows[0][1]))
 
         return 0, rows[0][0], rows[0][1]
+
+    @classmethod
+    def getPts(cls, id):
+        q = cls.sql_list['query_getpts'] + str(id)
+        l.get().w.info("Get Pts result  Query: {} ".format(q))
+
+        rows = DBLayer.queryWorker(cls.conn, 'select-one', q)
+
+        if len(rows) == 0:
+            return -306, None
+
+        return 0, rows[0]
 
     @classmethod
     def getTargetPath(cls, id):
