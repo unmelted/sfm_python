@@ -27,7 +27,7 @@ class NewPool(object):
 
     @classmethod
     def getConnection(cls):
-        con = pg.connect(database='autocalib', user='admin', password='1234')
+        con = pg.connect(database='autocalib', user='admin', password='1234', host='127.0.0.1')
         # con = NewPool.connection_pool.getconn()
         print("New Pool return : ", con)
         return con
