@@ -1,0 +1,10 @@
+
+[Unit]
+Description=EXODUS Calcuation Engine
+
+[Service]
+User=<root>
+ExecStart=/bin/bash -c 'cd /home/replay/work/sfm_python && conda activate calib && python3 main.py'
+
+[Install]
+WantedBy=multi-user.target
