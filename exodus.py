@@ -226,7 +226,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
         myjob_id, job_id, cal_type, pts_2d, pts_3d)
-    save_point_image(preset)
+    save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
     return result
 
