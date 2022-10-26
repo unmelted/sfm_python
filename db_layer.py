@@ -27,14 +27,14 @@ class NewPool(object):
 
     @classmethod
     def getConnection(cls):
-        con = pg.connect(database='autocalib', user='admin', password='1234', host='127.0.0.1')
-        # con = NewPool.connection_pool.getconn()
-        print("New Pool return : ", con)
+        # con = pg.connect(database='autocalib', user='admin', password='1234', host='127.0.0.1')
+        con = cls.connection_pool.getconn()
+        print("connect return : ", con)
         return con
 
     @classmethod
-    def exit(cls):
-        NewPool.connection_pool.putconn()
+    def release(cls, conn):
+        cls.connection_pool.putconn(conn)
 
 
 class BaseQuery(object):
@@ -95,6 +95,8 @@ class DBLayer(object):
             # print(self.sql_list[i])
             DBLayer.queryWorker(connection, 'create', sql_list[i])
 
+        NewPool.release(connection)
+
     @staticmethod
     def queryWorker(connection, type, query):
         # l.get().w.info("query worker : {}".format(query))
@@ -112,4 +114,5 @@ class DBLayer(object):
             result = 0
         # print(result)
         cursor.close()
+        NewPool.releae(connection)
         return result
