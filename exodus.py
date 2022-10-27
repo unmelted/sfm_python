@@ -8,14 +8,14 @@ from camera_group import *
 import definition as df
 from logger import Logger as l
 # from db_layer import NewPool
-from job_manager import JobManager
+from job_manager import JobManager, JobActivity
 from db_manager import DbManager
 from intrn_util import *
 from auto_calib import Autocalib
 
 
 class Commander(object):
-
+    dbm = DbManager()
     cmd_que = Queue()
 
     @classmethod
@@ -46,8 +46,8 @@ class Commander(object):
         l.get().w.debug('receive query {} {}'.format(query, obj[0]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
-            status, result = DbManager.getJobStatus(obj[0])
-
+            status, result = cls.dbm.getJobStatus(obj[0])
+            print('----------- status result', status, result)
         elif query == df.TaskCategory.GET_PAIR:
             result, image1, image2 = get_pair(obj[0])
             status = 100
@@ -56,11 +56,11 @@ class Commander(object):
                 contents.append(image2)
 
         elif query == df.TaskCategory.AUTOCALIB_CANCEL:
-            result = JobManager.checkJobStatusForCancel(obj[0])
+            result = JobActivity.checkJobStatusForCancel(obj[0])
             print("cancle job result : ", result)
             if result == 0:
                 print('can push cancel ')
-                JobManager.pushCancelJob(int(obj[0]))
+                JobActivity.pushCancelJob(int(obj[0]))
             else:
                 l.get().w.info('push cancle is failed result {} '.format(result))
                 return status, result, contents
@@ -71,20 +71,21 @@ class Commander(object):
 
         if query != df.TaskCategory.AUTOCALIB_STATUS:
             if len(obj) > 2:
-                DbManager.insert_requesthistory(
+                cls.dbm.insert_requesthistory(
                     int(obj[0]), obj[1], query, json.dumps(obj[2]))
 
             else:
-                DbManager.insert_requesthistory(
+                cls.dbm.insert_requesthistory(
                     int(obj[0]), obj[1], query, None)
 
+        l.get().w.debug('return result status {} result {} contents {} '.format(status, result, contents))
         return status, result, contents
 
     @classmethod
     def add_task(cls, task, obj):
         print("commander add task is called ", cls.cmd_que)
-        if JobManager.checkJobsUnderLimit() == True:
-            job_id = DbManager.getJobIndex() + 1
+        if JobActivity.checkJobsUnderLimit() == True:
+            job_id = cls.dbm.getJobIndex() + 1
             cls.cmd_que.put((task, job_id, obj))
             l.get().w.info("Alloc job id {} ".format(job_id))
             return job_id
@@ -93,6 +94,7 @@ class Commander(object):
 
     @classmethod
     def processor(cls, task, job_id, obj):
+        dbm = DbManager()
         result = 0
         status = 0
         contents = []
@@ -102,7 +104,7 @@ class Commander(object):
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
                 job_id, obj[0], obj[1]))
             desc = obj[1]
-            DbManager.insert_requesthistory(job_id, obj[2], task, desc)
+            dbm.insert_requesthistory(job_id, obj[2], task, desc)
             p = Process(target=calculate, args=(
                 obj[0], job_id, obj[1], obj[2]))
             p.start()
@@ -125,7 +127,7 @@ class Commander(object):
                 return status, result, contents
 
             desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
-            DbManager.insert_requesthistory(job_id, obj[1], task, None)
+            dbm.insert_requesthistory(job_id, obj[1], task, None)
 
             if task == df.TaskCategory.ANALYSIS:
                 p = Process(target=analysis, args=(job_id, obj[0], cal_type, obj[2]['pts_2d'],
@@ -140,7 +142,7 @@ class Commander(object):
 
 def calculate(input_dir, job_id, group, ip):
     print("calculated mode started pid : ", os.getpid())
-    JobManager.insertNewJob(job_id, os.getpid())
+    JobActivity.insertNewJob(job_id, os.getpid())
     print("--------------AUTOCALIB2-------------")
     print(os.getpid())
     print("------------------------------")
@@ -149,26 +151,28 @@ def calculate(input_dir, job_id, group, ip):
     ac.run()
     del ac
     ac = None
-    JobManager.updateJob(job_id, 'complete')
+    JobActivity.updateJob(job_id, 'complete')
 
 
 def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d):
     print("generate mode started pid : ", os.getpid())
-    JobManager.insertNewJob(myjob_id, os.getpid())
-    DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
+    dbm = DbManager()    
+    JobActivity.insertNewJob(myjob_id, os.getpid())
+    dbm.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
                                 'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
     result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d)
-    JobManager.updateJob(myjob_id, 'complete')
+    JobActivity.updateJob(myjob_id, 'complete')
 
 
 def analysis(myjob_id, job_id, cal_type, pts_2d, pts_3d, world_pts):
     print("analysis mode started pid : ", os.getpid())
-    JobManager.insertNewJob(myjob_id, os.getpid())
+    JobActivity.insertNewJob(myjob_id, os.getpid())
     analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts)
-    JobManager.updateJob(myjob_id, 'complete')
+    JobActivity.updateJob(myjob_id, 'complete')
 
 
 def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
+    dbm = DbManager()    
     time_s = time.time()
     float_2d = []
     float_3d = []
@@ -193,7 +197,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
                 float_2d.append(float(val))
 
     preset1 = Group(myjob_id)
-    result, root_path = DbManager.getRootPath(job_id)
+    result, root_path = dbm.getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
 

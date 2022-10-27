@@ -10,7 +10,7 @@ from extn_util import *
 from intrn_util import *
 from logger import Logger as l
 from definition import DEFINITION as df
-from job_manager import JobManager
+from job_manager import JobActivity
 
 
 IS_PYTHON3 = sys.version_info[0] >= 3
@@ -24,7 +24,7 @@ def shell_cmd(cmd, job_id):
     print("--------------AUTOCALIB4-------------")
     print(process.pid)
     print("-------------------------------------")
-    JobManager.updateJob(job_id, 'updatepid2', process.pid)
+    JobActivity.updateJob(job_id, 'updatepid2', process.pid)
     # for line in iter(process.stdout.readline, b''):
     #     print(line)
     # process.stdout.close()
