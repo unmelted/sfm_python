@@ -268,7 +268,7 @@ def save_point_image(preset, myjob_id):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
-    review_path = os.path.join(defn.output_pts_file_name, myjob_id)
+    review_path = os.path.join(defn.output_pts_image_dir, str(myjob_id))
     os.makedirs(review_path)
     print('save_point_image review_path : ', review_path)
 

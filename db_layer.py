@@ -123,12 +123,12 @@ class DBLayer(object):
 
         for i in create:
             # print(self.sql_list[i])
-            DBLayer.queryWorker(connection, 'create', sql_list[i])
+            DBLayer.queryWorker('create', sql_list[i])
 
         # NewPool.release(connection)
 
     @staticmethod
-    def queryWorker(pool, type, query):
+    def queryWorker(type, query):
         # l.get().w.info("query worker : {}".format(query))
 
         with DBLayer.getConn().connection() as conn :
@@ -145,7 +145,6 @@ class DBLayer(object):
                 else:  # insert , update
                     conn.commit()
                     result = 0
-                print(result)
 
                 # cursor = connection.cursor(cursor_factory=extras.NamedTupleCursor) #v2
                 # print("query worker : ", connection, cursor)

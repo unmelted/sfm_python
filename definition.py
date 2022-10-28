@@ -10,7 +10,7 @@ class TaskCategory(Enum):
     AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
-    GET_PTS = 500
+    GET_RESULT = 500
     VISUALIZE = 600
     ANALYSIS = 700
     FINISH = 1

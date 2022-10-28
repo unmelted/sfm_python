@@ -106,7 +106,6 @@ jobid = api.model('jobid', {
     'job_id': fields.Integer,
 })
 
-
 @ api.route('/exodus/autocalib/status/<int:jobid>')
 @ api.doc()
 class calib_status(Resource):
@@ -193,7 +192,7 @@ class get_result(Resource):
         print(jobid)
 
         status, result, contents = Commander.send_query(
-            df.TaskCategory.GET_PTS, [jobid, ip_addr])
+            df.TaskCategory.GET_RESULT, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
