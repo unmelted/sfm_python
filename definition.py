@@ -10,7 +10,7 @@ class TaskCategory(Enum):
     AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
     GET_PAIR = 400
-    GET_PTS = 500
+    GET_RESULT = 500
     VISUALIZE = 600
     ANALYSIS = 700
     FINISH = 1
@@ -93,6 +93,11 @@ class DEFINITION(object):
 
     export_point_type = 'dm'  # 'dm', 'mct' , 'json'
     output_pts_file_name = 'UserPointData_.pts'
+    # local
+    output_pts_image_dir = '/mnt/images/review/'
+
+    # server
+    #output_pts_image_dir = '/var/www/html/auto_calib/review/'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
     CHAT_ID = '1140943041'  # '5623435982'

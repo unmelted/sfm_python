@@ -263,10 +263,14 @@ def save_ex_answer_image(preset):
         cv2.imwrite(file_name, preset.cameras[i].view.image)
 
 
-def save_point_image(preset):
+def save_point_image(preset, myjob_id):
     output_path = os.path.join(preset.root_path, 'output')
     if not os.path.exists(output_path):
         os.makedirs(output_path)
+
+    review_path = os.path.join(defn.output_pts_image_dir, str(myjob_id))
+    os.makedirs(review_path)
+    print('save_point_image review_path : ', review_path)
 
     for i in range(len(preset.cameras)):
         viewname = get_viewname(preset.cameras[i].view.name, preset.ext)
@@ -317,6 +321,7 @@ def save_point_image(preset):
 
         l.get().w.info(file_name)
         cv2.imwrite(file_name, preset.cameras[i].view.image)
+        shutil.copy(file_name, review_path)
 
 
 def import_json(path):

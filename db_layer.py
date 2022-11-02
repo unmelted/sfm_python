@@ -1,7 +1,7 @@
 import os
 import time
-import psycopg2 as pg
-from psycopg2 import pool, extras
+# import psycopg as pg
+from psycopg_pool import ConnectionPool
 import json
 from logger import Logger as l
 
@@ -16,8 +16,12 @@ keepalive_kwargs = {
 
 
 class NewPool(object):
-    connection_pool = pool.ThreadedConnectionPool(
-        1, 50, host='127.0.0.1', database='autocalib', user='admin', password='1234')
+    cs = "dbname=%s user=%s password=%s host=%s" % ('autocalib', 'admin', '1234', '127.0.0.1')
+
+    def __init__(self) :            
+        # conninfo = pg.conninfo.conninfo_to_dict(dbname='autocalib', user='admin', password='1234') # v2
+        self.connection_pool = ConnectionPool(self.cs, max_size=50, num_workers=10)
+        self.pid = os.getpid()
 
     # @staticmethod
     # def get():
@@ -25,16 +29,25 @@ class NewPool(object):
     #     print("New Pool return : ", con)
     #     return con
 
-    @classmethod
-    def getConnection(cls):
-        con = pg.connect(database='autocalib', user='admin', password='1234')
-        # con = NewPool.connection_pool.getconn()
-        print("New Pool return : ", con)
-        return con
+    def __exit__(self):
+        print('new pool exit! ')
+        self.connection_pool.putconn()
 
-    @classmethod
-    def exit(cls):
-        NewPool.connection_pool.putconn()
+
+    def getConn(self):
+        # con = pg.connect(database='autocalib', user='admin', password='1234', host='127.0.0.1')
+        # con = cls.connection_pool.connection() #v2
+        # print("connect return : ", con)
+        if self.pid == os.getpid() :
+            return self.connection_pool
+        else :
+            print('process is different need to crate connection pool again')
+            self.connection_pool = ConnectionPool(self.cs, max_size= 50, num_workers=10)
+            return self.connection_pool
+
+
+    # def release(cls, conn):
+    #     cls.connection_pool.putconn(conn)
 
 
 class BaseQuery(object):
@@ -82,6 +95,23 @@ class BaseQuery(object):
 
 
 class DBLayer(object):
+    cs = "dbname=%s user=%s password=%s host=%s" % ('autocalib', 'admin', '1234', '127.0.0.1')    
+    connection_pool = ConnectionPool(cs, max_size=50, num_workers=10)
+    pid = os.getpid()    
+
+    @staticmethod
+    def getConn():
+        # con = pg.connect(database='autocalib', user='admin', password='1234', host='127.0.0.1')
+        # con = cls.connection_pool.connection() #v2
+        # print("connect return : ", con)
+        if DBLayer.pid == os.getpid() :
+            return DBLayer.connection_pool
+        else :
+            print('process is different need to crate connection pool again')
+            DBLayer.pid = os.getpid()
+            DBLayer.connection_pool = ConnectionPool(DBLayer.cs, max_size= 50, num_workers=10)
+            return DBLayer.connection_pool
+
     @staticmethod
     def initialize(connection):
         json_file = open(os.path.join(
@@ -93,23 +123,40 @@ class DBLayer(object):
 
         for i in create:
             # print(self.sql_list[i])
-            DBLayer.queryWorker(connection, 'create', sql_list[i])
+            DBLayer.queryWorker('create', sql_list[i])
+
+        # NewPool.release(connection)
 
     @staticmethod
-    def queryWorker(connection, type, query):
+    def queryWorker(type, query):
         # l.get().w.info("query worker : {}".format(query))
-        result = -1
-        cursor = connection.cursor(cursor_factory=extras.NamedTupleCursor)
-        # print("query worker : ", connection, cursor)
-        cursor.execute(query)
 
-        if type == 'select-one':
-            result = cursor.fetchone()
-        elif type == 'select-all':
-            result = cursor.fetchall()
-        else:  # insert , update
-            connection.commit()
-            result = 0
-        # print(result)
-        cursor.close()
-        return result
+        with DBLayer.getConn().connection() as conn :
+            with conn.cursor() as cur:
+                cur.execute(query)
+                print("--------------queryworker", os.getpid(), cur )
+
+                result = -1
+
+                if type == 'select-one':
+                    result = cur.fetchone()
+                elif type == 'select-all':
+                    result = cur.fetchmany()
+                else:  # insert , update
+                    conn.commit()
+                    result = 0
+
+                # cursor = connection.cursor(cursor_factory=extras.NamedTupleCursor) #v2
+                # print("query worker : ", connection, cursor)
+                # cursor.execute(query) #v2
+
+                # if type == 'select-one':
+                #     result = cursor.fetchone()
+                # elif type == 'select-all':
+                #     result = cursor.fetchall()
+                # else:  # insert , update
+                #     conn.commit()
+                #     result = 0
+                # # print(result)
+                # cursor.close()
+                return result

@@ -1,0 +1,10 @@
+
+[Unit]
+Description=EXODUS Calcuation Engine
+
+[Service]
+User=replay
+ExecStart=/bin/bash -c '/home/replay/work/sfm_python/sh/exodus.sh'
+
+[Install]
+WantedBy=multi-user.target

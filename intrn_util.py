@@ -52,7 +52,7 @@ def get_pair(job_id):
         return 0, image_name1, image_name2
 
 
-def get_pts(job_id):
+def get_result(job_id):
     contents = None
     l.get().w.info("GetPts start : {} ".format(job_id))
     result, contents = Db.getPts(job_id)

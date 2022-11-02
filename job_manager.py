@@ -9,7 +9,7 @@ from db_layer import NewPool, DBLayer, BaseQuery
 
 
 class JobManager(BaseQuery):
-    conn = NewPool.getConnection()
+    # conn = NewPool().getConn()
     sql_list = BaseQuery.loadjson(None)
 
     @classmethod
@@ -43,7 +43,7 @@ class JobManager(BaseQuery):
         q = JobManager.sql_list['query_getcanceljobs']
         # l.get().w.debug("Get canceljobs Query: {} ".format(q))
 
-        rows = DBLayer.queryWorker(cls.conn, 'select-all', q)
+        rows = DBLayer.queryWorker( 'select-all', q)
 
         for i in range(len(rows)):
             cids.append(int(rows[i][0]))
@@ -89,9 +89,9 @@ class JobManager(BaseQuery):
         # l.get().w.critical("Kill cmd -- {} : result {}".format(cmd, clear))
         q = BaseQuery.update('job_manager', cancel='done',
                              cancel_date='NOW()', complete='done', complete_date='NOW()', job_id=job_id)                             
-        result = DBLayer.queryWorker(cls.conn, 'update', q)
+        result = DBLayer.queryWorker( 'update', q)
         q = BaseQuery.update('command', result_id=-25, result_msg='Canceled Job', terminate=1, job_id=job_id)
-        result = DBLayer.queryWorker(cls.conn, 'update', q)
+        result = DBLayer.queryWorker( 'update', q)
 
         return 0
 
@@ -102,7 +102,7 @@ class JobManager(BaseQuery):
         pid1s = []
         pid2s = []
         q = cls.sql_list['query_getactivejobs']
-        rows = DBLayer.queryWorker(cls.conn, 'select-all', q)
+        rows = DBLayer.queryWorker( 'select-all', q)
 
         if len(rows) == 0:
             return 0, 0, 0, 0
@@ -126,16 +126,20 @@ class JobManager(BaseQuery):
         print("active pids count : ", count)
         return count, jids, pid1s, pid2s
 
+class JobActivity(BaseQuery) :
+    conn = NewPool().getConn()
+    sql_list = BaseQuery.loadjson(None)
+
     @classmethod
     def pushCancelJob(cls, job_id):
         q = BaseQuery.update('job_manager', cancel='try', job_id=job_id)
-        result = DBLayer.queryWorker(cls.conn, 'update', q)
+        result = DBLayer.queryWorker( 'update', q)
 
     @classmethod
     def countActiveJobs(cls):
         q = cls.sql_list['query_countactivejobs']
         l.get().w.info("Count activejobs Query: {} ".format(q))
-        rows = DBLayer.queryWorker(cls.conn, 'select-one', q)
+        rows = DBLayer.queryWorker( 'select-one', q)
 
         if len(rows) == 0:
             return 0
@@ -148,7 +152,7 @@ class JobManager(BaseQuery):
     @classmethod
     def checkJobsUnderLimit(cls):
         print("jobmanager check jobs under limit")
-        curJobs = JobManager.countActiveJobs()
+        curJobs = JobActivity.countActiveJobs()
         print("cur jobs : ", curJobs)
         if curJobs < defn.job_limit:
             return True
@@ -160,7 +164,7 @@ class JobManager(BaseQuery):
         q = cls.sql_list['query_jobstatusforcancel'] + str(job_id)
         l.get().w.info("Jobstatus Query before cancel: {} ".format(q))
         print(q)
-        rows = DBLayer.queryWorker(cls.conn, 'select-one', q)
+        rows = DBLayer.queryWorker( 'select-one', q)
 
         print(rows[0], rows[1], rows[2])
         if len(rows) == 0:
@@ -180,7 +184,7 @@ class JobManager(BaseQuery):
     def insertNewJob(cls, job_id, pid1=None):
         q = BaseQuery.insert('job_manager', job_id=job_id,
                              pid1=pid1, pid2='None', complete='running')
-        result = DBLayer.queryWorker(cls.conn, 'insert', q)
+        result = DBLayer.queryWorker( 'insert', q)
 
     @classmethod
     def updateJob(cls, job_id, type, param=None):
@@ -190,4 +194,4 @@ class JobManager(BaseQuery):
         elif type == 'updatepid2':
             q = BaseQuery.update('job_manager', pid2=param,  job_id=job_id)
 
-        result = DBLayer.queryWorker(cls.conn, 'update', q)
+        result = DBLayer.queryWorker( 'update', q)
