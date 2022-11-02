@@ -1,7 +1,9 @@
+from ensurepip import version
 import os
 from enum import Enum
 import logging
 
+VERSION = 'V4.0.0.2'
 
 class TaskCategory(Enum):
     INIT = 0
@@ -14,7 +16,6 @@ class TaskCategory(Enum):
     VISUALIZE = 600
     ANALYSIS = 700
     FINISH = 1
-
 
 def get_err_msg(err_code):
     msg = None
@@ -111,3 +112,8 @@ class DEFINITION(object):
     feature_minimum = 500
 
     job_limit = 5
+
+    VERSION = '4.0.0.2'
+
+    def get_version(self) :
+        return VERSION

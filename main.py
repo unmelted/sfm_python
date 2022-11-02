@@ -268,11 +268,23 @@ analysis = api.model('analysis', {
 
 #         return result
 
+@api.route('/exodus/autocalib/getversion')
+@api.doc()
+class get_result(Resource):
+    @api.expect()
+    def get(self):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
+
+        ver = df.DEFINITION.get_version()
+        print('getversion return :', ver )
+        
+        return ver
+
 
 file_args = api.model('file_args', {
     'config_file': fields.String
 })
-
 
 @api.route('/exodus/autocalib/read_config')
 @api.doc()
