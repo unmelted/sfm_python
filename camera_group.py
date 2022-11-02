@@ -111,7 +111,7 @@ class Group(object):
         for image_name in image_names :
             image  = cv2.imread(image_name)
             if (hasattr(image, 'shape') == False) :
-                l.get().w.error("Image abnormal err. retrun -24")
+                l.get().w.error("Image abnormal err. retrun -24", image_name)
                 return -24
 
 

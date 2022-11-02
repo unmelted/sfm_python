@@ -320,7 +320,8 @@ def save_point_image(preset, myjob_id):
                 pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
 
         l.get().w.info(file_name)
-        cv2.imwrite(file_name, preset.cameras[i].view.image)
+        output = cv2.resize(preset.cameras[i].view.image, (1280, 720))
+        cv2.imwrite(file_name, output)
         shutil.copy(file_name, review_path)
 
 
