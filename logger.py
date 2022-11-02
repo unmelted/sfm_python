@@ -26,7 +26,7 @@ class Logger(object):
     @staticmethod
     def get():
         if Logger.instance is None:
-            Logger.instance = Logger(['file', 'viewer', 'bot'])
+            Logger.instance = Logger(['file', 'bot']) #Logger(['file', 'viewer', 'bot'])
         return Logger.instance
 
     def __init__(self, type, ip='10.82.5.119'):

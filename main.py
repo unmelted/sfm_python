@@ -276,7 +276,7 @@ class get_result(Resource):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)
 
-        ver = df.DEFINITION.get_version()
+        ver = df.DEFINITION().get_version()
         print('getversion return :', ver )
         
         return ver
