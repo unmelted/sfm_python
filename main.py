@@ -278,8 +278,10 @@ class get_result(Resource):
 
         ver = df.DEFINITION().get_version()
         print('getversion return :', ver )
-        
-        return ver
+        result = {
+            'version' : ver,
+        }
+        return result
 
 
 file_args = api.model('file_args', {
