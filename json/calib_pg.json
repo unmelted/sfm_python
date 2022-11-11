@@ -3,7 +3,7 @@
     "create_request_history": "CREATE TABLE IF NOT EXISTS request_history (datetime TIMESTAMP DEFAULT NOW(), job_id INTEGER NOT NULL, requestor TEXT,  task TEXT, etc TEXT);",
     "create_job_manager": "CREATE TABLE IF NOT EXISTS job_manager (job_id INTEGER PRIMARY KEY, pid1 TEXT, pid2 TEXT, cancel TEXT, cancel_date TIMESTAMP, complete TEXT, complete_date TIMESTAMP);",
     "create_generate_data": "CREATE TABLE IF NOT EXISTS calib_data (job_id INTEGER PRIMARY KEY, datetime TIMESTAMP DEFAULT NOW(), result JSON );",
-    "create_point_data": "CREATE TABLE IF NOT EXISTS ref_point (no SERICAL PRIMARY KEY NOT NULL, job_id INTEGER, parent_job INTEGER, createdate TIMESTAMP DEFAULT NOW(), pt_2d INTEGER[], pt_3d INTEGER[], world INTEGER[]);",
+    "create_point_data": "CREATE TABLE IF NOT EXISTS ref_point (no SERIAL PRIMARY KEY NOT NULL, job_id INTEGER, parent_job INTEGER, createdate TIMESTAMP DEFAULT NOW(), pt_2d INTEGER[], pt_3d INTEGER[], world INTEGER[]);",
     "query_root_path": "SELECT root_path FROM command where job_id = ",
     "query_root_path_ex": " ORDER BY datetime DESC ",
     "query_job_id": "SELECT job_id FROM command ORDER BY job_id DESC",

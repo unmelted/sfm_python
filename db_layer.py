@@ -119,7 +119,7 @@ class DBLayer(object):
         sql_list = json.load(json_file)
 
         create = ["create_command_db",
-                  "create_request_history", "create_job_manager", "create_generate_data"]
+                  "create_request_history", "create_job_manager", "create_generate_data", "create_point_data"]
 
         for i in create:
             # print(self.sql_list[i])

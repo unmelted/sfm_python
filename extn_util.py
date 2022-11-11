@@ -361,10 +361,12 @@ def get_camera_list_in_both(from_path, group_id, ext):
 
     for img_file in img_files:
         cam_id = img_file[img_file.rfind('/')+1:-1 * len(ext) - 1]
-        if cam_id.rfind('_') == 0:
+        print(cam_id)
+        if cam_id.rfind('_') == -1:
             pass
         else:
             cam_id = cam_id[:cam_id.rfind('_')]
+        print('get_camera_list_in_both cam_id : ', cam_id)
 
         if cam_id in cam_inpts:
             image_names.append(img_file)

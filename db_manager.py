@@ -131,7 +131,17 @@ class DbManager(BaseQuery):
         return 0, rows[0][0]
 
     @classmethod
-    def insert_pointtable(cls, job_id, parent_job, pts_2d, pts_3d) :        
-        q = BaseQuery.insert('ref_point', job_id=job_id, parent_job=parent_job, pt_2d=pts_2d, pt_3d=pts_3d)
-        l.get().w.info("insert pointtable Query: {} ".format(q))        
+    def insert_pointtable(cls, job_id, parent_job, pts_2d, pts_3d) :     
+        q = ''
+        if len(pts_2d) > 0 and len(pts_3d) > 0 :   
+            q = 'INSERT INTO ref_point (job_id, parent_job, pt_2d, pt_3d) VALUES (%s ,%s, %s, %s);' % \
+                (job_id, parent_job, 'ARRAY '+ str(pts_2d).replace('\'', ''), 'ARRAY ' + str(pts_3d).replace('\'', ''))
+        elif len(pts_2d) > 0 and len(pts_3d) == 0:
+            q = 'INSERT INTO ref_point (job_id, parent_job, pt_2d) VALUES (%s ,%s, %s);' % \
+                (job_id, parent_job, 'ARRAY '+ str(pts_2d).replace('\'', ''))
+        else :
+            q = 'INSERT INTO ref_point (job_id, parent_job, pt_3d) VALUES (%s ,%s, %s);' % \
+                (job_id, parent_job, 'ARRAY ' + str(pts_3d).replace('\'', ''))
+   
+        l.get().w.info("insert ref_point Query: {} ".format(q))        
         result = DBLayer.queryWorker( 'insert', q)
