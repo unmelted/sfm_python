@@ -230,43 +230,40 @@ class visualize(Resource):
 
 analysis = api.model('analysis', {
     'job_id': fields.Integer,
-    "pts_2d": fields.List(fields.Float),
-    "pts_3d": fields.List(fields.Float),
+    'cal_type': fields.String,     
     "world": fields.List(fields.Float)
 })
 
 
-# @api.route('/exodus/autocalib/analysis')
-# @api.doc()
-# class calib_analysis(Resource):
-#     @api.expect(analysis)
-#     def post(self, an=analysis):
-#         ip_addr = request.environ['REMOTE_ADDR']
-#         print("ip of requestor ", ip_addr)
+@api.route('/exodus/autocalib/analysis')
+@api.doc()
+class calib_analysis(Resource):
+    @api.expect(analysis)
+    def post(self, an=analysis):
+        ip_addr = request.environ['REMOTE_ADDR']
+        print("ip of requestor ", ip_addr)
 
-#         parser = reqparse.RequestParser()
-#         parser.add_argument('job_id', type=int)
-#         parser.add_argument('pts_3d', default=list, action='append')
-#         parser.add_argument('pts_2d', default=list, action='append')
-#         parser.add_argument('world', default=list, action='append')
+        parser = reqparse.RequestParser()
+        parser.add_argument('job_id', type=int)
+        parser.add_argument('cal_type', type=str)        
+        parser.add_argument('world', default=list, action='append')
 
-#         args = parser.parse_args()
+        args = parser.parse_args()
 
-#         print(args['job_id'])
-#         print(args['pts_3d'])
-#         print(args['pts_2d'])
-#         print(args['world'])
-#         status, result, _ = Commander.send_query(
-#             df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
+        print(args['job_id'])
+        print(args['cal_type'])
+        print(args['world'])
+        status, result, _ = Commander.send_query(
+            df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
 
-#         msg = df.get_err_msg(result)
-#         result = {
-#             'job_id': args['job_id'],
-#             'progress': result,
-#             'message': msg,
-#         }
+        msg = df.get_err_msg(result)
+        result = {
+            'job_id': args['job_id'],
+            'progress': result,
+            'message': msg,
+        }
 
-#         return result
+        return result
 
 @api.route('/exodus/autocalib/getversion')
 @api.doc()

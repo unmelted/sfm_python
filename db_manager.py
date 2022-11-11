@@ -129,3 +129,9 @@ class DbManager(BaseQuery):
             l.get().w.debug("target path : {} ".format(rows[0][0]))
 
         return 0, rows[0][0]
+
+    @classmethod
+    def insert_pointtable(cls, job_id, parent_job, pts_2d, pts_3d) :        
+        q = BaseQuery.insert('ref_point', job_id=job_id, parent_job=parent_job, pt_2d=pts_2d, pt_3d=pts_3d)
+        l.get().w.info("insert pointtable Query: {} ".format(q))        
+        result = DBLayer.queryWorker( 'insert', q)

@@ -109,7 +109,7 @@ class Commander(object):
             print(os.getpid())
             print("------------------------------")
 
-        elif task == df.TaskCategory.ANALYSIS or task == df.TaskCategory.GENERATE_PTS:
+        elif task == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(
                 " Task Generate start obj : {} {} ".format(obj[0], obj[2]))
             if len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) > 15:
@@ -125,16 +125,14 @@ class Commander(object):
 
             desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
+            p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
+                                                obj[2]['pts_3d']))
+            p.start()
 
-            if task == df.TaskCategory.ANALYSIS:
-                p = Process(target=analysis, args=(job_id, obj[0], cal_type, obj[2]['pts_2d'],
-                                                   obj[2]['pts_3d'], obj[2]['world']))
-                p.start()
-
-            elif task == df.TaskCategory.GENERATE_PTS:
-                p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
-                                                   obj[2]['pts_3d']))
-                p.start()
+        elif task == df.TaskCategory.ANALYSIS:
+            DbManager.insert_requesthistory(job_id, obj[1], task, obj[2]['world'])            
+            p = Process(target=analysis, args=(job_id, obj[2]['job_id'], cal_type, obj[2]['world']))
+            p.start()
 
 
 def calculate(input_dir, job_id, group, ip):
@@ -161,10 +159,11 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d):
     JobActivity.updateJob(myjob_id, 'complete')
 
 
-def analysis(myjob_id, job_id, cal_type, pts_2d, pts_3d, world_pts):
+#job_id is job_id for generate
+def analysis(myjob_id, job_id, cal_type, world_pts):
     print("analysis mode started pid : ", os.getpid())
     JobActivity.insertNewJob(myjob_id, os.getpid())
-    analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts)
+    analysis_mode(myjob_id, job_id, cal_type, world_pts)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -173,35 +172,38 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     time_s = time.time()
     float_2d = []
     float_3d = []
+    total_pt = []
     l.get().w.info('prepare generate jobid {} cal_type {} '.format(job_id, cal_type))
     if cal_type == '3D' and len(pts_3d) < 16:
-        return finish_query(job_id, -301)
+        return finish_query(myjob_id, -301)
     elif cal_type == '2D' and len(pts_2d) < 8:
-        return finish_query(job_id, -301), None
+        return finish_query(myjob_id, -301), None
 
     if cal_type == '2D3D' or cal_type == '3D':
         for val in pts_3d:
             if float(val) < 0:
-                return finish_query(job_id, -302), None
+                return finish_query(myjob_id, -302), None
             else:
                 float_3d.append(float(val))
 
     if cal_type == '2D3D' or cal_type == '2D':
         for val in pts_2d:
             if float(val) < 0:
-                return finish_query(job_id, -302), None
+                return finish_query(myjob_id, -302), None
             else:
                 float_2d.append(float(val))
+    
+    DbManager.insert_pointtable(myjob_id, job_id, pts_2d, pts_3d)
 
     preset1 = Group(myjob_id)
     result, root_path = DbManager.getRootPath(job_id)
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish_query(myjob_id, result), None
 
     result = preset1.create_group(
         root_path, df.DEFINITION.run_mode, 'colmap_db')
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish_query(myjob_id, result), None
 
     status_update(myjob_id, 20)
     preset1.read_cameras()
@@ -229,12 +231,26 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
         myjob_id, job_id, cal_type, pts_2d, pts_3d)
     save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
+
+    preset.generate_extra_point('2D', None)    
+    preset.generate_adjust()
     return result
 
 
-def analysis_mode(job_id, cal_type, pts_2d, pts_3d, world_pts):
+def analysis_mode(myjob_id, job_id, cal_type, world_pts):
     float_world = []
-    result, preset = prepare_generate(job_id, cal_type, pts_2d, pts_3d)
+    result, preset = prepare_generate(job_id, cal_type, world_pts)
+    # preset = Group(myjob_id)
+    result, root_path = DbManager.getRootPath(job_id)
+    if result < 0:
+        return finish_query(job_id, result), None
+
+    result = preset.create_group(
+        root_path, df.DEFINITION.run_mode, 'colmap_db')
+    if result < 0:
+        return finish_query(job_id, result), None
+
+
     if result < 0:
         return result
 
