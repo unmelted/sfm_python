@@ -423,7 +423,7 @@ class Group(object):
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
-    def generate_adjust(self):
+    def generate_adjust(self, job_id):
         gadj = GroupAdjust(self.cameras)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
@@ -433,6 +433,6 @@ class Group(object):
             os.makedirs(os.path.join(self.root_path, 'preview'))
         output_path = os.path.join(self.root_path, 'preview')
 
-        gadj.adjust_image(output_path, self.ext)
+        gadj.adjust_image(output_path, self.ext, job_id)
 
         # making_gif(output_path, output_path)

@@ -233,7 +233,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     status_update(myjob_id, 100)
 
     preset.generate_extra_point('2D', None)    
-    preset.generate_adjust()
+    preset.generate_adjust(myjob_id)
     return result
 
 
@@ -261,5 +261,5 @@ def analysis_mode(myjob_id, job_id, cal_type, world_pts):
         return -305
 
     preset.generate_extra_point(cal_type, float_world)
-    preset.generate_adjust()
+    preset.generate_adjust(myjob_id)
     return 0
