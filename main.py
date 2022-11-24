@@ -85,10 +85,12 @@ class generate_points(Resource):
         parser.add_argument('job_id', type=int)
         parser.add_argument('pts_2d', default=list, action='append')
         parser.add_argument('pts_3d', default=list, action='append')
+        parser.add_argument('world', default=list, action='append')
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
         print(args['pts_3d'])
+        print(args['world'])
 
         job_id = Commander.add_task(
             df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))

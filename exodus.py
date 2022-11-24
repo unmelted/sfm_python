@@ -123,10 +123,10 @@ class Commander(object):
                 status = 0
                 return status, result, contents
 
-            desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
+            # desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
             p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
-                                                obj[2]['pts_3d']))
+                                                obj[2]['pts_3d'], obj[2]['world']))
             p.start()
 
         elif task == df.TaskCategory.ANALYSIS:
@@ -149,13 +149,13 @@ def calculate(input_dir, job_id, group, ip):
     JobActivity.updateJob(job_id, 'complete')
 
 
-def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d):
+def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, world=[]):
     print("generate mode started pid : ", os.getpid())
     # dbm = DbManager()    
     JobActivity.insertNewJob(myjob_id, os.getpid())
     DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
                                 'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
-    result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d)
+    result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, world)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -224,7 +224,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     return 0, preset1
 
 
-def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
+def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
@@ -232,7 +232,16 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
 
-    preset.generate_extra_point('2D', None)    
+    if cal_type == '2D' :
+        preset.generate_extra_point('2D', None)    
+    elif cal_type == '3D':
+        float_world = []
+        for wp in pts_world:
+            float_world.append(float(wp))        
+        preset.gnereate_extra_point('3D', float_world)
+    elif cal_type == '2D3D':
+        preset.generate_extra_point('2D', None)
+        
     preset.generate_adjust(myjob_id)
     return result
 
