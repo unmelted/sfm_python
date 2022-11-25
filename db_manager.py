@@ -145,3 +145,11 @@ class DbManager(BaseQuery):
    
         l.get().w.info("insert ref_point Query: {} ".format(q))        
         result = DBLayer.queryWorker( 'insert', q)
+
+    @classmethod
+    def insert_pointtable2(cls, job_id, parent_job, pts_world) :
+        q = ''
+        q = 'UPDATE ref_point SET world =%s WHERE job_id =%s and parent_job = %s;' % \
+            ('ARRAY' + str(pts_world).replace('\'', ''), job_id, parent_job)
+        l.get().w.info("update world Query {}".format(q))
+        result = DBLayer.queryWorker('update', q)

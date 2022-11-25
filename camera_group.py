@@ -111,7 +111,7 @@ class Group(object):
         for image_name in image_names :
             image  = cv2.imread(image_name)
             if (hasattr(image, 'shape') == False) :
-                l.get().w.error("Image abnormal err. retrun -24", image_name)
+                l.get().w.error("Image abnormal err. retrun -24 {}".format(image_name))
                 return -24
 
 
@@ -407,11 +407,13 @@ class Group(object):
             p = get_normalized_point(world_p)
             world = np.array(p)
             dist_coeff = np.zeros((4, 1))
-            # print("world " , world)
+            print("world " , world)
 
             for i in range(len(self.cameras)):
+                print(self.cameras[i].view.name, self.cameras[i].pts_3d)    
                 result, vector_rotation, vector_translation = cv2.solvePnP(
-                    world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff)
+                    world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
+
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
                     50.0, 50.0, -30.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]

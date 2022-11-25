@@ -235,10 +235,16 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
     if cal_type == '2D' :
         preset.generate_extra_point('2D', None)    
     elif cal_type == '3D':
-        float_world = []
-        for wp in pts_world:
-            float_world.append(float(wp))        
-        preset.gnereate_extra_point('3D', float_world)
+        if len(pts_world) >= 8 :
+            float_world = []
+            for wp in pts_world:
+                float_world.append(float(wp))
+
+            DbManager.insert_pointtable2(myjob_id, job_id, pts_world)
+            preset.generate_extra_point('3D', float_world)
+        else :
+            l.get().w.debug("Can't generate extra point. (No world)")
+
     elif cal_type == '2D3D':
         preset.generate_extra_point('2D', None)
         

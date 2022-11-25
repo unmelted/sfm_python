@@ -70,7 +70,8 @@ class BaseQuery(object):
         v = v[:-2] + ')'
 
         q = q + c + v
-        l.get().w.info("Inser Query: {} ".format(q))
+        if table != 'calib_data' :
+            l.get().w.info("Inser Query: {} ".format(q))
         return q
 
     def update(table, **k):
@@ -134,7 +135,7 @@ class DBLayer(object):
         with DBLayer.getConn().connection() as conn :
             with conn.cursor() as cur:
                 cur.execute(query)
-                print("--------------queryworker", os.getpid(), cur )
+                # print("--------------queryworker", os.getpid(), cur )
 
                 result = -1
 

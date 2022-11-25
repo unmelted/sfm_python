@@ -29,14 +29,19 @@ class GroupAdjust(object):
                 self.cameras[i].pts_extra[0][0]
             diffy = self.cameras[i].pts_extra[1][1] - \
                 self.cameras[i].pts_extra[0][1]
+
             if diffx == 0:
                 dist = diffy
-            else:
-                dist = math.sqrt(diffx * diffx + diffy * diffy)
+
+            if diffy < 0 :
+                diffy *= -1
+                diffx *= -1
+
+            dist = math.sqrt(diffx * diffx + diffy * diffy)
 
             self.cameras[i].rod_length = dist
             if diffx == 0:
-                degree = 0
+                degree = 90
             else:
                 degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
             if degree < 0:
@@ -74,8 +79,8 @@ class GroupAdjust(object):
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
             self.cameras[i].scale = dist_len / self.cameras[i].rod_length
-            self.cameras[i].adjust_x = targx - self.cameras[i].pts_extra[1][0]
-            self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
+            self.cameras[i].adjust_x = 0#targx - self.cameras[i].pts_extra[1][0]
+            self.cameras[i].adjust_y = 0#targy - self.cameras[i].pts_extra[1][1]
             self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
             self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
             l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(
@@ -184,7 +189,7 @@ class GroupAdjust(object):
     def adjust_image(self, output_path, ext, job_id):
         w = int(self.cameras[0].view.image_width/2)
         h = int(self.cameras[0].view.image_height/2)
-        analysis_path = os.path.join(defn.output_pts_image_dir, str(job_id))
+        analysis_path = os.path.join(defn.output_adj_image_dir, str(job_id))
         os.makedirs(analysis_path)
 
         for i in range(len(self.cameras)):
