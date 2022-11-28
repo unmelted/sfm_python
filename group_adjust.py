@@ -79,8 +79,8 @@ class GroupAdjust(object):
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
             self.cameras[i].scale = dist_len / self.cameras[i].rod_length
-            self.cameras[i].adjust_x = 0#targx - self.cameras[i].pts_extra[1][0]
-            self.cameras[i].adjust_y = 0#targy - self.cameras[i].pts_extra[1][1]
+            self.cameras[i].adjust_x = targx - self.cameras[i].pts_extra[1][0]
+            self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
             self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
             self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
             l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} ".format(

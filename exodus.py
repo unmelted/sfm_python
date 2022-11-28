@@ -248,7 +248,8 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
     elif cal_type == '2D3D':
         preset.generate_extra_point('2D', None)
         
-    preset.generate_adjust(myjob_id)
+    left, top, width, height = preset.generate_adjust(myjob_id)
+    DbManager.insert_pointtable3(myjob_id, job_id, left, top, width, height)    
     return result
 
 
@@ -276,5 +277,5 @@ def analysis_mode(myjob_id, job_id, cal_type, world_pts):
         return -305
 
     preset.generate_extra_point(cal_type, float_world)
-    preset.generate_adjust(myjob_id)
+    left, top, width, height = preset.generate_adjust(myjob_id)
     return 0

@@ -438,3 +438,4 @@ class Group(object):
         gadj.adjust_image(output_path, self.ext, job_id)
 
         # making_gif(output_path, output_path)
+        return self.left, self.top, self.width, self.height

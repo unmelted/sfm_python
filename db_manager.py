@@ -131,25 +131,33 @@ class DbManager(BaseQuery):
         return 0, rows[0][0]
 
     @classmethod
-    def insert_pointtable(cls, job_id, parent_job, pts_2d, pts_3d) :     
+    def insert_adjustData(cls, job_id, parent_job, pts_2d, pts_3d) :     
         q = ''
         if len(pts_2d) > 0 and len(pts_3d) > 0 :   
-            q = 'INSERT INTO ref_point (job_id, parent_job, pt_2d, pt_3d) VALUES (%s ,%s, %s, %s);' % \
+            q = 'INSERT INTO adjust_data (job_id, parent_job, pt_2d, pt_3d) VALUES (%s ,%s, %s, %s);' % \
                 (job_id, parent_job, 'ARRAY '+ str(pts_2d).replace('\'', ''), 'ARRAY ' + str(pts_3d).replace('\'', ''))
         elif len(pts_2d) > 0 and len(pts_3d) == 0:
-            q = 'INSERT INTO ref_point (job_id, parent_job, pt_2d) VALUES (%s ,%s, %s);' % \
+            q = 'INSERT INTO adjust_data (job_id, parent_job, pt_2d) VALUES (%s ,%s, %s);' % \
                 (job_id, parent_job, 'ARRAY '+ str(pts_2d).replace('\'', ''))
         else :
-            q = 'INSERT INTO ref_point (job_id, parent_job, pt_3d) VALUES (%s ,%s, %s);' % \
+            q = 'INSERT INTO adjust_data (job_id, parent_job, pt_3d) VALUES (%s ,%s, %s);' % \
                 (job_id, parent_job, 'ARRAY ' + str(pts_3d).replace('\'', ''))
    
-        l.get().w.info("insert ref_point Query: {} ".format(q))        
+        l.get().w.info("insert adjust_data Query: {} ".format(q))        
         result = DBLayer.queryWorker( 'insert', q)
 
     @classmethod
-    def insert_pointtable2(cls, job_id, parent_job, pts_world) :
+    def insert_adjustData2(cls, job_id, parent_job, pts_world) :
         q = ''
-        q = 'UPDATE ref_point SET world =%s WHERE job_id =%s and parent_job = %s;' % \
+        q = 'UPDATE adjust_data SET world =%s WHERE job_id =%s and parent_job = %s;' % \
             ('ARRAY' + str(pts_world).replace('\'', ''), job_id, parent_job)
+        l.get().w.info("update world Query {}".format(q))
+        result = DBLayer.queryWorker('update', q)
+
+    @classmethod
+    def insert_adjustData3(cls, job_id, parent_job, left, top, width, height) :
+        q = ''
+        q = 'UPDATE adjust_data SET margin_left =%s, margin_top = %s, margin_width = %s, margin_height = %s WHERE job_id =%s and parent_job = %s;' % \
+            (str(left), str(top), str(width), str(height), job_id, parent_job)
         l.get().w.info("update world Query {}".format(q))
         result = DBLayer.queryWorker('update', q)
