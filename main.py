@@ -16,7 +16,8 @@ app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 
 recon_args = api.model('recon_args', {
     'input_dir': fields.String,  # directory in storage
-    'group': fields.String  # 캘리브레이션 진행할 그룹
+    'group': fields.String,  # 캘리브레이션 진행할 그룹
+    'config' : fields.Raw({"type": "String"}, io = "rw")
 })
 
 
@@ -31,16 +32,16 @@ class calib_run(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('input_dir', type=str)
         parser.add_argument('group', type=str)
+        parser.add_argument('config', type=str)
         args = parser.parse_args()
 
-        print(args['input_dir'])
+        print(args['config'])
         # cmd_que.put((df.TaskCategory.AUTOCALIB,
         #             (args['input_dir'], args['group'], ip_addr)))
         que = Commander.getQue()
-        print("commander get que : ", que)
 
         job_id = Commander.add_task(df.TaskCategory.AUTOCALIB,
-                                    (args['input_dir'], args['group'], ip_addr))
+                                    (args, ip_addr))
 
         result = {
             'status': 0,
@@ -68,7 +69,9 @@ class calib_run(Resource):
 gen_args = api.model('gen_args', {
     "job_id": fields.Integer,
     "pts_2d": fields.List(fields.Float),
-    "pts_3d": fields.List(fields.Float)
+    "pts_3d": fields.List(fields.Float),
+    "world": fields.List(fields.Float),
+    'config' : fields.Raw({"type": "String"}, io = "r")    
 })
 
 
@@ -86,14 +89,15 @@ class generate_points(Resource):
         parser.add_argument('pts_2d', default=list, action='append')
         parser.add_argument('pts_3d', default=list, action='append')
         parser.add_argument('world', default=list, action='append')
+        parser.add_argument('config', type=str)        
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
         print(args['pts_3d'])
         print(args['world'])
-
+        print(args['config'])
         job_id = Commander.add_task(
-            df.TaskCategory.GENERATE_PTS, (args['job_id'], ip_addr, args))
+            df.TaskCategory.GENERATE_PTS, (args, ip_addr))
 
         result = {
             'status': 0,

@@ -32,12 +32,12 @@ class GroupAdjust(object):
 
             if diffx == 0:
                 dist = diffy
+            else :
+                if diffy < 0 :
+                    diffy *= -1
+                    diffx *= -1
 
-            if diffy < 0 :
-                diffy *= -1
-                diffx *= -1
-
-            dist = math.sqrt(diffx * diffx + diffy * diffy)
+                dist = math.sqrt(diffx * diffx + diffy * diffy)
 
             self.cameras[i].rod_length = dist
             if diffx == 0:

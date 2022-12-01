@@ -30,9 +30,9 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker( 'insert', q)
 
     @classmethod
-    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, mode, cam_list):
+    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, mode, config=None):
         q = BaseQuery.insert('command', job_id=job_id, parent_job=parent_id, requestor=ip, task=task,
-                             input_path=input_dir, mode=df.DEFINITION.run_mode, cam_list=df.DEFINITION.cam_list)
+                             input_path=input_dir, mode=df.DEFINITION.run_mode, config1=config)
         result = DBLayer.queryWorker( 'insert', q)
 
     @classmethod

@@ -4,6 +4,7 @@ from datetime import datetime
 import gc
 from multiprocessing import Process, Queue
 import json
+from flask import jsonify
 from camera_group import *
 import definition as df
 from logger import Logger as l
@@ -96,14 +97,18 @@ class Commander(object):
         status = 0
         contents = []
         l.get().w.info("Task Proc start : {} ".format(job_id))
+        print(obj[0]["config"])
+        mobj = obj[0]["config"].replace('\'', '\"')
+        jobj = json.loads(mobj)
+        print(jobj["scale"], jobj["pair"], jobj["preprocess"])
 
         if task == df.TaskCategory.AUTOCALIB:
             l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
-                job_id, obj[0], obj[1]))
+                job_id, obj[0]["input_dir"], obj[0]["group"], jobj["scale"]))
             desc = obj[1]
-            DbManager.insert_requesthistory(job_id, obj[2], task, desc)
+            DbManager.insert_requesthistory(job_id, obj[1], task, desc)
             p = Process(target=calculate, args=(
-                obj[0], job_id, obj[1], obj[2]))
+                obj[0]["input_dir"], job_id, obj[0]["group"], jobj["scale"], obj[1]))
             p.start()
             print("--------------AUTOCALIB1-------------")
             print(os.getpid())
@@ -111,12 +116,12 @@ class Commander(object):
 
         elif task == df.TaskCategory.GENERATE_PTS:
             l.get().w.info(
-                " Task Generate start obj : {} {} ".format(obj[0], obj[2]))
-            if len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) > 15:
+                " Task Generate start obj : {} {} ".format(obj[0], obj[1]))
+            if len(obj[0]['pts_2d']) > 7 and len(obj[0]['pts_3d']) > 15:
                 cal_type = '2D3D'
-            elif len(obj[2]['pts_2d']) > 7 and len(obj[2]['pts_3d']) < 15:
+            elif len(obj[0]['pts_2d']) > 7 and len(obj[0]['pts_3d']) < 15:
                 cal_type = '2D'
-            elif len(obj[2]['pts_2d']) < 7 and len(obj[2]['pts_3d']) > 15:
+            elif len(obj[0]['pts_2d']) < 7 and len(obj[0]['pts_3d']) > 15:
                 cal_type = '3D'
             else:
                 result = -304
@@ -125,8 +130,8 @@ class Commander(object):
 
             # desc = obj[2]['pts_2d'] + obj[2]['pts_3d']
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
-            p = Process(target=generate, args=(job_id, obj[0], obj[1], cal_type, obj[2]['pts_2d'],
-                                                obj[2]['pts_3d'], obj[2]['world']))
+            p = Process(target=generate, args=(job_id, obj[0]['job_id'], obj[1], cal_type, obj[0]['pts_2d'],
+                                                obj[0]['pts_3d'], jobj['pair'], obj[0]['world']))
             p.start()
 
         elif task == df.TaskCategory.ANALYSIS:
@@ -135,27 +140,27 @@ class Commander(object):
             p.start()
 
 
-def calculate(input_dir, job_id, group, ip):
+def calculate(input_dir, job_id, group, scale, ip):
     print("calculated mode started pid : ", os.getpid())
     JobActivity.insertNewJob(job_id, os.getpid())
     print("--------------AUTOCALIB2-------------")
     print(os.getpid())
     print("------------------------------")
-
-    ac = Autocalib(input_dir, job_id, group, ip)
+    print("calcuate config : ", scale)
+    ac = Autocalib(input_dir, job_id, group, scale, ip)
     ac.run()
     del ac
     ac = None
     JobActivity.updateJob(job_id, 'complete')
 
 
-def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, world=[]):
+def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, pair, world=[]):
     print("generate mode started pid : ", os.getpid())
     # dbm = DbManager()    
     JobActivity.insertNewJob(myjob_id, os.getpid())
     DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
-                                'None', df.DEFINITION.run_mode, df.DEFINITION.cam_list)
-    result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, world)
+                                'None', df.DEFINITION.run_mode, pair)
+    result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair, world)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -193,7 +198,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
             else:
                 float_2d.append(float(val))
     
-    DbManager.insert_pointtable(myjob_id, job_id, pts_2d, pts_3d)
+    DbManager.insert_adjustData(myjob_id, job_id, pts_2d, pts_3d)
 
     preset1 = Group(myjob_id)
     result, root_path = DbManager.getRootPath(job_id)
@@ -224,7 +229,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
     return 0, preset1
 
 
-def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
+def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair, pts_world):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
@@ -240,7 +245,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
             for wp in pts_world:
                 float_world.append(float(wp))
 
-            DbManager.insert_pointtable2(myjob_id, job_id, pts_world)
+            DbManager.insert_adjustData2(myjob_id, job_id, pts_world)
             preset.generate_extra_point('3D', float_world)
         else :
             l.get().w.debug("Can't generate extra point. (No world)")
@@ -249,7 +254,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pts_world):
         preset.generate_extra_point('2D', None)
         
     left, top, width, height = preset.generate_adjust(myjob_id)
-    DbManager.insert_pointtable3(myjob_id, job_id, left, top, width, height)    
+    DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)    
     return result
 
 
