@@ -11,7 +11,7 @@ from db_manager import DbManager
 
 class Autocalib(object):
 
-    def __init__(self, input_dir, job_id, group, config, ip):
+    def __init__(self, input_dir, job_id, group, config1, config2, ip):
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
@@ -20,7 +20,8 @@ class Autocalib(object):
         self.job_id = job_id
         self.ip = ip
         self.group = group
-        self.config = config
+        self.config1 = config1
+        self.config2 = config2
 
     def run(self):
         print("--------------AUTOCALIB3------")
@@ -28,7 +29,7 @@ class Autocalib(object):
         print("------------------------------")
 
         DbManager.insert_newcommand(self.job_id, 0, self.ip, df.TaskCategory.AUTOCALIB.name,
-                                    self.input_dir, df.DEFINITION.run_mode, self.config)
+                                    self.input_dir, df.DEFINITION.run_mode, self.config1)
         time_s = time.time()
         preset1 = Group(self.job_id)
         result = self.checkDataValidity()

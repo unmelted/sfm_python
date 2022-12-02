@@ -243,7 +243,7 @@ class Group(object):
 
         return -150, None
 
-    def generate_points(self, job_id, cal_type, float_2d=None, float_3d=None):
+    def generate_points(self, job_id, cal_type, pair, float_2d=None, float_3d=None):
 
         if df.answer_from == 'input' and (float_2d == None or float_3d == None):
             df.answer_from = 'pts'  # for analysis mode
@@ -253,7 +253,7 @@ class Group(object):
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(
-            job_id, cal_type, float_2d, float_3d, pair_type=df.init_pair_mode, answer_from=df.answer_from)
+            job_id, cal_type, float_2d, float_3d, pair_type=pair, answer_from=df.answer_from)
 
         if err < 0:
             return err
@@ -270,7 +270,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type='zero', answer_from='pts'):
+    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type, answer_from='pts'):
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -284,7 +284,7 @@ class Group(object):
             viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
             c0 = self.cameras[0]
             c1 = self.cameras[1]
-        elif pair_type == 'pair':
+        elif pair_type == 'colmap':
             result, image_name1, image_name2 = get_pair(job_id)
 
             viewname1 = get_viewname(image_name1, self.ext)
@@ -297,8 +297,11 @@ class Group(object):
             if err < 0:
                 return err, None, None, None, None
 
-        l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
+        elif pair_type == 'isometric' :
 
+
+        l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
+            
         if answer_from == 'pts':
             filename = os.path.join(self.root_path, 'images', df.pts_file_name)
             self.answer = import_answer(filename, 0)

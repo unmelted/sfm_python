@@ -108,7 +108,7 @@ class Commander(object):
             desc = obj[1]
             DbManager.insert_requesthistory(job_id, obj[1], task, desc)
             p = Process(target=calculate, args=(
-                obj[0]["input_dir"], job_id, obj[0]["group"], jobj["scale"], obj[1]))
+                obj[0]["input_dir"], job_id, obj[0]["group"], jobj["scale"], jobj["pair"], obj[1]))
             p.start()
             print("--------------AUTOCALIB1-------------")
             print(os.getpid())
@@ -140,14 +140,14 @@ class Commander(object):
             p.start()
 
 
-def calculate(input_dir, job_id, group, scale, ip):
+def calculate(input_dir, job_id, group, scale, pair, ip):
     print("calculated mode started pid : ", os.getpid())
     JobActivity.insertNewJob(job_id, os.getpid())
     print("--------------AUTOCALIB2-------------")
     print(os.getpid())
     print("------------------------------")
     print("calcuate config : ", scale)
-    ac = Autocalib(input_dir, job_id, group, scale, ip)
+    ac = Autocalib(input_dir, job_id, group, scale, pair, ip)
     ac.run()
     del ac
     ac = None
@@ -158,6 +158,7 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, pair, world=[]):
     print("generate mode started pid : ", os.getpid())
     # dbm = DbManager()    
     JobActivity.insertNewJob(myjob_id, os.getpid())
+    scale = 
     DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
                                 'None', df.DEFINITION.run_mode, pair)
     result = generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair, world)
@@ -172,7 +173,7 @@ def analysis(myjob_id, job_id, cal_type, world_pts):
     JobActivity.updateJob(myjob_id, 'complete')
 
 
-def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
+def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair):
     # dbm = DbManager()    
     time_s = time.time()
     float_2d = []
@@ -212,7 +213,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d):
 
     status_update(myjob_id, 20)
     preset1.read_cameras()
-    result = preset1.generate_points(job_id, cal_type, float_2d, float_3d)
+    result = preset1.generate_points(job_id, cal_type, pair, float_2d, float_3d)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -233,7 +234,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair, pts_world):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
-        myjob_id, job_id, cal_type, pts_2d, pts_3d)
+        myjob_id, job_id, cal_type, pts_2d, pts_3d, pair)
     save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
 
@@ -249,6 +250,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, pair, pts_world):
             preset.generate_extra_point('3D', float_world)
         else :
             l.get().w.debug("Can't generate extra point. (No world)")
+            return result
 
     elif cal_type == '2D3D':
         preset.generate_extra_point('2D', None)

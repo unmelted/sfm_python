@@ -82,3 +82,7 @@ def check_image_format(path):
         elif ext == 'jpg':
             return 'jpg'
         return 'png'
+
+def get_calculate_scale(job_id, parent_jobid) :
+    scale = Db.getParentScale(parent_jobid)
+    Db.update_command_pair
