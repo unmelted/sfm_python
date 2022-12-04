@@ -107,13 +107,12 @@ class Group(object):
                 return result
 
         index = 0
-        #check image before set camera
-        for image_name in image_names :
-            image  = cv2.imread(image_name)
-            if (hasattr(image, 'shape') == False) :
+        # check image before set camera
+        for image_name in image_names:
+            image = cv2.imread(image_name)
+            if (hasattr(image, 'shape') == False):
                 l.get().w.error("Image abnormal err. retrun -24 {}".format(image_name))
                 return -24
-
 
         for image_name in image_names:
             tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
@@ -284,8 +283,9 @@ class Group(object):
             viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
             c0 = self.cameras[0]
             c1 = self.cameras[1]
+
         elif pair_type == 'colmap':
-            result, image_name1, image_name2 = get_pair(job_id)
+            result, image_name1, image_name2 = get_pair(job_id, pair_type)
 
             viewname1 = get_viewname(image_name1, self.ext)
             viewname2 = get_viewname(image_name2, self.ext)
@@ -297,11 +297,22 @@ class Group(object):
             if err < 0:
                 return err, None, None, None, None
 
-        elif pair_type == 'isometric' :
+        elif pair_type == 'isometric':
+            unit1 = self.cam_count / 4
+            unit2 = self.cam_count * 3 / 4
+            viewname1 = get_viewname(self.cameras[unit1].view.name, self.ext)
+            viewname2 = get_viewname(self.cameras[unit2].view.name, self.ext)
 
+            err, c0 = self.get_camera_byView(viewname1)
+            if err < 0:
+                return err, None, None, None, None
+
+            err, c1 = self.get_camera_byView(viewname2)
+            if err < 0:
+                return err, None, None, None, None
 
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
-            
+
         if answer_from == 'pts':
             filename = os.path.join(self.root_path, 'images', df.pts_file_name)
             self.answer = import_answer(filename, 0)
@@ -410,10 +421,10 @@ class Group(object):
             p = get_normalized_point(world_p)
             world = np.array(p)
             dist_coeff = np.zeros((4, 1))
-            print("world " , world)
+            print("world ", world)
 
             for i in range(len(self.cameras)):
-                print(self.cameras[i].view.name, self.cameras[i].pts_3d)    
+                print(self.cameras[i].view.name, self.cameras[i].pts_3d)
                 result, vector_rotation, vector_translation = cv2.solvePnP(
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 

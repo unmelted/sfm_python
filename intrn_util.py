@@ -43,13 +43,18 @@ def finish(job_id, result):
     return result
 
 
-def get_pair(job_id):
-    l.get().w.info("GetPair start : {} ".format(job_id))
-    result, image_name1, image_name2 = Db.getPair(job_id)
-    if result < 0:
-        return finish_querys(job_id, result, 2)
+def get_pair(job_id, pair_type):
+    l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
+
+    if pair_type == 'colmap':
+        result, image_name1, image_name2 = Db.getPair(job_id)
+        if result < 0:
+            return finish_querys(job_id, result, 2)
+        else:
+            return 0, image_name1, image_name2
+
     else:
-        return 0, image_name1, image_name2
+        return -1, 0, 0
 
 
 def get_result(job_id):
@@ -83,6 +88,16 @@ def check_image_format(path):
             return 'jpg'
         return 'png'
 
-def get_calculate_scale(job_id, parent_jobid) :
-    scale = Db.getParentScale(parent_jobid)
-    Db.update_command_pair
+
+def getset_generate_config(job_id, parent_jobid, pair):
+    scale = Db.get_Scale(parent_jobid)
+    image1 = ''
+    image2 = ''
+    if (pair == 'colmap'):
+        image1, image2 = get_pair(parent_jobid)
+    elif pair == 'isometric':
+        pass
+
+    Db.update_generateJob(job_id, scale, image1, image2)
+
+    return scale

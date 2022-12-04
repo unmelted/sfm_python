@@ -5,6 +5,7 @@ import logging
 
 VERSION = 'V4.0.0.2'
 
+
 class TaskCategory(Enum):
     INIT = 0
     AUTOCALIB = 100
@@ -16,6 +17,7 @@ class TaskCategory(Enum):
     VISUALIZE = 600
     ANALYSIS = 700
     FINISH = 1
+
 
 def get_err_msg(err_code):
     msg = None
@@ -65,7 +67,7 @@ def get_err_msg(err_code):
         -304: "Points count is abnormal",
         -305: "World reference point is abnormal",
         -306: "No generated pts data",
-
+        -307: "No job or no data regarding scale",
         -401: "Job is already requested to be canceled",
         -402: "Requested job will be finished soon. can't cancel",
         -501: "There is no answer for err calculation"
@@ -116,5 +118,5 @@ class DEFINITION(object):
 
     VERSION = '4.0.0.2'
 
-    def get_version(self) :
+    def get_version(self):
         return VERSION
