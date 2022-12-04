@@ -70,7 +70,8 @@ class BaseQuery(object):
         v = v[:-2] + ')'
 
         q = q + c + v
-        l.get().w.info("Inser Query: {} ".format(q))
+        if table != 'calib_data' :
+            l.get().w.info("Inser Query: {} ".format(q))
         return q
 
     def update(table, **k):
@@ -119,7 +120,7 @@ class DBLayer(object):
         sql_list = json.load(json_file)
 
         create = ["create_command_db",
-                  "create_request_history", "create_job_manager", "create_generate_data"]
+                  "create_request_history", "create_job_manager", "create_generate_data", "create_point_data"]
 
         for i in create:
             # print(self.sql_list[i])
@@ -134,7 +135,7 @@ class DBLayer(object):
         with DBLayer.getConn().connection() as conn :
             with conn.cursor() as cur:
                 cur.execute(query)
-                print("--------------queryworker", os.getpid(), cur )
+                # print("--------------queryworker", os.getpid(), cur )
 
                 result = -1
 

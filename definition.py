@@ -1,6 +1,9 @@
+from ensurepip import version
 import os
 from enum import Enum
 import logging
+
+VERSION = 'V4.0.0.2'
 
 
 class TaskCategory(Enum):
@@ -64,7 +67,7 @@ def get_err_msg(err_code):
         -304: "Points count is abnormal",
         -305: "World reference point is abnormal",
         -306: "No generated pts data",
-
+        -307: "No job or no data regarding scale",
         -401: "Job is already requested to be canceled",
         -402: "Requested job will be finished soon. can't cancel",
         -501: "There is no answer for err calculation"
@@ -95,9 +98,10 @@ class DEFINITION(object):
     output_pts_file_name = 'UserPointData_.pts'
     # local
     output_pts_image_dir = '/mnt/images/review/'
-
+    output_adj_image_dir = '/mnt/images/analysis/'
     # server
     #output_pts_image_dir = '/var/www/html/auto_calib/review/'
+    #output_adj_image_dir = '/var/www/html/auto_calib/analysis/'
 
     BOT_TOKEN = '5578949849:AAEJHteVLGJnydip3x5eYwJQQgcPymWGu4s'
     CHAT_ID = '1140943041'  # '5623435982'
@@ -111,3 +115,8 @@ class DEFINITION(object):
     feature_minimum = 500
 
     job_limit = 5
+
+    VERSION = '4.0.0.2'
+
+    def get_version(self):
+        return VERSION

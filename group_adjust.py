@@ -1,3 +1,4 @@
+import os
 import subprocess
 import numpy as np
 import math
@@ -5,6 +6,7 @@ from logger import Logger as l
 from mathutil import *
 from intrn_util import *
 from extn_util import *
+from definition import DEFINITION as defn
 
 
 class GroupAdjust(object):
@@ -27,14 +29,19 @@ class GroupAdjust(object):
                 self.cameras[i].pts_extra[0][0]
             diffy = self.cameras[i].pts_extra[1][1] - \
                 self.cameras[i].pts_extra[0][1]
+
             if diffx == 0:
                 dist = diffy
-            else:
+            else :
+                if diffy < 0 :
+                    diffy *= -1
+                    diffx *= -1
+
                 dist = math.sqrt(diffx * diffx + diffy * diffy)
 
             self.cameras[i].rod_length = dist
             if diffx == 0:
-                degree = 0
+                degree = 90
             else:
                 degree = cv2.fastAtan2(diffy, diffx) * -1 + 90
             if degree < 0:
@@ -179,9 +186,11 @@ class GroupAdjust(object):
         out = np.linalg.multi_dot([mat5, mat3, mat2, mat1])
         return out
 
-    def adjust_image(self, output_path, ext):
+    def adjust_image(self, output_path, ext, job_id):
         w = int(self.cameras[0].view.image_width/2)
         h = int(self.cameras[0].view.image_height/2)
+        analysis_path = os.path.join(defn.output_adj_image_dir, str(job_id))
+        os.makedirs(analysis_path)
 
         for i in range(len(self.cameras)):
             file_name = os.path.join(output_path, get_viewname(
@@ -232,6 +241,7 @@ class GroupAdjust(object):
             dst_img = cv2.warpAffine(
                 self.cameras[i].view.image, mat[:2, :3], (w, h))
             cv2.imwrite(file_name, dst_img)
+            shutil.copy(file_name, analysis_path)
 
         cli = "convert -delay 25 -resize 960x540 -loop 0 " + \
             output_path + "/*.jpg " + output_path + "/animated.gif"

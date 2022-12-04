@@ -107,13 +107,12 @@ class Group(object):
                 return result
 
         index = 0
-        #check image before set camera
-        for image_name in image_names :
-            image  = cv2.imread(image_name)
-            if (hasattr(image, 'shape') == False) :
-                l.get().w.error("Image abnormal err. retrun -24")
+        # check image before set camera
+        for image_name in image_names:
+            image = cv2.imread(image_name)
+            if (hasattr(image, 'shape') == False):
+                l.get().w.error("Image abnormal err. retrun -24 {}".format(image_name))
                 return -24
-
 
         for image_name in image_names:
             tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
@@ -243,7 +242,7 @@ class Group(object):
 
         return -150, None
 
-    def generate_points(self, job_id, cal_type, float_2d=None, float_3d=None):
+    def generate_points(self, job_id, cal_type, pair, float_2d=None, float_3d=None):
 
         if df.answer_from == 'input' and (float_2d == None or float_3d == None):
             df.answer_from = 'pts'  # for analysis mode
@@ -253,7 +252,7 @@ class Group(object):
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(
-            job_id, cal_type, float_2d, float_3d, pair_type=df.init_pair_mode, answer_from=df.answer_from)
+            job_id, cal_type, float_2d, float_3d, pair_type=pair, answer_from=df.answer_from)
 
         if err < 0:
             return err
@@ -270,7 +269,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type='zero', answer_from='pts'):
+    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type, answer_from='pts'):
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -284,11 +283,26 @@ class Group(object):
             viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
             c0 = self.cameras[0]
             c1 = self.cameras[1]
-        elif pair_type == 'pair':
-            result, image_name1, image_name2 = get_pair(job_id)
+
+        elif pair_type == 'colmap':
+            result, image_name1, image_name2 = get_pair(job_id, pair_type)
 
             viewname1 = get_viewname(image_name1, self.ext)
             viewname2 = get_viewname(image_name2, self.ext)
+            err, c0 = self.get_camera_byView(viewname1)
+            if err < 0:
+                return err, None, None, None, None
+
+            err, c1 = self.get_camera_byView(viewname2)
+            if err < 0:
+                return err, None, None, None, None
+
+        elif pair_type == 'isometric':
+            unit1 = self.cam_count / 4
+            unit2 = self.cam_count * 3 / 4
+            viewname1 = get_viewname(self.cameras[unit1].view.name, self.ext)
+            viewname2 = get_viewname(self.cameras[unit2].view.name, self.ext)
+
             err, c0 = self.get_camera_byView(viewname1)
             if err < 0:
                 return err, None, None, None, None
@@ -407,11 +421,13 @@ class Group(object):
             p = get_normalized_point(world_p)
             world = np.array(p)
             dist_coeff = np.zeros((4, 1))
-            # print("world " , world)
+            print("world ", world)
 
             for i in range(len(self.cameras)):
+                print(self.cameras[i].view.name, self.cameras[i].pts_3d)
                 result, vector_rotation, vector_translation = cv2.solvePnP(
-                    world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff)
+                    world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
+
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
                     50.0, 50.0, -30.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
@@ -423,7 +439,7 @@ class Group(object):
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
-    def generate_adjust(self):
+    def generate_adjust(self, job_id):
         gadj = GroupAdjust(self.cameras)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
@@ -433,6 +449,7 @@ class Group(object):
             os.makedirs(os.path.join(self.root_path, 'preview'))
         output_path = os.path.join(self.root_path, 'preview')
 
-        gadj.adjust_image(output_path, self.ext)
+        gadj.adjust_image(output_path, self.ext, job_id)
 
         # making_gif(output_path, output_path)
+        return self.left, self.top, self.width, self.height
