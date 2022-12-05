@@ -130,7 +130,7 @@ class Commander(object):
                 status = 0
                 return status, result, contents
 
-            jconfig['pair'] = DbManager.getParentScale(obj[0]['job_id'])
+            jconfig['scale'] = DbManager.getParentScale(obj[0]['job_id'])
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
             p = Process(target=generate, args=(job_id, obj[0]['job_id'], obj[1], cal_type, obj[0]['pts_2d'],
                                                obj[0]['pts_3d'], jconfig, obj[0]['world']))
@@ -163,8 +163,8 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, world=[]):
     # dbm = DbManager()
     JobActivity.insertNewJob(myjob_id, os.getpid())
 
-    DbManager.insert_newcommand(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
-                                'None', config['scale'], config['pair'])
+    DbManager.insert_newcommand_gen(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
+                                'None', config)
     result = generate_pts(myjob_id, job_id, cal_type,
                           pts_2d, pts_3d, config, world)
     JobActivity.updateJob(myjob_id, 'complete')
