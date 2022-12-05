@@ -58,12 +58,12 @@ class Group(object):
         if self.run_mode == 'colmap':
             del self.colmap
 
-    def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
+    def create_group(self, root_path, run_mode, scale, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
 
         l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))
-        result = self.prepare_camera_list(list_from, group)
+        result = self.prepare_camera_list(list_from, scale, group)
         if result < 0:
             return result
 
@@ -77,7 +77,7 @@ class Group(object):
 
         return 0
 
-    def prepare_camera_list(self, list_from, group_id='Group1'):
+    def prepare_camera_list(self, list_from, scale, group_id='Group1'):
         self.world.get_world()
         self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)
@@ -115,7 +115,8 @@ class Group(object):
                 return -24
 
         for image_name in image_names:
-            tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
+            tcam = Camera(image_name, self.root_path,
+                          self.K, self.run_mode, scale)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
             if self.limit != 0 and index == self.limit:
@@ -242,7 +243,7 @@ class Group(object):
 
         return -150, None
 
-    def generate_points(self, job_id, cal_type, pair, float_2d=None, float_3d=None):
+    def generate_points(self, job_id, cal_type, pair_type, float_2d=None, float_3d=None):
 
         if df.answer_from == 'input' and (float_2d == None or float_3d == None):
             df.answer_from = 'pts'  # for analysis mode
@@ -252,7 +253,7 @@ class Group(object):
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(
-            job_id, cal_type, float_2d, float_3d, pair_type=pair, answer_from=df.answer_from)
+            job_id, cal_type, float_2d, float_3d, pair_type=pair_type, answer_from=df.answer_from)
 
         if err < 0:
             return err
@@ -285,7 +286,7 @@ class Group(object):
             c1 = self.cameras[1]
 
         elif pair_type == 'colmap':
-            result, image_name1, image_name2 = get_pair(job_id, pair_type)
+            result, image_name1, image_name2 = get_pairname(job_id, pair_type)
 
             viewname1 = get_viewname(image_name1, self.ext)
             viewname2 = get_viewname(image_name2, self.ext)
@@ -402,7 +403,7 @@ class Group(object):
     def visualize(self, mode='colmap'):
         plot_scene(self.cameras)
 
-    def export(self, myjob_id, job_id, cal_type):
+    def export(self, myjob_id, job_id, cal_type, scale):
         target_path = None
         if df.export_point_type == 'dm':
             result, target_path = get_targetpath(job_id)
@@ -410,7 +411,7 @@ class Group(object):
                 return result
 
         export_points(self, df.export_point_type,
-                      myjob_id, cal_type, target_path)
+                      myjob_id, cal_type, scale, target_path)
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):

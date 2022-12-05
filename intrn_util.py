@@ -43,36 +43,6 @@ def finish(job_id, result):
     return result
 
 
-def get_pair(job_id, pair_type):
-    l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
-
-    if pair_type == 'colmap':
-        result, image_name1, image_name2 = Db.getPair(job_id)
-        if result < 0:
-            return finish_querys(job_id, result, 2)
-        else:
-            return 0, image_name1, image_name2
-
-    else:
-        return -1, 0, 0
-
-
-def get_result(job_id):
-    contents = None
-    l.get().w.info("GetPts start : {} ".format(job_id))
-    result, contents = Db.getPts(job_id)
-    return result, contents
-
-
-def get_targetpath(job_id):
-    l.get().w.info("Get target path start : {} ".format(job_id))
-    result, target_path = Db.getTargetPath(job_id)
-    if result < 0:
-        return finish_query(job_id, result)
-    else:
-        return 0, target_path
-
-
 def check_image_format(path):
     flist = glob.glob(os.path.join(path, 'images', '*'))
     for i in flist:
@@ -89,15 +59,54 @@ def check_image_format(path):
         return 'png'
 
 
-def getset_generate_config(job_id, parent_jobid, pair):
-    scale = Db.get_Scale(parent_jobid)
-    image1 = ''
-    image2 = ''
-    if (pair == 'colmap'):
-        image1, image2 = get_pair(parent_jobid)
-    elif pair == 'isometric':
-        pass
+def get_viewname(name, ext):
+    viewname = None
 
-    Db.update_generateJob(job_id, scale, image1, image2)
+    if name.rfind('_') == -1:
+        viewname = name[:-1 * (len(ext) + 1)]
+    else:
+        viewname = name[:name.rfind('_')]
 
-    return scale
+    return viewname
+
+
+def get_pairname(job_id, pair_type):
+    l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
+
+    if pair_type == 'colmap':
+        result, image_name1, image_name2 = Db.getPair(job_id)
+        if result < 0:
+            return finish_querys(job_id, result, 2)
+        else:
+            return 0, image_name1, image_name2
+
+    elif pair_type == 'isometric':
+        root_path = Db.getRootPath(job_id)
+        ext = check_image_format(root_path)
+        image_names = sorted(
+            glob.glob(os.path.join(root_path, 'images', '*', ext)))
+        cam_count = len(image_names)
+        unit1 = cam_count / 4
+        unit2 = cam_count * 3 / 4
+        image_name1 = get_viewname(image_names[unit1], ext)
+        image_name2 = get_viewname(image_names[unit2], ext)
+
+        return 0, image_name1, image_name2
+
+    return -1, 0, 0
+
+
+def get_result(job_id):
+    contents = None
+    l.get().w.info("GetPts start : {} ".format(job_id))
+    result, contents = Db.getPts(job_id)
+    return result, contents
+
+
+def get_targetpath(job_id):
+    l.get().w.info("Get target path start : {} ".format(job_id))
+    result, target_path = Db.getTargetPath(job_id)
+    if result < 0:
+        return finish_query(job_id, result)
+    else:
+        return 0, target_path

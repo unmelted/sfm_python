@@ -17,7 +17,7 @@ app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 recon_args = api.model('recon_args', {
     'input_dir': fields.String,  # directory in storage
     'group': fields.String,  # 캘리브레이션 진행할 그룹
-    'config' : fields.Raw({"type": "String"}, io = "rw")
+    'config': fields.Raw({"type": "String"}, io="rw")
 })
 
 
@@ -71,7 +71,7 @@ gen_args = api.model('gen_args', {
     "pts_2d": fields.List(fields.Float),
     "pts_3d": fields.List(fields.Float),
     "world": fields.List(fields.Float),
-    'config' : fields.Raw({"type": "String"}, io = "r")    
+    'config': fields.Raw({"type": "String"}, io="r")
 })
 
 
@@ -89,7 +89,7 @@ class generate_points(Resource):
         parser.add_argument('pts_2d', default=list, action='append')
         parser.add_argument('pts_3d', default=list, action='append')
         parser.add_argument('world', default=list, action='append')
-        parser.add_argument('config', type=str)        
+        parser.add_argument('config', type=str)
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
@@ -111,6 +111,7 @@ class generate_points(Resource):
 jobid = api.model('jobid', {
     'job_id': fields.Integer,
 })
+
 
 @ api.route('/exodus/autocalib/status/<int:jobid>')
 @ api.doc()
@@ -157,20 +158,21 @@ class cancel_job(Resource):
         return result
 
 
-@api.route('/exodus/autocalib/getpair/<int:jobid>')
+@api.route('/exodus/autocalib/getpair/<int:job_id>/<string:pair>')
 @api.doc()
 class get_pair(Resource):
     @api.expect()
-    def get(self, jobid=jobid):
+    def get(self, job_id, pair):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)
-        print(jobid)
+        print(job_id)
+        print(pair)
 
         pair1 = None
         pair2 = None
 
         status, result, contents = Commander.send_query(
-            df.TaskCategory.GET_PAIR, [jobid, ip_addr])
+            df.TaskCategory.GET_PAIR, [jobid, pair, ip_addr])
         msg = df.get_err_msg(result)
         if result == 0:
             pair1 = contents[0]
@@ -236,7 +238,7 @@ class visualize(Resource):
 
 analysis = api.model('analysis', {
     'job_id': fields.Integer,
-    'cal_type': fields.String,     
+    'cal_type': fields.String,
     "world": fields.List(fields.Float)
 })
 
@@ -251,7 +253,7 @@ class calib_analysis(Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
-        parser.add_argument('cal_type', type=str)        
+        parser.add_argument('cal_type', type=str)
         parser.add_argument('world', default=list, action='append')
 
         args = parser.parse_args()
@@ -271,6 +273,7 @@ class calib_analysis(Resource):
 
         return result
 
+
 @api.route('/exodus/autocalib/getversion')
 @api.doc()
 class get_result(Resource):
@@ -280,9 +283,9 @@ class get_result(Resource):
         print("ip of requestor ", ip_addr)
 
         ver = df.DEFINITION().get_version()
-        print('getversion return :', ver )
+        print('getversion return :', ver)
         result = {
-            'version' : ver,
+            'version': ver,
         }
         return result
 
@@ -290,6 +293,7 @@ class get_result(Resource):
 file_args = api.model('file_args', {
     'config_file': fields.String
 })
+
 
 @api.route('/exodus/autocalib/read_config')
 @api.doc()

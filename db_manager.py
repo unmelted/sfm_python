@@ -31,7 +31,7 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker('insert', q)
 
     @classmethod
-    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, mode, config1, config2):
+    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, config1, config2):
         q = BaseQuery.insert('command', job_id=job_id, parent_job=parent_id, requestor=ip, task=task,
                              input_path=input_dir, config1=config1, config2=config2)
         result = DBLayer.queryWorker('insert', q)
@@ -132,6 +132,18 @@ class DbManager(BaseQuery):
         return 0, rows[0][0]
 
     @classmethod
+    def getParentScale(cls, parent_jobid):
+        q = cls.sql_list['query_getscale'] + str(parent_jobid)
+        rows = DBLayer.queryWorker('select-one', q)
+
+        if len(rows) == 0:
+            return -307, None
+        else:
+            l.get().w.debug("getScale : {}".format(rows[0]))
+
+        return 0, rows[0]
+
+    @classmethod
     def insert_adjustData(cls, job_id, parent_job, pts_2d, pts_3d):
         q = ''
         if len(pts_2d) > 0 and len(pts_3d) > 0:
@@ -163,18 +175,6 @@ class DbManager(BaseQuery):
             (str(left), str(top), str(width), str(height), job_id, parent_job)
         l.get().w.info("update world Query {}".format(q))
         result = DBLayer.queryWorker('update', q)
-
-    @classmethod
-    def get_Scale(cls, parent_jobid):
-        q = cls.sql_list['query_getscale'] + str(parent_jobid)
-        rows = DBLayer.queryWorker('select-one', q)
-
-        if len(rows) == 0:
-            return -307, None
-        else:
-            l.get().w.debug("getScale : {}".format(rows[0]))
-
-        return 0, rows[0]
 
     @classmethod
     def update_generateJob(job_id, scale, image1, image2):
