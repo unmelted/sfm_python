@@ -222,7 +222,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, config):
     status_update(myjob_id, 20)
     preset1.read_cameras()
     result = preset1.generate_points(
-        job_id, cal_type, config['pair'], float_2d, float_3d)
+        job_id, cal_type, config, float_2d, float_3d)
     if result < 0:
         return finish_query(job_id, result), None
 
