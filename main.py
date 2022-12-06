@@ -71,6 +71,8 @@ gen_args = api.model('gen_args', {
     "pts_2d": fields.List(fields.Float),
     "pts_3d": fields.List(fields.Float),
     "world": fields.List(fields.Float),
+    "image1" : fields.String,
+    "image2" : fields.String,
     'config': fields.Raw({"type": "String"}, io="r")
 })
 
@@ -89,12 +91,16 @@ class generate_points(Resource):
         parser.add_argument('pts_2d', default=list, action='append')
         parser.add_argument('pts_3d', default=list, action='append')
         parser.add_argument('world', default=list, action='append')
+        parser.add_argument('image1', type=str)
+        parser.add_argument('image2', type=str)        
         parser.add_argument('config', type=str)
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
         print(args['pts_3d'])
         print(args['world'])
+        print(args['image1'])
+        print(args['image2'])
         print(args['config'])
         job_id = Commander.add_task(
             df.TaskCategory.GENERATE_PTS, (args, ip_addr))
@@ -158,10 +164,10 @@ class cancel_job(Resource):
         return result
 
 
-@api.route('/exodus/autocalib/getpair/<int:job_id>/<string:pair>')
+@api.route('/exodus/autocalib/getpair/<job_id>/<pair>')
 @api.doc()
 class get_pair(Resource):
-    @api.expect()
+   # @api.expect()
     def get(self, job_id, pair):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)
@@ -172,7 +178,7 @@ class get_pair(Resource):
         pair2 = None
 
         status, result, contents = Commander.send_query(
-            df.TaskCategory.GET_PAIR, [jobid, pair, ip_addr])
+            df.TaskCategory.GET_PAIR, [job_id, pair, ip_addr])
         msg = df.get_err_msg(result)
         if result == 0:
             pair1 = contents[0]
@@ -180,7 +186,7 @@ class get_pair(Resource):
             print("returned pair image : ", pair1, pair2)
 
         result = {
-            'job_id': jobid,
+            'job_id': job_id,
             'result': result,
             'message': msg,
             'first_image': pair1,

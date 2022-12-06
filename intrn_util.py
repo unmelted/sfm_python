@@ -72,7 +72,7 @@ def get_viewname(name, ext):
 
 def get_pairname(job_id, pair_type):
     l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
-
+    image_names = []
     if pair_type == 'colmap':
         result, image_name1, image_name2 = Db.getPair(job_id)
         if result < 0:
@@ -81,17 +81,22 @@ def get_pairname(job_id, pair_type):
             return 0, image_name1, image_name2
 
     elif pair_type == 'isometric':
-        root_path = Db.getRootPath(job_id)
+        _, root_path = Db.getRootPath(job_id)
         ext = check_image_format(root_path)
         image_names = sorted(
-            glob.glob(os.path.join(root_path, 'images', '*', ext)))
+            glob.glob(os.path.join(root_path, 'images', '*.'+ ext)))
         cam_count = len(image_names)
-        unit1 = cam_count / 4
-        unit2 = cam_count * 3 / 4
-        image_name1 = get_viewname(image_names[unit1], ext)
-        image_name2 = get_viewname(image_names[unit2], ext)
 
-        return 0, image_name1, image_name2
+        unit1 = float(cam_count) / 4.0
+        unit2 = float(cam_count) * 3.0 / 4.0
+        print("get_pairname 3", cam_count, unit1, unit2, int(unit1), int(unit2))
+        image_name1 = image_names[int(unit1)]
+        image1 = image_name1[image_name1.rfind('/') +1:]
+        image_name2 = image_names[int(unit2)]
+        image2 = image_name2[image_name2.rfind('/') +1:]
+        print("get_pairname 4", image_name1, image_name2, image1, image2)
+        
+        return 0, image1, image2
 
     return -1, 0, 0
 

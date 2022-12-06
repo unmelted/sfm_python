@@ -16,5 +16,5 @@
     "query_deletejobs": "DELETE FROM job_manager WHERE job_id = ",
     "query_jobstatusforcancel": "SELECT cancel, complete, pid2 FROM job_manager WHERE job_id = ",
     "query_getpts": "SELECT result FROM calib_data where job_id = ",
-    "query_getscale": "SELECT config1 from commmand where job_id = "
+    "query_getscale": "SELECT config1 from command where job_id = "
 }

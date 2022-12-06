@@ -46,7 +46,7 @@ class Commander(object):
         if obj == None:
             return finish(obj, -21)
 
-        l.get().w.debug('receive query {} {}'.format(query, obj[0]))
+        l.get().w.debug('receive query {} {}'.format(query, obj[0], obj[1]))
 
         if query == df.TaskCategory.AUTOCALIB_STATUS:
             status, result = DbManager.getJobStatus(obj[0])
@@ -71,9 +71,11 @@ class Commander(object):
             result, contents = get_result(obj[0])
             status = 100
 
-        if query != df.TaskCategory.AUTOCALIB_STATUS:
+        if query != df.TaskCategory.AUTOCALIB_STATUS and query != df.TaskCategory.GET_PAIR :
             DbManager.insert_requesthistory(
                 int(obj[0]), obj[1], query, None)
+        elif query == df.TaskCategory.GET_PAIR :
+            DbManager.insert_requesthistory(int(obj[0]), obj[2], query, None)
 
         l.get().w.debug('return result status {} result {} contents {} '.format(
             status, result, contents))
@@ -130,10 +132,10 @@ class Commander(object):
                 status = 0
                 return status, result, contents
 
-            jconfig['scale'] = DbManager.getParentScale(obj[0]['job_id'])
+            jconfig['scale'] = DbManager.getParentScale(obj[0]['job_id'])[1]
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
             p = Process(target=generate, args=(job_id, obj[0]['job_id'], obj[1], cal_type, obj[0]['pts_2d'],
-                                               obj[0]['pts_3d'], jconfig, obj[0]['world']))
+                                               obj[0]['pts_3d'], jconfig, obj[0]['image1'], obj[0]['image2'], obj[0]['world']))
             p.start()
 
         elif task == df.TaskCategory.ANALYSIS:
@@ -150,7 +152,7 @@ def calculate(input_dir, job_id, group, config, ip):
     print("--------------AUTOCALIB2-------------")
     print(os.getpid())
     print("------------------------------")
-    print("calcuate config : ", scale)
+    print("calcuate config : ", config['scale'])
     ac = Autocalib(input_dir, job_id, group, config, ip)
     ac.run()
     del ac
@@ -158,15 +160,15 @@ def calculate(input_dir, job_id, group, config, ip):
     JobActivity.updateJob(job_id, 'complete')
 
 
-def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, world=[]):
+def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, image1, image2, world=[]):
     print("generate mode started pid : ", os.getpid())
     # dbm = DbManager()
     JobActivity.insertNewJob(myjob_id, os.getpid())
-
+    print("generate main ---- ", config)
     DbManager.insert_newcommand_gen(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
-                                'None', config)
+                                'None', config, image1, image2)
     result = generate_pts(myjob_id, job_id, cal_type,
-                          pts_2d, pts_3d, config, world)
+                          pts_2d, pts_3d, config, image1, image2, world)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -178,7 +180,7 @@ def analysis(myjob_id, job_id, cal_type, world_pts):
     JobActivity.updateJob(myjob_id, 'complete')
 
 
-def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, config):
+def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config):
     # dbm = DbManager()
     time_s = time.time()
     float_2d = []
@@ -222,7 +224,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, config):
     status_update(myjob_id, 20)
     preset1.read_cameras()
     result = preset1.generate_points(
-        job_id, cal_type, config, float_2d, float_3d)
+        job_id, cal_type, config, float_2d, float_3d, image1, image2)
     if result < 0:
         return finish_query(job_id, result), None
 
@@ -239,11 +241,11 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, config):
     return 0, preset1
 
 
-def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, pts_world):
+def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, image2, pts_world):
     l.get().w.info("Generate pst start : {} cal_type {} ".format(job_id, cal_type))
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
-        myjob_id, job_id, cal_type, pts_2d, pts_3d, config)
+        myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config)
     save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
 

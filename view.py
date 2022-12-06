@@ -10,7 +10,7 @@ from logger import Logger as l
 class View(object):
     """Represents an image used in the reconstruction"""
 
-    def __init__(self, image_path, root_path, feature_path, scale, feature_type='sift'):
+    def __init__(self, image_path, root_path, scale, feature_path, feature_type='sift'):
         self.name = image_path[image_path.rfind('/') + 1:]
         l.get().w.debug("View init name : {}".format(self.name))
 

@@ -243,7 +243,7 @@ class Group(object):
 
         return -150, None
 
-    def generate_points(self, job_id, cal_type, config, float_2d=None, float_3d=None):
+    def generate_points(self, job_id, cal_type, config, float_2d=None, float_3d=None, image1=None, image2=None):
 
         if df.answer_from == 'input' and (float_2d == None or float_3d == None):
             df.answer_from = 'pts'  # for analysis mode
@@ -253,7 +253,7 @@ class Group(object):
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(
-            job_id, cal_type, float_2d, float_3d, config['pair'], config['pair1'], config['pair2'], answer_from=df.answer_from)
+            job_id, cal_type, float_2d, float_3d, config['pair'], image1, image2, answer_from=df.answer_from)
 
         if err < 0:
             return err
@@ -270,7 +270,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type=None, pair1=None, pair2=None, answer_from='pts'):
+    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type=None, image1=None, image2=None, answer_from='pts'):
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -279,7 +279,18 @@ class Group(object):
         _2d = None
         _3d = None
 
-        if pair_type != None:
+        if image1 != None and image2 != None:
+            viewname1 = get_viewname(image1, self.ext)
+            viewname2 = get_viewname(image2, self.ext)
+            err, c0 = self.get_camera_byView(viewname1)
+            if err < 0:
+                return err, None, None, None, None
+
+            err, c1 = self.get_camera_byView(viewname2)
+            if err < 0:
+                return err, None, None, None, None
+
+        elif pair_type != None:
             if pair_type == 'zero':
                 viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
                 viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
@@ -315,17 +326,6 @@ class Group(object):
                 err, c1 = self.get_camera_byView(viewname2)
                 if err < 0:
                     return err, None, None, None, None
-
-        elif pair_type == None and pair1 != None and pair2 != None:
-            viewname1 = get_viewname(pair1, self.ext)
-            viewname2 = get_viewname(pair2, self.ext)
-            err, c0 = self.get_camera_byView(viewname1)
-            if err < 0:
-                return err, None, None, None, None
-
-            err, c1 = self.get_camera_byView(viewname2)
-            if err < 0:
-                return err, None, None, None, None
 
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
