@@ -6,7 +6,7 @@ from multiprocessing import Process, Queue
 import json
 from flask import jsonify
 from camera_group import *
-import definition as df
+
 from logger import Logger as l
 # from db_layer import NewPool
 from job_manager import JobManager, JobActivity
@@ -217,7 +217,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
         return finish_query(myjob_id, result), None
 
     result = preset1.create_group(
-        root_path, df.DEFINITION.run_mode, config['scale'], 'colmap_db')
+        df.TaskCategory.GENERATE_PTS, root_path, df.DEFINITION.run_mode, config['scale'], 'colmap_db')
     if result < 0:
         return finish_query(myjob_id, result), None
 

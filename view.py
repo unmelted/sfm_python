@@ -5,12 +5,13 @@ import cv2
 import numpy as np
 import glob
 from logger import Logger as l
+import definition as df
 
 
 class View(object):
     """Represents an image used in the reconstruction"""
 
-    def __init__(self, image_path, root_path, scale, feature_path, feature_type='sift'):
+    def __init__(self, task_mode, image_path, root_path, scale, feature_path, feature_type='sift'):
         self.name = image_path[image_path.rfind('/') + 1:]
         l.get().w.debug("View init name : {}".format(self.name))
 
@@ -28,12 +29,12 @@ class View(object):
 
         self.extraction_mode = 'half'
 
-        if scale == ' half':
-            self.image_width = self.image.shape[1] / 2.0
-            self.image_height = self.image.shape[0] / 2.0
-            self.image = cv2.resize(
-                self.image, (self.image_width, self.image_height))
-            cv2.imwrte(image_path, self.image)
+        if scale == 'half' and task_mode == df.TaskCategory.AUTOCALIB:
+            self.image_width = int(self.image.shape[1] / 2.0)
+            self.image_height = int(self.image.shape[0] / 2.0)
+            output = cv2.resize(self.image, (self.image_width, self.image_height))
+            cv2.imwrite(image_path, output)
+            self.image = output
             l.get().w.debug("sclae half apply : {}".format(image_path))
 
         if (self.extraction_mode == 'None'):

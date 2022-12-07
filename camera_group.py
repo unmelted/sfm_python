@@ -58,12 +58,12 @@ class Group(object):
         if self.run_mode == 'colmap':
             del self.colmap
 
-    def create_group(self, root_path, run_mode, scale, list_from='pts_file', group='Group1'):
+    def create_group(self, task_mode, root_path, run_mode, scale, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
 
         l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))
-        result = self.prepare_camera_list(list_from, scale, group)
+        result = self.prepare_camera_list(task_mode, list_from, scale, group)
         if result < 0:
             return result
 
@@ -77,7 +77,7 @@ class Group(object):
 
         return 0
 
-    def prepare_camera_list(self, list_from, scale, group_id='Group1'):
+    def prepare_camera_list(self, task_mode, list_from, scale, group_id='Group1'):
         self.world.get_world()
         self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)
@@ -115,7 +115,7 @@ class Group(object):
                 return -24
 
         for image_name in image_names:
-            tcam = Camera(image_name, self.root_path,
+            tcam = Camera(task_mode, image_name, self.root_path,
                           self.K, self.run_mode, scale)
             self.cameras.append(tcam)
             self.views.append(tcam.view)

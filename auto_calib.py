@@ -39,7 +39,7 @@ class Autocalib(object):
 
         l.get().w.error("list from type : {} ".format(self.list_from))
         ret = preset1.create_group(
-            self.root_dir, self.run_mode, self.config['scale'], self.list_from, self.group)
+            df.TaskCategory.AUTOCALIB, self.root_dir, self.run_mode, self.config['scale'], self.list_from, self.group)
 
         if (ret < 0):
             return finish(self.job_id, ret)
