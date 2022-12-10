@@ -1,4 +1,5 @@
 from ensurepip import version
+from operator import truediv
 import os
 from enum import Enum
 import logging
@@ -115,6 +116,11 @@ class DEFINITION(object):
     feature_minimum = 500
 
     job_limit = 5
+
+    test_applycrop = False
+    # test_apply_shift = True
+    test_applycenter_image = 'interpolate' #3dpt_center #0cam_center
+    test_applyshift_type = 'center' #ave
 
     VERSION = '4.0.0.2'
 

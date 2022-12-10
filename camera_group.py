@@ -78,7 +78,6 @@ class Group(object):
         return 0
 
     def prepare_camera_list(self, task_mode, list_from, scale, group_id='Group1'):
-        self.world.get_world()
         self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)
         image_names = []
@@ -430,14 +429,18 @@ class Group(object):
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):
-        if cal_type == '3D':
-            world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
-                world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
+        if len(world_pts) > 5:
+            print("generate extra point caltype ", cal_type, world_pts)
+            self.world.set_world(world_pts)
+            # world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
+            #     world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
 
-            p = get_normalized_point(world_p)
-            world = np.array(p)
+            # p = get_normalized_point(world_p)
+            world = self.world.get_world()
             dist_coeff = np.zeros((4, 1))
             print("world ", world)
+
+        if cal_type == '3D':
 
             for i in range(len(self.cameras)):
                 print(self.cameras[i].view.name, self.cameras[i].pts_3d)
@@ -445,7 +448,7 @@ class Group(object):
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
-                    50.0, 50.0, -30.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+                    50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
@@ -456,7 +459,8 @@ class Group(object):
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def generate_adjust(self, job_id):
-        gadj = GroupAdjust(self.cameras)
+        gadj = GroupAdjust(self.cameras, self.world, self.root_path)
+        gadj.calculate_rotatecenter()
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
         self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
@@ -466,6 +470,6 @@ class Group(object):
         output_path = os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
+        #self.world.draw_center_inworld(self.cameras, self.root_path)
 
-        # making_gif(output_path, output_path)
         return self.left, self.top, self.width, self.height

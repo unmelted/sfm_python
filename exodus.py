@@ -191,21 +191,21 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
     scale_factor = 1.0 if config['scale'] == 'full' else 2.0
 
     if cal_type == '3D' and len(pts_3d) < 16:
-        return finish_query(myjob_id, -301)
+        return finish(myjob_id, -301), None
     elif cal_type == '2D' and len(pts_2d) < 8:
-        return finish_query(myjob_id, -301), None
+        return finish(myjob_id, -301), None
 
     if cal_type == '2D3D' or cal_type == '3D':
         for val in pts_3d:
             if float(val) < 0:
-                return finish_query(myjob_id, -302), None
+                return finish(myjob_id, -302), None
             else:
                 float_3d.append(float(val) / scale_factor)
 
     if cal_type == '2D3D' or cal_type == '2D':
         for val in pts_2d:
             if float(val) < 0:
-                return finish_query(myjob_id, -302), None
+                return finish(myjob_id, -302), None
             else:
                 float_2d.append(float(val) / scale_factor)
 
@@ -214,19 +214,19 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
     preset1 = Group(myjob_id)
     result, root_path = DbManager.getRootPath(job_id)
     if result < 0:
-        return finish_query(myjob_id, result), None
+        return finish(myjob_id, result), None
 
     result = preset1.create_group(
         df.TaskCategory.GENERATE_PTS, root_path, df.DEFINITION.run_mode, config['scale'], 'colmap_db')
     if result < 0:
-        return finish_query(myjob_id, result), None
+        return finish(myjob_id, result), None
 
     status_update(myjob_id, 20)
     preset1.read_cameras()
     result = preset1.generate_points(
         job_id, cal_type, config, float_2d, float_3d, image1, image2)
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish(job_id, result), None
 
     time_e = time.time() - time_s
     l.get().w.critical("Spending time total (sec) : {}".format(time_e))
@@ -236,7 +236,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
 
     result = preset1.export(myjob_id, job_id, cal_type, config['scale'])
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish(job_id, result), None
     status_update(myjob_id, 80)
     return 0, preset1
 
@@ -246,25 +246,30 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
         myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config)
+    if result < 0 :
+        return result
+
     save_point_image(preset, myjob_id)
     status_update(myjob_id, 100)
 
     if cal_type == '2D':
         preset.generate_extra_point('2D', None)
-    elif cal_type == '3D':
+    elif cal_type == '3D' or cal_type == '2D3D':
         if len(pts_world) >= 8:
             float_world = []
             for wp in pts_world:
                 float_world.append(float(wp))
 
             DbManager.insert_adjustData2(myjob_id, job_id, pts_world)
-            preset.generate_extra_point('3D', float_world)
+
+        if cal_type == '3D':
+            preset.generate_extra_point('3D', float_world)            
+        elif cal_type == '2D3D':
+            preset.generate_extra_point('2D', float_world)
+
         else:
             l.get().w.debug("Can't generate extra point. (No world)")
             return result
-
-    elif cal_type == '2D3D':
-        preset.generate_extra_point('2D', None)
 
     left, top, width, height = preset.generate_adjust(myjob_id)
     DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
