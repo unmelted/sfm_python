@@ -13,13 +13,14 @@ from definition import DEFINITION as df
 
 class GroupAdjust(object):
 
-    def __init__(self, cameras, world, root_path):
+    def __init__(self, cameras, world, root_path, config):
         self.cameras = cameras
         self.world = world
         self.root_path = root_path
 
         self.x_fit = []
         self.y_fit = []
+        self.config = config
 
     def set_group_margin(self, left, top, right, bottom, width, height):
         self.left = left
@@ -31,11 +32,11 @@ class GroupAdjust(object):
 
     def calculate_rotatecenter(self) :
 
-        if df.test_applycenter_image == '3dpt_center':
+        if self.config['rotation_center'] == '3d-center':
             for i in range(len(self.cameras)):        
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
-        elif df.test_applycenter_image == '0cam_center' : 
+        elif self.config['rotation_center'] == 'zero-cam' : 
             center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             np_center = np.array(center)            
             pts_3d0 = self.cameras[0].pts_3d            
@@ -58,7 +59,7 @@ class GroupAdjust(object):
                 self.cameras[i].rotate_y = center[1] / center[2]
                 print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
-        elif df.test_applycenter_image == 'interpolate':
+        elif self.config['rotation_center'] == 'each-center':
             print("interpolate cneter start.. ")
             self.world.calculate_center_inworld(self.cameras, self.root_path)
             new_center = self.world.interpolate_center_inworld(self.cameras)

@@ -173,12 +173,13 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, image1, ima
 
 
 # job_id is job_id for generate
+'''
 def analysis(myjob_id, job_id, cal_type, world_pts):
     print("analysis mode started pid : ", os.getpid())
     JobActivity.insertNewJob(myjob_id, os.getpid())
     analysis_mode(myjob_id, job_id, cal_type, world_pts)
     JobActivity.updateJob(myjob_id, 'complete')
-
+'''
 
 def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config):
     # dbm = DbManager()
@@ -271,11 +272,11 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
             l.get().w.debug("Can't generate extra point. (No world)")
             return result
 
-    left, top, width, height = preset.generate_adjust(myjob_id)
+    left, top, width, height = preset.generate_adjust(myjob_id, config)
     DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
     return result
 
-
+'''
 def analysis_mode(myjob_id, job_id, cal_type, world_pts):
     float_world = []
     result, preset = prepare_generate(job_id, cal_type, world_pts)
@@ -301,3 +302,4 @@ def analysis_mode(myjob_id, job_id, cal_type, world_pts):
     preset.generate_extra_point(cal_type, float_world)
     left, top, width, height = preset.generate_adjust(myjob_id)
     return 0
+'''

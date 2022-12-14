@@ -458,8 +458,8 @@ class Group(object):
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
-    def generate_adjust(self, job_id):
-        gadj = GroupAdjust(self.cameras, self.world, self.root_path)
+    def generate_adjust(self, job_id, config):
+        gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
         gadj.calculate_rotatecenter()
         gadj.calculate_radian()
         gadj.calculate_scaleshift()

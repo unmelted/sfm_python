@@ -242,44 +242,6 @@ class visualize(Resource):
         return result
 
 
-analysis = api.model('analysis', {
-    'job_id': fields.Integer,
-    'cal_type': fields.String,
-    "world": fields.List(fields.Float)
-})
-
-
-@api.route('/exodus/autocalib/analysis')
-@api.doc()
-class calib_analysis(Resource):
-    @api.expect(analysis)
-    def post(self, an=analysis):
-        ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor ", ip_addr)
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('job_id', type=int)
-        parser.add_argument('cal_type', type=str)
-        parser.add_argument('world', default=list, action='append')
-
-        args = parser.parse_args()
-
-        print(args['job_id'])
-        print(args['cal_type'])
-        print(args['world'])
-        status, result, _ = Commander.send_query(
-            df.TaskCategory.ANALYSIS, (args['job_id'], ip_addr, args))
-
-        msg = df.get_err_msg(result)
-        result = {
-            'job_id': args['job_id'],
-            'progress': result,
-            'message': msg,
-        }
-
-        return result
-
-
 @api.route('/exodus/autocalib/getversion')
 @api.doc()
 class get_result(Resource):
