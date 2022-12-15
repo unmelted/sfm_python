@@ -30,12 +30,13 @@ class GroupAdjust(object):
         self.width = width
         self.height = height
 
-    def calculate_rotatecenter(self) :
+    def calculate_rotatecenter(self, track_cx = 0, track_cy = 0) :
 
         if self.config['rotation_center'] == '3d-center':
             for i in range(len(self.cameras)):        
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
+
         elif self.config['rotation_center'] == 'zero-cam' : 
             center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             np_center = np.array(center)            
@@ -60,13 +61,37 @@ class GroupAdjust(object):
                 print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
         elif self.config['rotation_center'] == 'each-center':
-            print("interpolate cneter start.. ")
+
             self.world.calculate_center_inworld(self.cameras, self.root_path)
             new_center = self.world.interpolate_center_inworld(self.cameras)
 
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = new_center[i][0]
                 self.cameras[i].rotate_y = new_center[i][1]
+                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+
+        elif self.config['rotation_center'] == 'tracking-center' :
+            cam_idx = get_camera_index_byname(self.config['tracking_camidx'])
+            pts_3d0 = self.cameras[cam_idx].pts_3d
+            center = [track_cx, track_cy, 1]
+            np_center = np.array(center)
+
+            for i in range(len(self.cameras)):
+                if self.cameras[i].view.name == self.config['tracking_camidx'] :
+                    self.cameras[i].rotate_x = track_cx
+                    self.cameras[i].rotate_y = track_cy
+                    continue                    
+
+                h, _ = cv2.findHomography(pts_3d0, self.cameras[i].pts_3d)
+                # print("rotatecenter homography ---- \n" , h)
+                center = np.dot(h , np_center)
+                # print(center)
+                if center[2] < 0 :
+                    print("3rd value is minus ...")
+                    center[2] = 1.0
+
+                self.cameras[i].rotate_x = center[0] / center[2]
+                self.cameras[i].rotate_y = center[1] / center[2]
                 print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
 

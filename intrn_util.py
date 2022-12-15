@@ -115,3 +115,9 @@ def get_targetpath(job_id):
         return finish_query(job_id, result)
     else:
         return 0, target_path
+
+def get_camera_index_byname(cameras, view_name) :
+
+    for i, camera in enumerate(cameras) :
+        if (view_name == camera.view.name) :
+            return i

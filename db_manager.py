@@ -183,7 +183,3 @@ class DbManager(BaseQuery):
             (str(left), str(top), str(width), str(height), job_id, parent_job)
         l.get().w.info("update world Query {}".format(q))
         result = DBLayer.queryWorker('update', q)
-
-    @classmethod
-    def update_generateJob(job_id, scale, image1, image2):
-        pass

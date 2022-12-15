@@ -13,10 +13,11 @@ class TaskCategory(Enum):
     AUTOCALIB_STATUS = 200
     AUTOCALIB_CANCEL = 700
     GENERATE_PTS = 300
-    GET_PAIR = 400
-    GET_RESULT = 500
-    VISUALIZE = 600
-    ANALYSIS = 700
+    POSITION_TRACKING = 400
+    GET_PAIR = 500
+    GET_RESULT = 600
+    VISUALIZE = 700
+    ANALYSIS = 800
     FINISH = 1
 
 
@@ -118,9 +119,8 @@ class DEFINITION(object):
     job_limit = 5
 
     test_applycrop = False
-    # test_apply_shift = True
-    test_applycenter_image = 'interpolate' #3dpt_center #0cam_center
     test_applyshift_type = 'center' #ave
+    test_applypositiontracking = True
 
     VERSION = '4.0.0.2'
 
