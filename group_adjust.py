@@ -9,6 +9,7 @@ from mathutil import *
 from intrn_util import *
 from extn_util import *
 from definition import DEFINITION as df
+from camera_transform import *
 
 
 class GroupAdjust(object):
@@ -30,35 +31,37 @@ class GroupAdjust(object):
         self.width = width
         self.height = height
 
-    def calculate_rotatecenter(self, track_cx = 0, track_cy = 0) :
+    def calculate_rotatecenter(self, track_cx=0, track_cy=0):
 
         if self.config['rotation_center'] == '3d-center':
-            for i in range(len(self.cameras)):        
+            for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
 
-        elif self.config['rotation_center'] == 'zero-cam' : 
-            center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
-            np_center = np.array(center)            
-            pts_3d0 = self.cameras[0].pts_3d            
+        elif self.config['rotation_center'] == 'zero-cam':
+            center = [self.cameras[0].view.image_width /
+                      2, self.cameras[0].view.image_height/2, 1]
+            np_center = np.array(center)
+            pts_3d0 = self.cameras[0].pts_3d
 
             for i in range(len(self.cameras)):
-                if i == 0 :
+                if i == 0:
                     self.cameras[i].rotate_x = center[0] / center[2]
                     self.cameras[i].rotate_y = center[1] / center[2]
-                    continue                    
+                    continue
 
                 h, _ = cv2.findHomography(pts_3d0, self.cameras[i].pts_3d)
                 # print("rotatecenter homography ---- \n" , h)
-                center = np.dot(h , np_center)
+                center = np.dot(h, np_center)
                 # print(center)
-                if center[2] < 0 :
+                if center[2] < 0:
                     print("3rd value is minus ...")
                     center[2] = 1.0
 
                 self.cameras[i].rotate_x = center[0] / center[2]
                 self.cameras[i].rotate_y = center[1] / center[2]
-                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+                print(self.cameras[i].view.name,
+                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
         elif self.config['rotation_center'] == 'each-center':
 
@@ -68,32 +71,33 @@ class GroupAdjust(object):
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = new_center[i][0]
                 self.cameras[i].rotate_y = new_center[i][1]
-                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+                print(self.cameras[i].view.name,
+                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
-        elif self.config['rotation_center'] == 'tracking-center' :
+        elif self.config['rotation_center'] == 'tracking-center':
             cam_idx = get_camera_index_byname(self.config['tracking_camidx'])
             pts_3d0 = self.cameras[cam_idx].pts_3d
             center = [track_cx, track_cy, 1]
             np_center = np.array(center)
 
             for i in range(len(self.cameras)):
-                if self.cameras[i].view.name == self.config['tracking_camidx'] :
+                if self.cameras[i].view.name == self.config['tracking_camidx']:
                     self.cameras[i].rotate_x = track_cx
                     self.cameras[i].rotate_y = track_cy
-                    continue                    
+                    continue
 
                 h, _ = cv2.findHomography(pts_3d0, self.cameras[i].pts_3d)
                 # print("rotatecenter homography ---- \n" , h)
-                center = np.dot(h , np_center)
+                center = np.dot(h, np_center)
                 # print(center)
-                if center[2] < 0 :
+                if center[2] < 0:
                     print("3rd value is minus ...")
                     center[2] = 1.0
 
                 self.cameras[i].rotate_x = center[0] / center[2]
                 self.cameras[i].rotate_y = center[1] / center[2]
-                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
-
+                print(self.cameras[i].view.name,
+                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
     def calculate_radian(self):
         for i in range(len(self.cameras)):
@@ -105,8 +109,8 @@ class GroupAdjust(object):
 
             if diffx == 0:
                 dist = diffy
-            else :
-                if diffy < 0 :
+            else:
+                if diffy < 0:
                     diffy *= -1
                     diffx *= -1
 
@@ -138,7 +142,7 @@ class GroupAdjust(object):
         start_len = self.cameras[0].rod_length
         target_len = self.cameras[len(self.cameras) - 1].rod_length
 
-        if df.test_applyshift_type == 'ave' : 
+        if df.test_applyshift_type == 'ave':
             for i in range(len(self.cameras)):
                 # sumx += self.cameras[i].pts_extra[1][0]
                 # sumy += self.cameras[i].pts_extra[1][1]
@@ -151,18 +155,18 @@ class GroupAdjust(object):
             avey = sumy / dsccnt
             targx = avex
             targy = avey
-        elif df.test_applyshift_type == 'center' :
-            center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
+        elif df.test_applyshift_type == 'center':
+            center = [self.cameras[0].view.image_width /
+                      2, self.cameras[0].view.image_height/2, 1]
             targx = center[0]
             targy = center[1]
             dsccnt = len(self.cameras)
 
-                   
         interval = (target_len - start_len) / (dsccnt - 1)
 
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
-            self.cameras[i].scale = dist_len / self.cameras[i].rod_length            
+            self.cameras[i].scale = dist_len / self.cameras[i].rod_length
             # self.cameras[i].adjust_x = targx - self.cameras[i].pts_extra[1][0]
             # self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
             self.cameras[i].adjust_x = targx - self.cameras[i].rotate_x
@@ -271,10 +275,10 @@ class GroupAdjust(object):
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height,
                                  self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
-        if df.test_applycrop == True :
+        if df.test_applycrop == True:
             out = np.linalg.multi_dot([mat5, mat4, mat3, mat2, mat1])
-        else :
-            out = np.linalg.multi_dot([mat5, mat3, mat2, mat1])        
+        else:
+            out = np.linalg.multi_dot([mat5, mat3, mat2, mat1])
         return out
 
     def adjust_image(self, output_path, ext, job_id):
@@ -325,11 +329,12 @@ class GroupAdjust(object):
                     pt_ex[1][0]), int(pt_ex[1][1])), 5, (0, 255, 0), -1)
                 #cv2.circle(self.cameras[i].view.image, (int(pt_ex[2][0]), int(pt_ex[2][1])), 5, (0, 255, 0), -1)
                 # cv2.line(self.cameras[i].view.image, (int(pt_ex[0][0]), int(pt_ex[0][1])), (int(pt_ex[1][0]), int(pt_ex[1][1])),
-                        #  (255, 0, 0), 3)
+                #  (255, 0, 0), 3)
                 print("extra point ! :",  int(pt_ex[0][0]), int(
                     pt_ex[0][1]), int(pt_ex[1][0]), int(pt_ex[1][1]))
 
-            cv2.circle(self.cameras[i].view.image, (int(self.cameras[i].rotate_x), int(self.cameras[i].rotate_y)), 8, (0, 0, 255), -1)
+            cv2.circle(self.cameras[i].view.image, (int(self.cameras[i].rotate_x), int(
+                self.cameras[i].rotate_y)), 8, (0, 0, 255), -1)
 
             dst_img = cv2.warpAffine(
                 self.cameras[i].view.image, mat[:2, :3], (w, h))
@@ -341,3 +346,34 @@ class GroupAdjust(object):
         print(cli)
         process = subprocess.Popen(
             cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+
+    def test_homography(self, initx, inity):
+        mx = 0
+        my = 0
+        output_path = os.path.join(self.root_path, 'htest')
+        os.makedirs(output_path)
+
+        for i in range(1, len(self.cameras)):
+            filename = os.path.join(
+                output_path, self.cameras[i].view.name[:-4] + '_hm.jpg')
+            print(filename)
+
+            if i == 1:
+                mx, my = CameraTransform.homography_fromF(
+                    self.cameras[0], self.cameras[1], initx, inity)
+                print("index == 1 ", mx, my)
+                cv2.circle(self.cameras[0].view.image, (int(
+                    initx), int(inity)), 10, (255, 255, 255), -1)
+                cv2.circle(self.cameras[1].view.image, (int(
+                    mx), int(my)), 10, (255, 255, 255), -1)
+                filename2 = os.path.join(
+                    output_path, self.cameras[0].view.name[:-4] + '_hm.jpg')
+                cv2.imwrite(filename2, self.cameras[0].view.image)
+                cv2.imwrite(filename, self.cameras[1].view.image)
+
+            else:
+                mx, my = CameraTransform.homography_fromF(
+                    self.cameras[i-1], self.cameras[i], mx, my)
+                cv2.circle(self.cameras[i].view.image, (int(
+                    mx), int(my)), 10, (255, 255, 255), -1)
+                cv2.imwrite(filename, self.cameras[i].view.image)

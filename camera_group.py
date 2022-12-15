@@ -10,7 +10,6 @@ from camera import *
 from pair import *
 from view import *
 from visualize import *
-from camera_transform import *
 from world import *
 from intrn_util import *
 from extn_util import *
@@ -470,6 +469,6 @@ class Group(object):
         output_path = os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
-        #self.world.draw_center_inworld(self.cameras, self.root_path)
+        gadj.test_homography()
 
         return self.left, self.top, self.width, self.height
