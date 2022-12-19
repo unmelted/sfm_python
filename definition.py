@@ -4,7 +4,7 @@ import os
 from enum import Enum
 import logging
 
-VERSION = 'V4.0.0.2'
+VERSION = 'V4.0.0.3'
 
 
 class TaskCategory(Enum):
@@ -121,8 +121,6 @@ class DEFINITION(object):
     test_applycrop = False
     test_applyshift_type = 'center' #ave
     test_applypositiontracking = True
-
-    VERSION = '4.0.0.2'
 
     def get_version(self):
         return VERSION

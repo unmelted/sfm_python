@@ -272,7 +272,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
             l.get().w.debug("Can't generate extra point. (No world)")
             return result
 
-    left, top, width, height = preset.generate_adjust(myjob_id, config)
+    left, top, width, height = preset.generate_adjust(myjob_id, cal_type,  config)
     DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
     return result
 

@@ -428,16 +428,17 @@ class Group(object):
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):
-        if len(world_pts) > 5:
-            print("generate extra point caltype ", cal_type, world_pts)
-            self.world.set_world(world_pts)
-            # world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
-            #     world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
+        if world_pts != None : 
+            if len(world_pts) > 5:
+                print("generate extra point caltype ", cal_type, world_pts)
+                self.world.set_world(world_pts)
+                # world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
+                #     world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
 
-            # p = get_normalized_point(world_p)
-            world = self.world.get_world()
-            dist_coeff = np.zeros((4, 1))
-            print("world ", world)
+                # p = get_normalized_point(world_p)
+                world = self.world.get_world()
+                dist_coeff = np.zeros((4, 1))
+                print("world ", world)
 
         if cal_type == '3D':
 
@@ -457,9 +458,9 @@ class Group(object):
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
-    def generate_adjust(self, job_id, config):
+    def generate_adjust(self, job_id, cal_type, config):
         gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
-        gadj.calculate_rotatecenter()
+        gadj.calculate_rotatecenter(cal_type)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
         self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
