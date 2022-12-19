@@ -351,7 +351,10 @@ class GroupAdjust(object):
         mx = 0
         my = 0
         output_path = os.path.join(self.root_path, 'htest')
-        os.makedirs(output_path)
+        if not os.path.exists(output_path) :
+            os.makedirs(output_path)
+    
+        tf = CameraTransform()
 
         for i in range(1, len(self.cameras)):
             filename = os.path.join(
@@ -359,7 +362,7 @@ class GroupAdjust(object):
             print(filename)
 
             if i == 1:
-                mx, my = CameraTransform.homography_fromF(
+                mx, my = tf.homography_fromF(
                     self.cameras[0], self.cameras[1], initx, inity)
                 print("index == 1 ", mx, my)
                 cv2.circle(self.cameras[0].view.image, (int(
@@ -372,7 +375,8 @@ class GroupAdjust(object):
                 cv2.imwrite(filename, self.cameras[1].view.image)
 
             else:
-                mx, my = CameraTransform.homography_fromF(
+                return 
+                mx, my = tf.homography_fromF(
                     self.cameras[i-1], self.cameras[i], mx, my)
                 cv2.circle(self.cameras[i].view.image, (int(
                     mx), int(my)), 10, (255, 255, 255), -1)

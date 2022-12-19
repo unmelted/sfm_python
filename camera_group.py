@@ -469,6 +469,6 @@ class Group(object):
         output_path = os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
-        gadj.test_homography()
+        #gadj.test_homography(1372, 1116)
 
         return self.left, self.top, self.width, self.height

@@ -1,5 +1,7 @@
 import os
 import sys
+from telnetlib import TTYLOC
+from tkinter import ttk
 import numpy as np
 import math
 import cv2
@@ -12,7 +14,7 @@ from logger import Logger as l
 
 class CameraTransform(object):
 
-    def __init__(self, world):
+    def __init__(self, world = None):
         self.calib_type = None  # 2d, 3d
         self.world = world
         scale = 100
@@ -305,26 +307,78 @@ class CameraTransform(object):
         return extra_3d
 
     def computeHomography(self, R1, T1, R2, T2, d_inv, normal):
-        homography = R2 * R1.T + d_inv * (-1*R2 * R1.T * T1 + T2) * normal.T
+        homography = R2 * R1.T + d_inv * (-1 * R2 * R1.T * T1 + T2) * normal.T
         print("compute Homography : ", homography)
+        return homography
+
+    def computeRelative(self, R1, T1, R2, T2) :
+        rr = R2 * R1.T
+        tt = R2 * (-R1.T * T1) + T2
+        return rr, tt
+
+    def computeHomography2(self, R1to2, T1to2, d_inv ,normal) :
+        homography = R1to2 + d_inv * T1to2 * normal.T
+        return homography
 
     def homography_fromF(self, ref, target, tx, ty):
         print("homography from F start .. ", ref.view.name, target.view.name)
-        normal = ref.R * np.array([0, 0, 1])
-        print(normal)
-        origin = np.array([0, 0, 0])
-        origin1 = ref.R * origin + ref.T
-        dinv = 1.0 / np.dot(normal, origin1)
-        k_inv = np.linalg.inv(ref.K)
-        homo_euc = self.computeHomography(
-            ref.R, ref.T, target.R, target.T, dinv, normal)
-        homo = ref.K * homo_euc * k_inv
+        print(ref.R)
+        print(ref.t)
+        print(ref.K)
+        print("----- ")
+        print(target.R)
+        print(target.t)
+        print(target.K)
+        print("----- ")
 
-        print(homo)
+        normal = ref.R *np.array([0, 0, 1])
+        origin = np.array([0, 0, 0])
+
+        origin1 = ref.R * origin + ref.t
+        dinv = 1.0 / np.dot(normal, origin1)
+        homo_euc = self.computeHomography(
+            ref.R, ref.t, target.R, target.t, dinv, normal)
+
+        k_inv = np.linalg.inv(ref.K)
+        homo1 = target.K * homo_euc * k_inv
+        homo2 = homo1
+        print("homoe2 .. ", homo2)
+
+        homo_euc /= homo_euc[2][2]
+        homo2 /= homo2[2][2]
+        print("-------fianl homo ", homo2)
+
         p = np.array([tx, ty, 1])
-        moved_p = np.dot(homo, p)
+        moved_p = np.dot(homo2, p)
         movedx = moved_p[0] / moved_p[2]
         movedy = moved_p[1] / moved_p[2]
+       
         print(moved_p, movedx, movedy)
+
+        rr, tt = self.computeRelative(ref.R, ref.t, target.R, target.t)
+        homo_euc = self.computeHomography2(rr, tt, dinv, normal)
+        homo1 = target.K * homo_euc * k_inv        
+        homo2 = homo1
+
+        homo_euc /= homo_euc[2][2]
+        homo2 /= homo2[2][2]
+        print("----fianl homo2 ", homo2)
+
+        p = np.array([tx, ty, 1])
+        moved_p = np.dot(homo2, p)
+        movedx = moved_p[0] / moved_p[2]
+        movedy = moved_p[1] / moved_p[2]
+       
+        print(moved_p, movedx, movedy)        
+
+        p = np.array([tx, ty, 1]) * k_inv
+        moved_p = np.dot(homo2, p) * target.K
+        print(moved_p)
+        moved_x = moved_p[0][0] / moved_p[2][2]
+        moved_y = moved_p[1][1] / moved_p[2][2]
+        print(moved_x , moved_y)
+
+        h, _ = cv2.findHomography(ref.pts_3d, target.pts_3d)        
+        print("refernce -- \n", h)
 
         return movedx, movedy
