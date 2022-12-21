@@ -31,9 +31,14 @@ class GroupAdjust(object):
         self.width = width
         self.height = height
 
-    def calculate_rotatecenter(self, track_cx=0, track_cy=0):
+    def calculate_rotatecenter(self, cal_type, track_cx=0, track_cy=0):
 
-        if self.config['rotation_center'] == '3d-center':
+        if cal_type == '2D' :
+            for i in range(len(self.cameras)):
+                self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
+                self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
+                            
+        elif self.config['rotation_center'] == '3d-center':
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
