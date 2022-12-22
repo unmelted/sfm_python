@@ -43,7 +43,6 @@ class DbManager(BaseQuery):
                              input_path=input_dir, config1=config['scale'], config2=config['pair'], image_pair1=image1, image_pair2=image2)
         result = DBLayer.queryWorker('insert', q)
 
-
     @classmethod
     def update_command_pair(cls, image1, image2, job_id):
         q = BaseQuery.update('command', image_pair1=image1,
@@ -89,6 +88,8 @@ class DbManager(BaseQuery):
 
         if len(rows) > 1:
             return -201, 0
+        elif len(rows) == 0:
+            return -151, 0
         else:
             l.get().w.debug("status : {} {} ".format(
                 str(rows[0][0]), str(rows[0][1])))
