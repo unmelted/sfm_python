@@ -260,7 +260,9 @@ def save_point_image(preset, myjob_id):
         os.makedirs(output_path)
 
     review_path = os.path.join(defn.output_pts_image_dir, str(myjob_id))
-    os.makedirs(review_path)
+    if not os.path.exists(review_path): 
+        os.makedirs(review_path)
+
     print('save_point_image review_path : ', review_path)
 
     for i in range(len(preset.cameras)):
