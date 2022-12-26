@@ -190,6 +190,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
     l.get().w.info('prepare generate jobid {} cal_type {} scale {}'.format(
         job_id, cal_type, config['scale']))
     scale_factor = 1.0 if config['scale'] == 'full' else 2.0
+    print("apply scale factor : ", scale_factor)
 
     if cal_type == '3D' and len(pts_3d) < 16:
         return finish(myjob_id, -301), None
@@ -209,6 +210,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
                 return finish(myjob_id, -302), None
             else:
                 float_2d.append(float(val) / scale_factor)
+    print(" applied ,,, " , pts_2d, pts_3d)
 
     DbManager.insert_adjustData(myjob_id, job_id, pts_2d, pts_3d)
 

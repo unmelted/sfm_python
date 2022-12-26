@@ -82,42 +82,42 @@ class Autocalib(object):
         return 0
 
     def checkDataValidity(self):
-        if self.mode == df.TaskCategory.VISUALIZE or  \
-                self.mode == 'visualize' or \
-                self.mode == df.TaskCategory.ANALYSIS or \
-                self.mode == 'analysis':
+        # if self.mode == df.TaskCategory.VISUALIZE or  \
+        #         self.mode == 'visualize' or \
+        #         self.mode == df.TaskCategory.ANALYSIS or \
+        #         self.mode == 'analysis':
 
-            self.root_dir = self.input_dir
+        #     self.root_dir = self.input_dir
 
-            if not os.path.exists(self.root_dir) or \
-               not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'sparse')):
-                return finish(self.job_id, -104)
+        #     if not os.path.exists(self.root_dir) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'sparse')):
+        #         return finish(self.job_id, -104)
 
-        else:
-            if not os.path.exists(self.input_dir):
-                return -105
+        # else:
+        if not os.path.exists(self.input_dir):
+            return -105
 
-            result = 0
-            now = datetime.now()
-            root = 'Cal' + \
-                datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
-            if not os.path.exists(os.path.join(os.getcwd(), root)):
-                os.makedirs(os.path.join(os.getcwd(), root))
-            self.root_dir = os.path.join(os.getcwd(), root)
-            if not os.path.exists(os.path.join(self.root_dir, 'images')):
-                os.makedirs(os.path.join(self.root_dir, 'images'))
+        result = 0
+        now = datetime.now()
+        root = 'Cal' + \
+            datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
+        if not os.path.exists(os.path.join(os.getcwd(), root)):
+            os.makedirs(os.path.join(os.getcwd(), root))
+        self.root_dir = os.path.join(os.getcwd(), root)
+        if not os.path.exists(os.path.join(self.root_dir, 'images')):
+            os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            result = prepare_job(self.input_dir, self.root_dir, self.list_from)
-            if result < 0:
-                return result
-
-            if self.list_from == 'video_folder':
-                self.list_from = 'image_folder'
-
-            l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DbManager.update_command_path(self.root_dir, self.job_id)
-
+        result = prepare_job(self.input_dir, self.root_dir, self.list_from)
+        if result < 0:
             return result
+
+        if self.list_from == 'video_folder':
+            self.list_from = 'image_folder'
+
+        l.get().w.info("Check validity root path: {} ".format(self.root_dir))
+        DbManager.update_command_path(self.root_dir, self.job_id)
+
+        return result

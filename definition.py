@@ -16,7 +16,7 @@ class TaskCategory(Enum):
     POSITION_TRACKING = 400
     GET_PAIR = 500
     GET_RESULT = 600
-    VISUALIZE = 700
+    GET_GENINFO = 700
     ANALYSIS = 800
     FINISH = 1
 

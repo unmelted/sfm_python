@@ -1,4 +1,3 @@
-from email.utils import parseaddr
 import os
 import subprocess
 import numpy as np
@@ -37,7 +36,7 @@ class GroupAdjust(object):
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
-                            
+
         elif self.config['rotation_center'] == '3d-center':
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
@@ -280,6 +279,8 @@ class GroupAdjust(object):
         mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height,
                                  self.left, self.right, self.width, self.height)
         mat5 = get_scale_matrix(0.5, 0.5)
+        # mat5 = get_scale_matrix(self.width/cam.view.image_width, self.height/cam.view.image_height) native
+
         if df.test_applycrop == True:
             out = np.linalg.multi_dot([mat5, mat4, mat3, mat2, mat1])
         else:
@@ -289,6 +290,9 @@ class GroupAdjust(object):
     def adjust_image(self, output_path, ext, job_id):
         w = int(self.cameras[0].view.image_width/2)
         h = int(self.cameras[0].view.image_height/2)
+        # w = int(self.width)
+        # h = int(self.height)
+        
         analysis_path = os.path.join(df.output_adj_image_dir, str(job_id))
         os.makedirs(analysis_path)
 

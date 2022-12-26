@@ -252,9 +252,9 @@ class get_result(Resource):
         return result
 
 
-@api.route('/exodus/autocalib/visualize/<int:jobid>')
+@api.route('/exodus/autocalib/getgeninfo/<int:jobid>')
 @api.doc()
-class visualize(Resource):
+class get_geninfo(Resource):
     @api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']

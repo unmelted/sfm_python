@@ -34,7 +34,7 @@ class World(object):
     def calculate_center_inworld(self, cameras, root_path) :
         self.root_path = root_path
         ground = cv2.imread(self.stadium)
-        center = [1920, 1080, 1] #4k standard
+        center =[ cameras[0].view.image_width/ 2, cameras[0].view.image_height/2, 1] 
         # centern = get_normalized_point(center)
 
         np_center = np.array(center)
