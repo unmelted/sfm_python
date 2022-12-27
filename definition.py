@@ -11,13 +11,13 @@ class TaskCategory(Enum):
     INIT = 0
     AUTOCALIB = 100
     AUTOCALIB_STATUS = 200
-    AUTOCALIB_CANCEL = 700
-    GENERATE_PTS = 300
-    POSITION_TRACKING = 400
-    GET_PAIR = 500
-    GET_RESULT = 600
-    GET_GENINFO = 700
-    ANALYSIS = 800
+    AUTOCALIB_CANCEL = 300
+    GENERATE_PTS = 400
+    POSITION_TRACKING = 500
+    GET_PAIR = 600
+    GET_RESULT = 700
+    GET_GENINFO = 800
+    ANALYSIS = 900
     FINISH = 1
 
 
@@ -119,7 +119,7 @@ class DEFINITION(object):
     job_limit = 5
 
     test_applycrop = False
-    test_applyshift_type = 'center' #ave
+    test_applyshift_type = 'center'  # ave
     test_applypositiontracking = True
 
     def get_version(self):
