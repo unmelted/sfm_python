@@ -84,18 +84,19 @@ def get_pairname(job_id, pair_type):
         _, root_path = Db.getRootPath(job_id)
         ext = check_image_format(root_path)
         image_names = sorted(
-            glob.glob(os.path.join(root_path, 'images', '*.'+ ext)))
+            glob.glob(os.path.join(root_path, 'images', '*.' + ext)))
         cam_count = len(image_names)
 
         unit1 = float(cam_count) / 4.0
         unit2 = float(cam_count) * 3.0 / 4.0
-        print("get_pairname 3", cam_count, unit1, unit2, int(unit1), int(unit2))
+        print("get_pairname 3", cam_count, unit1,
+              unit2, int(unit1), int(unit2))
         image_name1 = image_names[int(unit1)]
-        image1 = image_name1[image_name1.rfind('/') +1:]
+        image1 = image_name1[image_name1.rfind('/') + 1:]
         image_name2 = image_names[int(unit2)]
-        image2 = image_name2[image_name2.rfind('/') +1:]
+        image2 = image_name2[image_name2.rfind('/') + 1:]
         print("get_pairname 4", image_name1, image_name2, image1, image2)
-        
+
         return 0, image1, image2
 
     return -1, 0, 0
@@ -116,8 +117,24 @@ def get_targetpath(job_id):
     else:
         return 0, target_path
 
-def get_camera_index_byname(cameras, view_name) :
 
-    for i, camera in enumerate(cameras) :
-        if (view_name == camera.view.name) :
+def get_camera_index_byname(cameras, view_name):
+
+    for i, camera in enumerate(cameras):
+        if (view_name == camera.view.name):
             return i
+
+
+def get_geninfo(job_id, parent_jobid):
+    l.get().w.info("Get Get Info job_id, parent_jobid : {} {} ".format(job_id, parent_jobid))
+    result = -1
+
+    result, image, _ = Db.getPair(parent_jobid)
+    if result < 0:
+        return finish_querys(job_id, result, 3)
+
+    result,  use_width, use_height = Db.getUseArea(parent_jobid)
+    if result < 0:
+        return finish_querys(job_id, result, 3)
+
+    return result, image, use_width, use_height

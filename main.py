@@ -1,4 +1,3 @@
-from ast import arg
 import os
 from multiprocessing import Process, Queue
 from flask import Flask
@@ -71,8 +70,8 @@ gen_args = api.model('gen_args', {
     "pts_2d": fields.List(fields.Float),
     "pts_3d": fields.List(fields.Float),
     "world": fields.List(fields.Float),
-    "image1" : fields.String,
-    "image2" : fields.String,
+    "image1": fields.String,
+    "image2": fields.String,
     'config': fields.Raw({"type": "String"}, io="r")
 })
 
@@ -92,7 +91,7 @@ class generate_points(Resource):
         parser.add_argument('pts_3d', default=list, action='append')
         parser.add_argument('world', default=list, action='append')
         parser.add_argument('image1', type=str)
-        parser.add_argument('image2', type=str)        
+        parser.add_argument('image2', type=str)
         parser.add_argument('config', type=str)
         args = parser.parse_args()
         job_id = args['job_id']
@@ -113,6 +112,7 @@ class generate_points(Resource):
 
         return result
 
+
 @api.route('/exodus/position_tracking')
 @api.doc()
 class generate_points(Resource):
@@ -125,15 +125,15 @@ class generate_points(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
         parser.add_argument('image', type=str)
-        parser.add_argument('track_cx', type=int)        
-        parser.add_argument('track_cy', type=int)        
+        parser.add_argument('track_cx', type=int)
+        parser.add_argument('track_cy', type=int)
         parser.add_argument('config', type=str)
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
         print(args['image'])
         print(args['track_cx'])
-        print(args['track_cy'])        
+        print(args['track_cy'])
         print(args['config'])
         job_id = Commander.add_task(
             df.TaskCategory.POSITION_TRACKING, (args, ip_addr))
@@ -261,15 +261,16 @@ class get_geninfo(Resource):
         print("ip of requestor ", ip_addr)
 
         print(jobid)
-        status, result, _ = Commander.send_query(
-            df.TaskCategory.VISUALIZE, [jobid, ip_addr])
+        result, contents = Commander.send_query(
+            df.TaskCategory.GET_GENINFO, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
-            'job_id': jobid,
-            'status': status,
             'result': result,
             'message': msg,
+            'image1': contents[0],
+            'use_width': contents[1],
+            'use_height': contents[2],
         }
 
         return result

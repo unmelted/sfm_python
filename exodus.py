@@ -71,10 +71,15 @@ class Commander(object):
             result, contents = get_result(obj[0])
             status = 100
 
-        if query != df.TaskCategory.AUTOCALIB_STATUS and query != df.TaskCategory.GET_PAIR :
+        elif query == df.TaskCategory.GET_GENINFO:
+            result, image, width, height = get_geninfo(obj[0])
+            contents = [image, width, height]
+            status = 100
+
+        if query != df.TaskCategory.AUTOCALIB_STATUS and query != df.TaskCategory.GET_PAIR:
             DbManager.insert_requesthistory(
                 int(obj[0]), obj[1], query, None)
-        elif query == df.TaskCategory.GET_PAIR :
+        elif query == df.TaskCategory.GET_PAIR:
             DbManager.insert_requesthistory(int(obj[0]), obj[2], query, None)
 
         l.get().w.debug('return result status {} result {} contents {} '.format(
@@ -166,7 +171,7 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, image1, ima
     JobActivity.insertNewJob(myjob_id, os.getpid())
     print("generate main ---- ", config)
     DbManager.insert_newcommand_gen(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
-                                'None', config, image1, image2)
+                                    'None', config, image1, image2)
     result = generate_pts(myjob_id, job_id, cal_type,
                           pts_2d, pts_3d, config, image1, image2, world)
     JobActivity.updateJob(myjob_id, 'complete')
@@ -180,6 +185,7 @@ def analysis(myjob_id, job_id, cal_type, world_pts):
     analysis_mode(myjob_id, job_id, cal_type, world_pts)
     JobActivity.updateJob(myjob_id, 'complete')
 '''
+
 
 def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config):
     # dbm = DbManager()
@@ -210,7 +216,7 @@ def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2,
                 return finish(myjob_id, -302), None
             else:
                 float_2d.append(float(val) / scale_factor)
-    print(" applied ,,, " , pts_2d, pts_3d)
+    print(" applied ,,, ", pts_2d, pts_3d)
 
     DbManager.insert_adjustData(myjob_id, job_id, pts_2d, pts_3d)
 
@@ -249,7 +255,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
     status_update(myjob_id, 10)
     result, preset = prepare_generate(
         myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config)
-    if result < 0 :
+    if result < 0:
         return result
 
     save_point_image(preset, myjob_id)
@@ -257,8 +263,10 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
 
     if cal_type == '2D':
         preset.generate_extra_point('2D', None)
-        left, top, width, height = preset.generate_adjust(myjob_id, cal_type,  config)
-        DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
+        left, top, width, height = preset.generate_adjust(
+            myjob_id, cal_type,  config)
+        DbManager.insert_adjustData3(
+            myjob_id, job_id, left, top, width, height)
         return result
 
     elif cal_type == '3D' or cal_type == '2D3D':
@@ -270,7 +278,7 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
             DbManager.insert_adjustData2(myjob_id, job_id, pts_world)
 
             if cal_type == '3D':
-                preset.generate_extra_point('3D', float_world)            
+                preset.generate_extra_point('3D', float_world)
             elif cal_type == '2D3D':
                 preset.generate_extra_point('2D', float_world)
 
@@ -278,9 +286,12 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
                 l.get().w.debug("Can't generate extra point. (No world)")
                 return result
 
-            left, top, width, height = preset.generate_adjust(myjob_id, cal_type,  config)
-            DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
+            left, top, width, height = preset.generate_adjust(
+                myjob_id, cal_type,  config)
+            DbManager.insert_adjustData3(
+                myjob_id, job_id, left, top, width, height)
             return result
+
 
 '''
 def analysis_mode(myjob_id, job_id, cal_type, world_pts):

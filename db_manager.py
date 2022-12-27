@@ -153,6 +153,18 @@ class DbManager(BaseQuery):
         return 0, rows[0]
 
     @classmethod
+    def getUseArea(cls, job_id):
+        q = cls.sql_list['query_getusearea'] + str(job_id)
+        rows = DBLayer.queryWorker('select-one', q)
+
+        if len(rows) == 0:
+            return -307, None
+        else:
+            l.get().w.debug("getArea : {}".format(rows[0]))
+
+        return 0, rows[0][0], rows[0][1]
+
+    @classmethod
     def insert_adjustData(cls, job_id, parent_job, pts_2d, pts_3d):
         q = ''
         if len(pts_2d) > 0 and len(pts_3d) > 0:
