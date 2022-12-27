@@ -258,17 +258,17 @@ class get_geninfo(Resource):
     @api.expect()
     def get(self, jobid=jobid):
         ip_addr = request.environ['REMOTE_ADDR']
-        print("ip of requestor ", ip_addr)
+        print("get gen info ip of requestor ", ip_addr)
 
         print(jobid)
-        result, contents = Commander.send_query(
+        status, result, contents = Commander.send_query(
             df.TaskCategory.GET_GENINFO, [jobid, ip_addr])
         msg = df.get_err_msg(result)
 
         result = {
             'result': result,
             'message': msg,
-            'image1': contents[0],
+            'image': contents[0],
             'use_width': contents[1],
             'use_height': contents[2],
         }

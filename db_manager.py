@@ -162,7 +162,7 @@ class DbManager(BaseQuery):
         else:
             l.get().w.debug("getArea : {}".format(rows[0]))
 
-        return 0, rows[0][0], rows[0][1], rows[0][2]
+        return 0, rows[0], rows[1], rows[2]
 
     @classmethod
     def insert_adjustData(cls, job_id, parent_job, pts_2d, pts_3d):
