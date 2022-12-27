@@ -158,11 +158,11 @@ class DbManager(BaseQuery):
         rows = DBLayer.queryWorker('select-one', q)
 
         if len(rows) == 0:
-            return -307, None
+            return -307, None, None, None
         else:
             l.get().w.debug("getArea : {}".format(rows[0]))
 
-        return 0, rows[0][0], rows[0][1]
+        return 0, rows[0][0], rows[0][1], rows[0][2]
 
     @classmethod
     def insert_adjustData(cls, job_id, parent_job, pts_2d, pts_3d):

@@ -125,15 +125,15 @@ def get_camera_index_byname(cameras, view_name):
             return i
 
 
-def get_geninfo(job_id, parent_jobid):
+def get_geninfo(job_id):
     l.get().w.info("Get Get Info job_id, parent_jobid : {} {} ".format(job_id, parent_jobid))
     result = -1
 
-    result, image, _ = Db.getPair(parent_jobid)
+    result, parent_jobid, use_width, use_height = Db.getUseArea(job_id)
     if result < 0:
         return finish_querys(job_id, result, 3)
 
-    result,  use_width, use_height = Db.getUseArea(parent_jobid)
+    result, image, _ = Db.getPair(parent_jobid)
     if result < 0:
         return finish_querys(job_id, result, 3)
 

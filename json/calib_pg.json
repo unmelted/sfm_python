@@ -17,5 +17,5 @@
     "query_jobstatusforcancel": "SELECT cancel, complete, pid2 FROM job_manager WHERE job_id = ",
     "query_getpts": "SELECT result FROM calib_data where job_id = ",
     "query_getscale": "SELECT config1 from command where job_id = ",
-    "query_getusearea": "SELECT margin_width, margin_height from adjust_data where job_id = "
+    "query_getusearea": "SELECT parent_job,  margin_width, margin_height from adjust_data where job_id = "
 }
