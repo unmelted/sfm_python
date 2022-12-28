@@ -112,28 +112,41 @@ class generate_points(Resource):
 
         return result
 
+pt_args = api.model('pt_args', {
+    "job_id": fields.Integer,
+    "image": fields.String,
+    "track_x1": fields.Float,
+    "track_y1": fields.Float,
+    "track_x2": fields.Float,
+    "track_y2": fields.Float,
+    'config': fields.Raw({"type": "String"}, io="r")
+})
+
 
 @api.route('/exodus/position_tracking')
 @api.doc()
 class generate_points(Resource):
-    @api.expect(gen_args)
-    # @api.marshal_with(gen_args)
-    def post(self, model=gen_args):
+    @api.expect(pt_args)
+    def post(self, model=pt_args):
         ip_addr = request.environ['REMOTE_ADDR']
         print("ip of requestor ", ip_addr)
 
         parser = reqparse.RequestParser()
         parser.add_argument('job_id', type=int)
         parser.add_argument('image', type=str)
-        parser.add_argument('track_cx', type=int)
-        parser.add_argument('track_cy', type=int)
+        parser.add_argument('track_x1', type=int)
+        parser.add_argument('track_y1', type=int)
+        parser.add_argument('track_x2', type=int)
+        parser.add_argument('track_y2', type=int)
         parser.add_argument('config', type=str)
         args = parser.parse_args()
         job_id = args['job_id']
         print(args['pts_2d'])
         print(args['image'])
-        print(args['track_cx'])
-        print(args['track_cy'])
+        print(args['track_x1'])
+        print(args['track_y1'])
+        print(args['track_x2'])
+        print(args['track_y2'])
         print(args['config'])
         job_id = Commander.add_task(
             df.TaskCategory.POSITION_TRACKING, (args, ip_addr))

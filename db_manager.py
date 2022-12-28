@@ -44,6 +44,13 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker('insert', q)
 
     @classmethod
+    def insert_newcommand_pt(cls, job_id, parent_id, ip, task, input_dir, config, image):
+        print("-------- newcommand pt..", config['scale'], config['pair'])
+        q = BaseQuery.insert('command', job_id=job_id, parent_job=parent_id, requestor=ip, task=task,
+                             input_path=input_dir, config1=config['scale'], config2=config['pair'], image_pair1=image)
+        result = DBLayer.queryWorker('insert', q)
+
+    @classmethod
     def update_command_pair(cls, image1, image2, job_id):
         q = BaseQuery.update('command', image_pair1=image1,
                              image_pair2=image2, job_id=job_id)

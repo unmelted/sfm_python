@@ -143,11 +143,10 @@ class Commander(object):
                                                obj[0]['pts_3d'], jconfig, obj[0]['image1'], obj[0]['image2'], obj[0]['world']))
             p.start()
 
-        elif task == df.TaskCategory.ANALYSIS:
-            DbManager.insert_requesthistory(
-                job_id, obj[1], task, obj[2]['world'])
-            p = Process(target=analysis, args=(
-                job_id, obj[2]['job_id'], cal_type, obj[2]['world']))
+        elif task == df.TaskCategory.POSITION_TRACKING:
+            DbManager.insert_requesthistory(job_id, obj[1], task, None)
+            p = Process(target=position_tracking, args=(
+                job_id, obj[2]['job_id'], obj[2]['image'], obj[2]['track_x1'], obj[2]['track_y1'], obj[2]['track_x2'], obj[2]['track_y2']))
             p.start()
 
 
@@ -177,14 +176,12 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, image1, ima
     JobActivity.updateJob(myjob_id, 'complete')
 
 
-# job_id is job_id for generate
-'''
-def analysis(myjob_id, job_id, cal_type, world_pts):
-    print("analysis mode started pid : ", os.getpid())
+def position_tracking(myjob_id, job_id, image, track_x1, track_y1, track_x2, track_y2, config):
+    print("position tracking started pid : ", os.getpid())
     JobActivity.insertNewJob(myjob_id, os.getpid())
-    analysis_mode(myjob_id, job_id, cal_type, world_pts)
+    DbManager.insert_newcommand_pt(myjob_id, job_id, '', df.TaskCategory.POSITION_TRACKING.name,
+                                    'None', config, image)
     JobActivity.updateJob(myjob_id, 'complete')
-'''
 
 
 def prepare_generate(myjob_id, job_id, cal_type, pts_2d, pts_3d, image1, image2, config):
@@ -292,12 +289,8 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
                 myjob_id, job_id, left, top, width, height)
             return result
 
-
-'''
-def analysis_mode(myjob_id, job_id, cal_type, world_pts):
-    float_world = []
-    result, preset = prepare_generate(job_id, cal_type, world_pts)
-    # preset = Group(myjob_id)
+def dynamic_position_swipe(myjob_id, job_id, image, track_x1, track_y1, track_x2, track_y2, config):
+    preset = Group(myjob_id)
     result, root_path = DbManager.getRootPath(job_id)
     if result < 0:
         return finish_query(job_id, result), None
@@ -310,13 +303,4 @@ def analysis_mode(myjob_id, job_id, cal_type, world_pts):
     if result < 0:
         return result
 
-    for wp in world_pts:
-        float_world.append(float(wp))
 
-    if cal_type == '3D' and len(world_pts) < 8:
-        return -305
-
-    preset.generate_extra_point(cal_type, float_world)
-    left, top, width, height = preset.generate_adjust(myjob_id)
-    return 0
-'''
