@@ -146,7 +146,7 @@ class Commander(object):
         elif task == df.TaskCategory.POSITION_TRACKING:
             DbManager.insert_requesthistory(job_id, obj[1], task, None)
             p = Process(target=position_tracking, args=(
-                job_id, obj[2]['job_id'], obj[2]['image'], obj[2]['track_x1'], obj[2]['track_y1'], obj[2]['track_x2'], obj[2]['track_y2']))
+                job_id, obj[2][0], obj[2][1], obj[2][2], obj[2][3], obj[2][4], obj[2][5]))
             p.start()
 
 

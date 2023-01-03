@@ -140,16 +140,23 @@ class generate_points(Resource):
         parser.add_argument('track_y2', type=int)
         parser.add_argument('config', type=str)
         args = parser.parse_args()
-        job_id = args['job_id']
-        print(args['pts_2d'])
+        print(args['job_id'])        
         print(args['image'])
         print(args['track_x1'])
         print(args['track_y1'])
         print(args['track_x2'])
         print(args['track_y2'])
         print(args['config'])
+        job_id = args['job_id']
+        image = args['image']
+        tcx1 = args['track_x1']
+        tcy1 = args['track_y1']
+        tcx2 = args['track_x2']
+        tcy2 = args['track_y2']
+        tcfg = args['config']
+
         job_id = Commander.add_task(
-            df.TaskCategory.POSITION_TRACKING, (args, ip_addr))
+            df.TaskCategory.POSITION_TRACKING, (args, ip_addr, [job_id, image, tcx1, tcy1, tcx2, tcy2, tcfg]))
 
         result = {
             'status': 0,

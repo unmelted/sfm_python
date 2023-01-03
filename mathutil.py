@@ -405,6 +405,26 @@ def get_normalized_point(world) :
     print(new_world)
     return new_world
 
+'''
+def get_rotate_point(center_x, center_y, point_x, point_y, radian):
+    print("rotate point input .. ", center_x,
+          center_y, point_x, point_y, radian)
+    delx = point_x - center_x
+    dely = point_y - center_y
+
+    cos_ = math.cos(radian)
+    sin_ = math.sin(radian)
+
+    ret_x = delx * cos_ - dely * sin_
+    ret_y = delx * sin_ + dely * cos_
+
+    ret_x = ret_x + center_x
+    ret_y = ret_y + center_y
+
+    print(ret_x, ret_y)
+    return ret_x, ret_y
+'''
+
 def get_rotate_point(center_x, center_y, point_x, point_y, radian) :
     delx = point_x - center_x
     dely = point_y - center_y
