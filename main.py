@@ -125,7 +125,7 @@ pt_args = api.model('pt_args', {
 
 @api.route('/exodus/position_tracking')
 @api.doc()
-class generate_points(Resource):
+class position_tracking(Resource):
     @api.expect(pt_args)
     def post(self, model=pt_args):
         ip_addr = request.environ['REMOTE_ADDR']
@@ -156,7 +156,7 @@ class generate_points(Resource):
         tcfg = args['config']
 
         job_id = Commander.add_task(
-            df.TaskCategory.POSITION_TRACKING, (args, ip_addr, [job_id, image, tcx1, tcy1, tcx2, tcy2, tcfg]))
+            df.TaskCategory.POSITION_TRACKING, (args, ip_addr))
 
         result = {
             'status': 0,
