@@ -31,9 +31,9 @@ class DbManager(BaseQuery):
         result = DBLayer.queryWorker('insert', q)
 
     @classmethod
-    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, config1, config2):
+    def insert_newcommand(cls, job_id, parent_id, ip, task, input_dir, group, config1, config2):
         q = BaseQuery.insert('command', job_id=job_id, parent_job=parent_id, requestor=ip, task=task,
-                             input_path=input_dir, config1=config1, config2=config2)
+                             input_path=input_dir, group=group,  config1=config1, config2=config2)
         result = DBLayer.queryWorker('insert', q)
 
     @classmethod

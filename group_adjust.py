@@ -32,7 +32,7 @@ class GroupAdjust(object):
 
     def calculate_rotatecenter(self, cal_type, track_cx=0, track_cy=0):
 
-        if cal_type == '2D' :
+        if cal_type == '2D':
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
@@ -79,7 +79,8 @@ class GroupAdjust(object):
                       self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
         elif self.config['rotation_center'] == 'tracking-center':
-            cam_idx = get_camera_index_byname(self.config['tracking_camidx'])
+            cam_idx = get_camera_index_byname(
+                self.cameras, self.config['tracking_camidx'])
             pts_3d0 = self.cameras[cam_idx].pts_3d
             center = [track_cx, track_cy, 1]
             np_center = np.array(center)
@@ -292,7 +293,7 @@ class GroupAdjust(object):
         h = int(self.cameras[0].view.image_height/2)
         # w = int(self.width)
         # h = int(self.height)
-        
+
         analysis_path = os.path.join(df.output_adj_image_dir, str(job_id))
         os.makedirs(analysis_path)
 
@@ -360,9 +361,9 @@ class GroupAdjust(object):
         mx = 0
         my = 0
         output_path = os.path.join(self.root_path, 'htest')
-        if not os.path.exists(output_path) :
+        if not os.path.exists(output_path):
             os.makedirs(output_path)
-    
+
         tf = CameraTransform()
 
         for i in range(1, len(self.cameras)):
@@ -384,7 +385,7 @@ class GroupAdjust(object):
                 cv2.imwrite(filename, self.cameras[1].view.image)
 
             else:
-                return 
+                return
                 mx, my = tf.homography_fromF(
                     self.cameras[i-1], self.cameras[i], mx, my)
                 cv2.circle(self.cameras[i].view.image, (int(

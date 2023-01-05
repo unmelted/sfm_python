@@ -28,7 +28,7 @@ class Autocalib(object):
         print("------------------------------")
 
         DbManager.insert_newcommand(self.job_id, 0, self.ip, df.TaskCategory.AUTOCALIB.name,
-                                    self.input_dir, self.config['scale'], self.config['pair'])
+                                    self.input_dir, self.group, self.config['scale'], self.config['pair'])
         time_s = time.time()
         preset1 = Group(self.job_id)
         result = self.checkDataValidity()

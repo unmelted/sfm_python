@@ -1,5 +1,6 @@
 import os
 import glob
+import json
 import numpy as np
 from group_adjust import GroupAdjust
 
@@ -441,34 +442,68 @@ class Group():
 
         if cal_type == '3D':
 
-            for i, _ in enumerate(self.cameras)):
+            for i, _ in enumerate(self.cameras):
                 print(self.cameras[i].view.name, self.cameras[i].pts_3d)
-                result, vector_rotation, vector_translation=cv2.solvePnP(
+                result, vector_rotation, vector_translation = cv2.solvePnP(
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 
-                normal2d, jacobian=cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
+                normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
                     50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-                self.cameras[i].pts_extra=normal2d[:, 0, :]
+                self.cameras[i].pts_extra = normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
         else:
             for i in range(len(self.cameras)):
-                self.cameras[i].pts_extra=self.cameras[i].pts_2d
+                self.cameras[i].pts_extra = self.cameras[i].pts_2d
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def generate_adjust(self, job_id, cal_type, config):
-        gadj=GroupAdjust(self.cameras, self.world, self.root_path, config)
+        gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
         gadj.calculate_rotatecenter(cal_type)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
-        self.left, self.right, self.top, self.bottom, self.width, self.height=gadj.calculate_margin()
+        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
 
         if not os.path.exists(os.path.join(self.root_path, 'preview')):
             os.makedirs(os.path.join(self.root_path, 'preview'))
-        output_path=os.path.join(self.root_path, 'preview')
+        output_path = os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
         # gadj.test_homography(1372, 1116)
 
         return self.left, self.top, self.width, self.height
+
+    def parsing_points(self, contents):
+        result = -1
+        from_data = json.load(contents)
+
+        for j in range(len(from_data['points'])):
+            l.get().w.debug('pts dsc_id : {}'.format(
+                from_data['points'][j]['dsc_id']))
+            for i in range(len(self.cameras)):
+                viewname = get_viewname(self.cameras[i].view.name, self.ext)
+                if from_data['points'][j]['dsc_id'] == viewname:
+                    l.get().w.info('camera view name : {}'.format(
+                        self.cameras[i].view.name))
+
+                    self.cameras[i].pts_3d[0][0] = from_data['points'][j]['pts_3d']['X1']
+                    self.cameras[i].pts_3d[0][1] = from_data['points'][j]['pts_3d']['Y1']
+                    self.cameras[i].pts_3d[1][0] = from_data['points'][j]['pts_3d']['X2']
+                    self.cameras[i].pts_3d[1][1] = from_data['points'][j]['pts_3d']['Y2']
+                    self.cameras[i].pts_3d[2][0] = from_data['points'][j]['pts_3d']['X3']
+                    self.cameras[i].pts_3d[2][1] = from_data['points'][j]['pts_3d']['Y3']
+                    self.cameras[i].pts_3d[3][0] = from_data['points'][j]['pts_3d']['X4']
+                    self.cameras[i].pts_3d[3][1] = from_data['points'][j]['pts_3d']['Y4']
+
+                    self.cameras[i].pts_2d[0][0] = from_data['points'][j]['pts_2d']['UpperPosX']
+                    self.cameras[i].pts_2d[0][1] = from_data['points'][j]['pts_2d']['UpperPosY']
+                    self.cameras[i].pts_2d[1][0] = from_data['points'][j]['pts_2d']['LowerPosX']
+                    self.cameras[i].pts_2d[1][1] = from_data['points'][j]['pts_2d']['LowerPosY']
+
+                    print(from_data['points'][j]['pts_3d'])
+                    print(from_data['points'][j]['pts_2d'])
+                    print(self.cameras[i].pts_2d)
+                    print(self.cameras[i].pts_3d)
+        resutl = 0
+        return result

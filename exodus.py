@@ -180,8 +180,8 @@ def generate(myjob_id, job_id, ip, cal_type, pts_2d, pts_3d, config, image1, ima
     print("generate main ---- ", config)
     DbManager.insert_newcommand_gen(myjob_id, job_id, ip, df.TaskCategory.GENERATE_PTS.name,
                                     'None', config, image1, image2)
-    result = generate_pts(myjob_id, job_id, cal_type,
-                          pts_2d, pts_3d, config, image1, image2, world)
+    _ = generate_pts(myjob_id, job_id, cal_type,
+                     pts_2d, pts_3d, config, image1, image2, world)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -191,8 +191,8 @@ def position_tracking(myjob_id, job_id, image, track_x1, track_y1, track_x2, tra
     JobActivity.insertNewJob(myjob_id, os.getpid())
     DbManager.insert_newcommand_pt(myjob_id, job_id, '', df.TaskCategory.POSITION_TRACKING.name,
                                    'None', config, image)
-    dynamic_position_swipe(myjob_id, job_id, image,
-                           track_x1, track_y1, track_x2, track_y2, config)
+    _ = dynamic_position_swipe(myjob_id, job_id, image,
+                               track_x1, track_y1, track_x2, track_y2, config)
     JobActivity.updateJob(myjob_id, 'complete')
 
 
@@ -307,16 +307,25 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
 
 def dynamic_position_swipe(myjob_id, job_id, image, track_x1, track_y1, track_x2, track_y2, config):
     """ main execute function for point generation"""
+    print("dynamic_position_swipe start job_id : ", myjob_id, job_id)
+
     preset = Group(myjob_id)
     result, root_path = DbManager.getRootPath(job_id)
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish_query(job_id, result)
 
-    print("dynamic_position_swipe ")
+    status_update(myjob_id, 10)
+
     result = preset.create_group(
         df.TaskCategory.POSITION_TRACKING, root_path, df.DEFINITION.run_mode, config['scale'], 'colmap_db')
     if result < 0:
-        return finish_query(job_id, result), None
+        return finish_query(job_id, result)
 
+    result, contents = get_result(job_id)
     if result < 0:
-        return result
+        return finish_query(job_id, result)
+
+    status_update(myjob_id, 30)
+
+    result = preset.parsing_points(contents)
+    status_update(myjob_id, 50)
