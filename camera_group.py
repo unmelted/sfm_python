@@ -1,6 +1,4 @@
 import os
-from re import I
-import sys
 import glob
 import numpy as np
 from group_adjust import GroupAdjust
@@ -18,7 +16,8 @@ from colmap_proc import *
 from sfm import *
 
 
-class Group(object):
+class Group():
+    """Group class manage multiple cameras data"""
 
     def __init__(self, job_id):
         self.cameras = []
@@ -202,7 +201,7 @@ class Group(object):
             for pair in self.pairs:
                 pair_obj = self.pairs[pair]
 
-                if baseline == True:
+                if baseline is True:
                     self.sfm.compute_pose(pair_obj, baseline)
                     baseline = False
                     l.get().w.debug(
@@ -243,10 +242,10 @@ class Group(object):
 
     def generate_points(self, job_id, cal_type, config, float_2d=None, float_3d=None, image1=None, image2=None):
 
-        if df.answer_from == 'input' and (float_2d == None or float_3d == None):
+        if df.answer_from == 'input' and (float_2d is None or float_3d is None):
             df.answer_from = 'pts'  # for analysis mode
 
-        if df.answer_from == 'pts' and self.answer == None:
+        if df.answer_from == 'pts' and self.answer is None:
             return -303
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
@@ -277,7 +276,7 @@ class Group(object):
         _2d = None
         _3d = None
 
-        if image1 != None and image2 != None:
+        if image1 is not None and image2 is not None:
             viewname1 = get_viewname(image1, self.ext)
             viewname2 = get_viewname(image2, self.ext)
             err, c0 = self.get_camera_byView(viewname1)
@@ -288,7 +287,7 @@ class Group(object):
             if err < 0:
                 return err, None, None, None, None
 
-        elif pair_type != None:
+        elif pair_type is not None:
             if pair_type == 'zero':
                 viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
                 viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
@@ -428,7 +427,7 @@ class Group(object):
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):
-        if world_pts != None : 
+        if world_pts != None:
             if len(world_pts) > 5:
                 print("generate extra point caltype ", cal_type, world_pts)
                 self.world.set_world(world_pts)
@@ -442,34 +441,34 @@ class Group(object):
 
         if cal_type == '3D':
 
-            for i in range(len(self.cameras)):
+            for i, _ in enumerate(self.cameras)):
                 print(self.cameras[i].view.name, self.cameras[i].pts_3d)
-                result, vector_rotation, vector_translation = cv2.solvePnP(
+                result, vector_rotation, vector_translation=cv2.solvePnP(
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 
-                normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
+                normal2d, jacobian=cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
                     50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
-                self.cameras[i].pts_extra = normal2d[:, 0, :]
+                self.cameras[i].pts_extra=normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
         else:
             for i in range(len(self.cameras)):
-                self.cameras[i].pts_extra = self.cameras[i].pts_2d
+                self.cameras[i].pts_extra=self.cameras[i].pts_2d
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def generate_adjust(self, job_id, cal_type, config):
-        gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
+        gadj=GroupAdjust(self.cameras, self.world, self.root_path, config)
         gadj.calculate_rotatecenter(cal_type)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
-        self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
+        self.left, self.right, self.top, self.bottom, self.width, self.height=gadj.calculate_margin()
 
         if not os.path.exists(os.path.join(self.root_path, 'preview')):
             os.makedirs(os.path.join(self.root_path, 'preview'))
-        output_path = os.path.join(self.root_path, 'preview')
+        output_path=os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
-        #gadj.test_homography(1372, 1116)
+        # gadj.test_homography(1372, 1116)
 
         return self.left, self.top, self.width, self.height

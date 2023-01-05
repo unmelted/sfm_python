@@ -37,7 +37,6 @@ class calib_run(Resource):
         print(args['config'])
         # cmd_que.put((df.TaskCategory.AUTOCALIB,
         #             (args['input_dir'], args['group'], ip_addr)))
-        que = Commander.getQue()
 
         job_id = Commander.add_task(df.TaskCategory.AUTOCALIB,
                                     (args, ip_addr))
@@ -112,6 +111,7 @@ class generate_points(Resource):
 
         return result
 
+
 pt_args = api.model('pt_args', {
     "job_id": fields.Integer,
     "image": fields.String,
@@ -140,7 +140,7 @@ class position_tracking(Resource):
         parser.add_argument('track_y2', type=int)
         parser.add_argument('config', type=str)
         args = parser.parse_args()
-        print(args['job_id'])        
+        print(args['job_id'])
         print(args['image'])
         print(args['track_x1'])
         print(args['track_y1'])
@@ -344,8 +344,8 @@ if __name__ == '__main__':
     np = NewPool()
     DBLayer.initialize(np.getConn())
 
-    que = Commander.getQue()
-    pr = Process(target=Commander.Receiver, args=(que, ))
+    que = Commander.getque()
+    pr = Process(target=Commander.receiver, args=(que, ))
     jr = Process(target=JobManager.Watcher)
 
     pr.start()
