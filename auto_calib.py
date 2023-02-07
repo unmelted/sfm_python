@@ -11,7 +11,7 @@ from db_manager import DbManager
 
 class Autocalib(object):
 
-    def __init__(self, input_dir, job_id, group, config1, config2, ip):
+    def __init__(self, input_dir, job_id, group, config, ip):
         self.input_dir = input_dir
         self.root_dir = None
         self.run_mode = df.DEFINITION.run_mode
@@ -20,8 +20,7 @@ class Autocalib(object):
         self.job_id = job_id
         self.ip = ip
         self.group = group
-        self.config1 = config1
-        self.config2 = config2
+        self.config = config
 
     def run(self):
         print("--------------AUTOCALIB3------")
@@ -29,7 +28,7 @@ class Autocalib(object):
         print("------------------------------")
 
         DbManager.insert_newcommand(self.job_id, 0, self.ip, df.TaskCategory.AUTOCALIB.name,
-                                    self.input_dir, df.DEFINITION.run_mode, self.config1, self.config2)
+                                    self.input_dir, self.group, self.config['scale'], self.config['pair'])
         time_s = time.time()
         preset1 = Group(self.job_id)
         result = self.checkDataValidity()
@@ -40,7 +39,7 @@ class Autocalib(object):
 
         l.get().w.error("list from type : {} ".format(self.list_from))
         ret = preset1.create_group(
-            self.root_dir, self.run_mode, self.list_from, self.group)
+            df.TaskCategory.AUTOCALIB, self.root_dir, self.run_mode, self.config['scale'], self.list_from, self.group)
 
         if (ret < 0):
             return finish(self.job_id, ret)
@@ -83,42 +82,42 @@ class Autocalib(object):
         return 0
 
     def checkDataValidity(self):
-        if self.mode == df.TaskCategory.VISUALIZE or  \
-                self.mode == 'visualize' or \
-                self.mode == df.TaskCategory.ANALYSIS or \
-                self.mode == 'analysis':
+        # if self.mode == df.TaskCategory.VISUALIZE or  \
+        #         self.mode == 'visualize' or \
+        #         self.mode == df.TaskCategory.ANALYSIS or \
+        #         self.mode == 'analysis':
 
-            self.root_dir = self.input_dir
+        #     self.root_dir = self.input_dir
 
-            if not os.path.exists(self.root_dir) or \
-               not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
-               not os.path.exists(os.path.join(self.root_dir, 'sparse')):
-                return finish(self.job_id, -104)
+        #     if not os.path.exists(self.root_dir) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'cameras.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'images.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'point3D.txt')) or \
+        #        not os.path.exists(os.path.join(self.root_dir, 'sparse')):
+        #         return finish(self.job_id, -104)
 
-        else:
-            if not os.path.exists(self.input_dir):
-                return -105
+        # else:
+        if not os.path.exists(self.input_dir):
+            return -105
 
-            result = 0
-            now = datetime.now()
-            root = 'Cal' + \
-                datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
-            if not os.path.exists(os.path.join(os.getcwd(), root)):
-                os.makedirs(os.path.join(os.getcwd(), root))
-            self.root_dir = os.path.join(os.getcwd(), root)
-            if not os.path.exists(os.path.join(self.root_dir, 'images')):
-                os.makedirs(os.path.join(self.root_dir, 'images'))
+        result = 0
+        now = datetime.now()
+        root = 'Cal' + \
+            datetime.strftime(now, '%Y%m%d_%H%M_') + str(self.job_id)
+        if not os.path.exists(os.path.join(os.getcwd(), root)):
+            os.makedirs(os.path.join(os.getcwd(), root))
+        self.root_dir = os.path.join(os.getcwd(), root)
+        if not os.path.exists(os.path.join(self.root_dir, 'images')):
+            os.makedirs(os.path.join(self.root_dir, 'images'))
 
-            result = prepare_job(self.input_dir, self.root_dir, self.list_from)
-            if result < 0:
-                return result
-
-            if self.list_from == 'video_folder':
-                self.list_from = 'image_folder'
-
-            l.get().w.info("Check validity root path: {} ".format(self.root_dir))
-            DbManager.update_command_path(self.root_dir, self.job_id)
-
+        result = prepare_job(self.input_dir, self.root_dir, self.list_from)
+        if result < 0:
             return result
+
+        if self.list_from == 'video_folder':
+            self.list_from = 'image_folder'
+
+        l.get().w.info("Check validity root path: {} ".format(self.root_dir))
+        DbManager.update_command_path(self.root_dir, self.job_id)
+
+        return result

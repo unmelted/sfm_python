@@ -27,7 +27,7 @@ tz REAL
 
 colmap gui --import_path data/nba/ --database_path data/nba/colmap.db --image_path data/nba/images
 
-
+colmap model_orientation_aligner --image_path ../../images/ --input_path . --output_path .
 
 ------------------ 09/05 written postgreSQL query ---------------------
 --CREATE TABLE IF NOT EXISTS command 

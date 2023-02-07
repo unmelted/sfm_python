@@ -1,7 +1,6 @@
 import os
-from re import I
-import sys
 import glob
+import json
 import numpy as np
 from group_adjust import GroupAdjust
 
@@ -10,7 +9,6 @@ from camera import *
 from pair import *
 from view import *
 from visualize import *
-from camera_transform import *
 from world import *
 from intrn_util import *
 from extn_util import *
@@ -19,7 +17,8 @@ from colmap_proc import *
 from sfm import *
 
 
-class Group(object):
+class Group():
+    """Group class manage multiple cameras data"""
 
     def __init__(self, job_id):
         self.cameras = []
@@ -58,12 +57,12 @@ class Group(object):
         if self.run_mode == 'colmap':
             del self.colmap
 
-    def create_group(self, root_path, run_mode, list_from='pts_file', group='Group1'):
+    def create_group(self, task_mode, root_path, run_mode, scale, list_from='pts_file', group='Group1'):
         self.root_path = root_path
         self.run_mode = run_mode
 
         l.get().w.error("create group run_mode : {} list_from {}".format(self.run_mode, list_from))
-        result = self.prepare_camera_list(list_from, group)
+        result = self.prepare_camera_list(task_mode, list_from, scale, group)
         if result < 0:
             return result
 
@@ -77,8 +76,7 @@ class Group(object):
 
         return 0
 
-    def prepare_camera_list(self, list_from, group_id='Group1'):
-        self.world.get_world()
+    def prepare_camera_list(self, task_mode, list_from, scale, group_id='Group1'):
         self.adjust = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)
         image_names = []
@@ -115,7 +113,8 @@ class Group(object):
                 return -24
 
         for image_name in image_names:
-            tcam = Camera(image_name, self.root_path, self.K, self.run_mode)
+            tcam = Camera(task_mode, image_name, self.root_path,
+                          self.K, self.run_mode, scale)
             self.cameras.append(tcam)
             self.views.append(tcam.view)
             if self.limit != 0 and index == self.limit:
@@ -203,7 +202,7 @@ class Group(object):
             for pair in self.pairs:
                 pair_obj = self.pairs[pair]
 
-                if baseline == True:
+                if baseline is True:
                     self.sfm.compute_pose(pair_obj, baseline)
                     baseline = False
                     l.get().w.debug(
@@ -242,17 +241,17 @@ class Group(object):
 
         return -150, None
 
-    def generate_points(self, job_id, cal_type, pair, float_2d=None, float_3d=None):
+    def generate_points(self, job_id, cal_type, config, float_2d=None, float_3d=None, image1=None, image2=None):
 
-        if df.answer_from == 'input' and (float_2d == None or float_3d == None):
+        if df.answer_from == 'input' and (float_2d is None or float_3d is None):
             df.answer_from = 'pts'  # for analysis mode
 
-        if df.answer_from == 'pts' and self.answer == None:
+        if df.answer_from == 'pts' and self.answer is None:
             return -303
 
         l.get().w.debug("generate points answer_from {}".format(df.answer_from))
         err, _2d, _3d, viewname1, viewname2 = self.make_seed_answer(
-            job_id, cal_type, float_2d, float_3d, pair_type=pair, answer_from=df.answer_from)
+            job_id, cal_type, float_2d, float_3d, config['pair'], image1, image2, answer_from=df.answer_from)
 
         if err < 0:
             return err
@@ -269,7 +268,7 @@ class Group(object):
 
         return 0
 
-    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type, answer_from='pts'):
+    def make_seed_answer(self, job_id, cal_type, float_2d, float_3d, pair_type=None, image1=None, image2=None, answer_from='pts'):
         viewname1 = None
         viewname2 = None
         c0 = None
@@ -278,17 +277,9 @@ class Group(object):
         _2d = None
         _3d = None
 
-        if pair_type == 'zero':
-            viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
-            viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
-            c0 = self.cameras[0]
-            c1 = self.cameras[1]
-
-        elif pair_type == 'colmap':
-            result, image_name1, image_name2 = get_pair(job_id, pair_type)
-
-            viewname1 = get_viewname(image_name1, self.ext)
-            viewname2 = get_viewname(image_name2, self.ext)
+        if image1 is not None and image2 is not None:
+            viewname1 = get_viewname(image1, self.ext)
+            viewname2 = get_viewname(image2, self.ext)
             err, c0 = self.get_camera_byView(viewname1)
             if err < 0:
                 return err, None, None, None, None
@@ -297,19 +288,42 @@ class Group(object):
             if err < 0:
                 return err, None, None, None, None
 
-        elif pair_type == 'isometric':
-            unit1 = self.cam_count / 4
-            unit2 = self.cam_count * 3 / 4
-            viewname1 = get_viewname(self.cameras[unit1].view.name, self.ext)
-            viewname2 = get_viewname(self.cameras[unit2].view.name, self.ext)
+        elif pair_type is not None:
+            if pair_type == 'zero':
+                viewname1 = get_viewname(self.cameras[0].view.name, self.ext)
+                viewname2 = get_viewname(self.cameras[1].view.name, self.ext)
+                c0 = self.cameras[0]
+                c1 = self.cameras[1]
 
-            err, c0 = self.get_camera_byView(viewname1)
-            if err < 0:
-                return err, None, None, None, None
+            elif pair_type == 'colmap':
+                result, image_name1, image_name2 = get_pairname(
+                    job_id, pair_type)
 
-            err, c1 = self.get_camera_byView(viewname2)
-            if err < 0:
-                return err, None, None, None, None
+                viewname1 = get_viewname(image_name1, self.ext)
+                viewname2 = get_viewname(image_name2, self.ext)
+                err, c0 = self.get_camera_byView(viewname1)
+                if err < 0:
+                    return err, None, None, None, None
+
+                err, c1 = self.get_camera_byView(viewname2)
+                if err < 0:
+                    return err, None, None, None, None
+
+            elif pair_type == 'isometric':
+                unit1 = self.cam_count / 4
+                unit2 = self.cam_count * 3 / 4
+                viewname1 = get_viewname(
+                    self.cameras[unit1].view.name, self.ext)
+                viewname2 = get_viewname(
+                    self.cameras[unit2].view.name, self.ext)
+
+                err, c0 = self.get_camera_byView(viewname1)
+                if err < 0:
+                    return err, None, None, None, None
+
+                err, c1 = self.get_camera_byView(viewname2)
+                if err < 0:
+                    return err, None, None, None, None
 
         l.get().w.debug("Pair name {} {}".format(viewname1, viewname2))
 
@@ -402,7 +416,7 @@ class Group(object):
     def visualize(self, mode='colmap'):
         plot_scene(self.cameras)
 
-    def export(self, myjob_id, job_id, cal_type):
+    def export(self, myjob_id, job_id, cal_type, scale):
         target_path = None
         if df.export_point_type == 'dm':
             result, target_path = get_targetpath(job_id)
@@ -410,26 +424,31 @@ class Group(object):
                 return result
 
         export_points(self, df.export_point_type,
-                      myjob_id, cal_type, target_path)
+                      myjob_id, cal_type, scale, target_path)
         return 0
 
     def generate_extra_point(self, cal_type, world_pts):
+        if world_pts != None:
+            if len(world_pts) > 5:
+                print("generate extra point caltype ", cal_type, world_pts)
+                self.world.set_world(world_pts)
+                # world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
+                #     world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
+
+                # p = get_normalized_point(world_p)
+                world = self.world.get_world()
+                dist_coeff = np.zeros((4, 1))
+                print("world ", world)
+
         if cal_type == '3D':
-            world_p = [[world_pts[0], world_pts[1], 0], [world_pts[2], world_pts[3], 0], [
-                world_pts[4], world_pts[5], 0], [world_pts[6], world_pts[7], 0]]
 
-            p = get_normalized_point(world_p)
-            world = np.array(p)
-            dist_coeff = np.zeros((4, 1))
-            print("world ", world)
-
-            for i in range(len(self.cameras)):
+            for i, _ in enumerate(self.cameras):
                 print(self.cameras[i].view.name, self.cameras[i].pts_3d)
                 result, vector_rotation, vector_translation = cv2.solvePnP(
                     world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 
                 normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
-                    50.0, 50.0, -30.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+                    50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
@@ -439,8 +458,9 @@ class Group(object):
                 l.get().w.info("2d set extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
 
-    def generate_adjust(self, job_id):
-        gadj = GroupAdjust(self.cameras)
+    def generate_adjust(self, job_id, cal_type, config):
+        gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
+        gadj.calculate_rotatecenter(cal_type)
         gadj.calculate_radian()
         gadj.calculate_scaleshift()
         self.left, self.right, self.top, self.bottom, self.width, self.height = gadj.calculate_margin()
@@ -450,6 +470,40 @@ class Group(object):
         output_path = os.path.join(self.root_path, 'preview')
 
         gadj.adjust_image(output_path, self.ext, job_id)
+        # gadj.test_homography(1372, 1116)
 
-        # making_gif(output_path, output_path)
         return self.left, self.top, self.width, self.height
+
+    def parsing_points(self, contents):
+        result = -1
+        from_data = json.load(contents)
+
+        for j in range(len(from_data['points'])):
+            l.get().w.debug('pts dsc_id : {}'.format(
+                from_data['points'][j]['dsc_id']))
+            for i in range(len(self.cameras)):
+                viewname = get_viewname(self.cameras[i].view.name, self.ext)
+                if from_data['points'][j]['dsc_id'] == viewname:
+                    l.get().w.info('camera view name : {}'.format(
+                        self.cameras[i].view.name))
+
+                    self.cameras[i].pts_3d[0][0] = from_data['points'][j]['pts_3d']['X1']
+                    self.cameras[i].pts_3d[0][1] = from_data['points'][j]['pts_3d']['Y1']
+                    self.cameras[i].pts_3d[1][0] = from_data['points'][j]['pts_3d']['X2']
+                    self.cameras[i].pts_3d[1][1] = from_data['points'][j]['pts_3d']['Y2']
+                    self.cameras[i].pts_3d[2][0] = from_data['points'][j]['pts_3d']['X3']
+                    self.cameras[i].pts_3d[2][1] = from_data['points'][j]['pts_3d']['Y3']
+                    self.cameras[i].pts_3d[3][0] = from_data['points'][j]['pts_3d']['X4']
+                    self.cameras[i].pts_3d[3][1] = from_data['points'][j]['pts_3d']['Y4']
+
+                    self.cameras[i].pts_2d[0][0] = from_data['points'][j]['pts_2d']['UpperPosX']
+                    self.cameras[i].pts_2d[0][1] = from_data['points'][j]['pts_2d']['UpperPosY']
+                    self.cameras[i].pts_2d[1][0] = from_data['points'][j]['pts_2d']['LowerPosX']
+                    self.cameras[i].pts_2d[1][1] = from_data['points'][j]['pts_2d']['LowerPosY']
+
+                    print(from_data['points'][j]['pts_3d'])
+                    print(from_data['points'][j]['pts_2d'])
+                    print(self.cameras[i].pts_2d)
+                    print(self.cameras[i].pts_3d)
+        resutl = 0
+        return result

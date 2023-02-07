@@ -6,7 +6,7 @@ from view import *
 class Camera(object):
     """ Class for representing pin-hole camera """
 
-    def __init__(self, image_name, root_path, K, run_mode):
+    def __init__(self, task_mode, image_name, root_path, K, run_mode, scale):
         self.id = None
         self.index = None
         self.P = None     # camera matrix
@@ -30,7 +30,8 @@ class Camera(object):
                 os.makedirs(os.path.join(root_path, 'feature'))
             feature_path = os.path.join(root_path, 'features')
 
-        self.view = View(image_name, root_path, feature_path=feature_path)
+        self.view = View(task_mode, image_name, root_path, scale,
+                         feature_path=feature_path)
 
         ''' related adjust value '''
         self.pts = np.empty((0, 2), dtype=np.float64)

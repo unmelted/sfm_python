@@ -12,10 +12,11 @@ from PIL import Image
 from db_manager import DbManager
 
 
-def export_points(preset, output_type, myjob_id, cal_type, target_path=None):
+def export_points(preset, output_type, myjob_id, cal_type, scale, target_path=None):
     if output_type == 'dm':
         output_path = os.path.join(preset.root_path, 'output')
-        export_points_dm(preset, myjob_id, cal_type, output_path, target_path)
+        export_points_dm(preset, myjob_id, cal_type,
+                         output_path, scale, target_path)
 
     elif output_type == 'mct':
         export_points_mct(preset, cal_type)
@@ -84,8 +85,9 @@ def export_points_mct(preset, cal_type):
     ofile.close()
 
 
-def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
+def export_points_dm(preset, myjob_id, cal_type, output_path, scale, target_path):
 
+    scale_factor = 1.0 if scale == 'full' else 2.0
     filename = os.path.join(preset.root_path, 'images', defn.pts_file_name)
     with open(filename, 'r') as json_file:
         from_data = json.load(json_file)
@@ -106,21 +108,21 @@ def export_points_dm(preset, myjob_id, cal_type, output_path, target_path):
                 l.get().w.info('cal_type {} camera view name : {}'.format(
                     cal_type, preset.cameras[i].view.name))
                 if cal_type == '3D' or cal_type == '2D3D':
-                    from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0]
-                    from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1]
-                    from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0]
-                    from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts_3d[1][1]
-                    from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts_3d[2][0]
-                    from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1]
-                    from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0]
-                    from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1]
+                    from_data['points'][j]['pts_3d']['X1'] = preset.cameras[i].pts_3d[0][0] * scale_factor
+                    from_data['points'][j]['pts_3d']['Y1'] = preset.cameras[i].pts_3d[0][1] * scale_factor
+                    from_data['points'][j]['pts_3d']['X2'] = preset.cameras[i].pts_3d[1][0] * scale_factor
+                    from_data['points'][j]['pts_3d']['Y2'] = preset.cameras[i].pts_3d[1][1] * scale_factor
+                    from_data['points'][j]['pts_3d']['X3'] = preset.cameras[i].pts_3d[2][0] * scale_factor
+                    from_data['points'][j]['pts_3d']['Y3'] = preset.cameras[i].pts_3d[2][1] * scale_factor
+                    from_data['points'][j]['pts_3d']['X4'] = preset.cameras[i].pts_3d[3][0] * scale_factor
+                    from_data['points'][j]['pts_3d']['Y4'] = preset.cameras[i].pts_3d[3][1] * scale_factor
                 if cal_type == '2D' or cal_type == '2D3D':
-                    from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0]
-                    from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1]
+                    from_data['points'][j]['pts_2d']['UpperPosX'] = preset.cameras[i].pts_2d[0][0] * scale_factor
+                    from_data['points'][j]['pts_2d']['UpperPosY'] = preset.cameras[i].pts_2d[0][1] * scale_factor
                     from_data['points'][j]['pts_2d']['MiddlePosX'] = -1.0
                     from_data['points'][j]['pts_2d']['MiddlePosY'] = -1.0
-                    from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0]
-                    from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1]
+                    from_data['points'][j]['pts_2d']['LowerPosX'] = preset.cameras[i].pts_2d[1][0] * scale_factor
+                    from_data['points'][j]['pts_2d']['LowerPosY'] = preset.cameras[i].pts_2d[1][1] * scale_factor
 
                 new_data['points'].append(from_data['points'][j])
                 break
@@ -228,17 +230,6 @@ def import_camera_pose(preset):
         cam.calculate_p()
 
 
-def get_viewname(name, ext):
-    viewname = None
-
-    if name.rfind('_') == -1:
-        viewname = name[:-1 * (len(ext) + 1)]
-    else:
-        viewname = name[:name.rfind('_')]
-
-    return viewname
-
-
 def save_ex_answer_image(preset):
 
     output_path = os.path.join(preset.root_path, 'output')
@@ -269,7 +260,9 @@ def save_point_image(preset, myjob_id):
         os.makedirs(output_path)
 
     review_path = os.path.join(defn.output_pts_image_dir, str(myjob_id))
-    os.makedirs(review_path)
+    if not os.path.exists(review_path): 
+        os.makedirs(review_path)
+
     print('save_point_image review_path : ', review_path)
 
     for i in range(len(preset.cameras)):

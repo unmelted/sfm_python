@@ -1,21 +1,23 @@
 from ensurepip import version
+from operator import truediv
 import os
 from enum import Enum
 import logging
 
-VERSION = 'V4.0.0.2'
+VERSION = 'V4.0.0.3'
 
 
 class TaskCategory(Enum):
     INIT = 0
     AUTOCALIB = 100
     AUTOCALIB_STATUS = 200
-    AUTOCALIB_CANCEL = 700
-    GENERATE_PTS = 300
-    GET_PAIR = 400
-    GET_RESULT = 500
-    VISUALIZE = 600
-    ANALYSIS = 700
+    AUTOCALIB_CANCEL = 300
+    GENERATE_PTS = 400
+    POSITION_TRACKING = 500
+    GET_PAIR = 600
+    GET_RESULT = 700
+    GET_GENINFO = 800
+    ANALYSIS = 900
     FINISH = 1
 
 
@@ -116,7 +118,9 @@ class DEFINITION(object):
 
     job_limit = 5
 
-    VERSION = '4.0.0.2'
+    test_applycrop = False
+    test_applyshift_type = 'center'  # ave
+    test_applypositiontracking = True
 
     def get_version(self):
         return VERSION

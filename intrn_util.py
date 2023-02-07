@@ -43,9 +43,36 @@ def finish(job_id, result):
     return result
 
 
-def get_pair(job_id, pair_type):
-    l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
+def check_image_format(path):
+    flist = glob.glob(os.path.join(path, 'images', '*'))
+    for i in flist:
+        print(i)
+        ext = i[i.rfind('.')+1:]
+        if ext == 'png':
+            return 'png'
+        elif ext == 'tiff':
+            return 'tiff'
+        elif ext == 'jpeg':
+            return 'jpeg'
+        elif ext == 'jpg':
+            return 'jpg'
+        return 'png'
 
+
+def get_viewname(name, ext):
+    viewname = None
+
+    if name.rfind('_') == -1:
+        viewname = name[:-1 * (len(ext) + 1)]
+    else:
+        viewname = name[:name.rfind('_')]
+
+    return viewname
+
+
+def get_pairname(job_id, pair_type):
+    l.get().w.info("GetPair start : {} by {}".format(job_id, pair_type))
+    image_names = []
     if pair_type == 'colmap':
         result, image_name1, image_name2 = Db.getPair(job_id)
         if result < 0:
@@ -53,8 +80,26 @@ def get_pair(job_id, pair_type):
         else:
             return 0, image_name1, image_name2
 
-    else:
-        return -1, 0, 0
+    elif pair_type == 'isometric':
+        _, root_path = Db.getRootPath(job_id)
+        ext = check_image_format(root_path)
+        image_names = sorted(
+            glob.glob(os.path.join(root_path, 'images', '*.' + ext)))
+        cam_count = len(image_names)
+
+        unit1 = float(cam_count) / 4.0
+        unit2 = float(cam_count) * 3.0 / 4.0
+        print("get_pairname 3", cam_count, unit1,
+              unit2, int(unit1), int(unit2))
+        image_name1 = image_names[int(unit1)]
+        image1 = image_name1[image_name1.rfind('/') + 1:]
+        image_name2 = image_names[int(unit2)]
+        image2 = image_name2[image_name2.rfind('/') + 1:]
+        print("get_pairname 4", image_name1, image_name2, image1, image2)
+
+        return 0, image1, image2
+
+    return -1, 0, 0
 
 
 def get_result(job_id):
@@ -73,31 +118,23 @@ def get_targetpath(job_id):
         return 0, target_path
 
 
-def check_image_format(path):
-    flist = glob.glob(os.path.join(path, 'images', '*'))
-    for i in flist:
-        print(i)
-        ext = i[i.rfind('.')+1:]
-        if ext == 'png':
-            return 'png'
-        elif ext == 'tiff':
-            return 'tiff'
-        elif ext == 'jpeg':
-            return 'jpeg'
-        elif ext == 'jpg':
-            return 'jpg'
-        return 'png'
+def get_camera_index_byname(cameras, view_name):
+
+    for i, camera in enumerate(cameras):
+        if (view_name == camera.view.name):
+            return i
 
 
-def getset_generate_config(job_id, parent_jobid, pair):
-    scale = Db.get_Scale(parent_jobid)
-    image1 = ''
-    image2 = ''
-    if (pair == 'colmap'):
-        image1, image2 = get_pair(parent_jobid)
-    elif pair == 'isometric':
-        pass
+def get_geninfo(job_id):
+    l.get().w.info("Get Get Info job_id, parent_jobid : {} ".format(job_id))
+    result = -1
 
-    Db.update_generateJob(job_id, scale, image1, image2)
+    result, parent_jobid, use_width, use_height = Db.getUseArea(job_id)
+    if result < 0:
+        return finish_querys(job_id, result, 3)
 
-    return scale
+    result, image, _ = Db.getPair(parent_jobid)
+    if result < 0:
+        return finish_querys(job_id, result, 3)
+
+    return result, image, use_width, use_height
