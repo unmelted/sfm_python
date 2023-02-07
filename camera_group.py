@@ -31,7 +31,8 @@ class Group():
         self.y_lambda = np.zeros((2), dtype=np.float64)
         self.sfm = None
         self.world = World()
-        self.adjust = None
+        self.transform = None
+        self.group_adj = None
         self.limit = 0
 
         self.root_path = None
@@ -77,7 +78,7 @@ class Group():
         return 0
 
     def prepare_camera_list(self, task_mode, list_from, scale, group_id='Group1'):
-        self.adjust = CameraTransform(self.world)
+        self.transform = CameraTransform(self.world)
         self.ext = check_image_format(self.root_path)
         image_names = []
 
@@ -262,9 +263,9 @@ class Group():
                 continue
             else:
                 if cal_type == '2D3D' or cal_type == '2D':
-                    self.adjust.reproject(_2d, self.cameras[i], '2D')
+                    self.transform.reproject(_2d, self.cameras[i], '2D')
                 if cal_type == '2D3D' or cal_type == '3D':
-                    self.adjust.reproject(_3d, self.cameras[i], '3D')
+                    self.transform.reproject(_3d, self.cameras[i], '3D')
 
         return 0
 
@@ -366,7 +367,7 @@ class Group():
         c1.pts_2d = np.array(base2_2d)
         c1.pts_3d = np.array(base2_3d)
 
-        _2d, _3d = self.adjust.make_3D(c0, c1)
+        _2d, _3d = self.transform.make_3D(c0, c1)
 
         return err, _2d, _3d, viewname1, viewname2
 
@@ -427,7 +428,7 @@ class Group():
                       myjob_id, cal_type, scale, target_path)
         return 0
 
-    def generate_extra_point(self, cal_type, world_pts):
+    def generate_extra_point(self, cal_type, world_pts, config):
         if world_pts != None:
             if len(world_pts) > 5:
                 print("generate extra point caltype ", cal_type, world_pts)
@@ -437,11 +438,14 @@ class Group():
 
                 # p = get_normalized_point(world_p)
                 world = self.world.get_world()
-                dist_coeff = np.zeros((4, 1))
                 print("world ", world)
 
-        if cal_type == '3D':
+        if self.group_adj == None :
+            self.group_adj = GroupAdjust(self.cameras, world, self.root_path, config)
 
+        if cal_type == '3D':
+            self.group_adj.calculate_extra_point_3d()
+            '''
             for i, _ in enumerate(self.cameras):
                 print(self.cameras[i].view.name, self.cameras[i].pts_3d)
                 result, vector_rotation, vector_translation = cv2.solvePnP(
@@ -452,6 +456,7 @@ class Group():
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
+            '''                
         else:
             for i in range(len(self.cameras)):
                 self.cameras[i].pts_extra = self.cameras[i].pts_2d

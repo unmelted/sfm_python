@@ -30,6 +30,20 @@ class GroupAdjust(object):
         self.width = width
         self.height = height
 
+    def calculate_extra_point_3d(self) :
+
+        dist_coeff = np.zeros((4, 1))        
+
+        for i, _ in enumerate(self.cameras):
+            print(self.cameras[i].view.name, self.cameras[i].pts_3d)
+            result, vector_rotation, vector_translation = cv2.solvePnP(
+                self.world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
+
+            normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
+                50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+            self.cameras[i].pts_extra = normal2d[:, 0, :]
+            l.get().w.info("3d make extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra))
+        
     def calculate_rotatecenter(self, cal_type, track_cx=0, track_cy=0):
 
         if cal_type == '2D':
