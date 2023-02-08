@@ -6,8 +6,6 @@ import sys
 import os
 import math
 from camera_sim import *
-# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-sys.path.append(r"/Users/4dreplay/work/sfm_python/")
 from group_adjust import GroupAdjust 
 from logger import Logger as l
 
