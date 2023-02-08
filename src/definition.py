@@ -1,5 +1,3 @@
-from ensurepip import version
-from operator import truediv
 import os
 from enum import Enum
 import logging

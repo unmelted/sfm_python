@@ -272,11 +272,9 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
     status_update(myjob_id, 100)
 
     if cal_type == '2D':
-        preset.generate_extra_point('2D', None)
-        left, top, width, height = preset.generate_adjust(
-            myjob_id, cal_type,  config)
-        DbManager.insert_adjustData3(
-            myjob_id, job_id, left, top, width, height)
+        preset.generate_extra_point('2D', None, config)
+        left, top, width, height = preset.generate_adjust(myjob_id, cal_type,  config)
+        DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
         return result
 
     elif cal_type == '3D' or cal_type == '2D3D':
@@ -288,18 +286,16 @@ def generate_pts(myjob_id, job_id, cal_type, pts_2d, pts_3d, config, image1, ima
             DbManager.insert_adjustData2(myjob_id, job_id, pts_world)
 
             if cal_type == '3D':
-                preset.generate_extra_point('3D', float_world)
+                preset.generate_extra_point('3D', float_world, config)
             elif cal_type == '2D3D':
-                preset.generate_extra_point('2D', float_world)
+                preset.generate_extra_point('2D', float_world, config)
 
             else:
                 l.get().w.debug("Can't generate extra point. (No world)")
                 return result
 
-            left, top, width, height = preset.generate_adjust(
-                myjob_id, cal_type,  config)
-            DbManager.insert_adjustData3(
-                myjob_id, job_id, left, top, width, height)
+            left, top, width, height = preset.generate_adjust(myjob_id, cal_type,  config)
+            DbManager.insert_adjustData3(myjob_id, job_id, left, top, width, height)
             return result
     else:
         return result
