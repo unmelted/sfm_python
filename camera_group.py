@@ -440,7 +440,7 @@ class Group():
                 world = self.world.get_world()
                 print("world ", world)
 
-        if self.group_adj == None :
+        if self.group_adj == None:
             self.group_adj = GroupAdjust(self.cameras, world, self.root_path, config)
 
         if cal_type == '3D':
@@ -456,7 +456,7 @@ class Group():
                 self.cameras[i].pts_extra = normal2d[:, 0, :]
                 l.get().w.info("3d make extra {} : {}".format(
                     self.cameras[i].view.name, self.cameras[i].pts_extra))
-            '''                
+            '''
         else:
             for i in range(len(self.cameras)):
                 self.cameras[i].pts_extra = self.cameras[i].pts_2d
@@ -474,7 +474,7 @@ class Group():
             os.makedirs(os.path.join(self.root_path, 'preview'))
         output_path = os.path.join(self.root_path, 'preview')
 
-        gadj.adjust_image(output_path, self.ext, job_id)
+        gadj.adjust_images(output_path, self.ext, job_id)
         # gadj.test_homography(1372, 1116)
 
         return self.left, self.top, self.width, self.height

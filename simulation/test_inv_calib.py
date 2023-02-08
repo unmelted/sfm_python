@@ -1,13 +1,15 @@
-import os
-import glob
-import cv2
-import json
-import argparse
-import math
-from camera import *
-from group_adjust import *
-from logger import Logger as l
 
+import json
+import cv2
+import glob
+import sys
+import os
+import math
+from camera_sim import *
+# sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(r"/Users/4dreplay/work/sfm_python/")
+from group_adjust import GroupAdjust 
+from logger import Logger as l
 
 def prepare_video_job(from_path, to_path):
 
@@ -124,8 +126,8 @@ def get_scale_point(center_x, center_y, point_x, point_y, scale):
     delx = point_x - center_x
     dely = point_y - center_y
 
-    ret_x = delx * (1/scale)
-    ret_y = dely * (1/scale)
+    ret_x = delx * (1 / scale)
+    ret_y = dely * (1 / scale)
 
     ret_x = ret_x + center_x
     ret_y = ret_y + center_y
@@ -154,18 +156,18 @@ def cal_inv_calib(info):
             crns[i] = crns[i] - (info["AdjustY"])
 
         if i % 2 == 1:
-            s_x, s_y = get_scale_point(info["RotateX"], info["RotateY"], crns[i-1], crns[i], info["Scale"])
+            s_x, s_y = get_scale_point(info["RotateX"], info["RotateY"], crns[i - 1], crns[i], info["Scale"])
             t_x, t_y = get_rotate_point(info["RotateX"], info["RotateY"], s_x, s_y, -info["Angle"])
 
-            crns[i-1] = (t_x)
+            crns[i - 1] = (t_x)
             crns[i] = (t_y)
 
             # if isflip == True:
             #     crns[i-1] = 3840 - int(t_x)
             #     crns[i] = 1920 - int(t_y)
-            print("ceil apply : ", math.ceil(crns[i-1]), math.ceil(crns[i]))
-            if math.ceil(crns[i-1]) < 0 or math.ceil(crns[i-1]) >= 3840:
-                print("WARN X------------------------ ", math.ceil(crns[i-1]))
+            print("ceil apply : ", math.ceil(crns[i - 1]), math.ceil(crns[i]))
+            if math.ceil(crns[i - 1]) < 0 or math.ceil(crns[i - 1]) >= 3840:
+                print("WARN X------------------------ ", math.ceil(crns[i - 1]))
             elif math.ceil(crns[i]) < 0 or math.ceil(crns[i]) >= 2160:
                 print("WARN y------------------------ ", math.ceil(crns[i]))
 
@@ -178,8 +180,8 @@ def cal_inv_calib(info):
 def show_image(camera, crns, scale=1.0):
 
     if scale != 1.0:
-        camera.image_width = int(camera.image_width/scale)
-        camera.image_height = int(camera.image_height/scale)
+        camera.image_width = int(camera.image_width / scale)
+        camera.image_height = int(camera.image_height / scale)
         camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
 
     adj_image = adjust.adjust_image(out_path, camera, scale)

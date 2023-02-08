@@ -32,6 +32,7 @@ class Camera(object):
 
         self.view = View(task_mode, image_name, root_path, scale,
                          feature_path=feature_path)
+        self.name = self.view.name
 
         ''' related adjust value '''
         self.pts = np.empty((0, 2), dtype=np.float64)
