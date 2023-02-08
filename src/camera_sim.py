@@ -7,7 +7,6 @@ class Camera(object):
     """ Class for representing pin-hole camera """
 
     def __init__(self, image_name):
-        self.name = image_name
         self.image = None
         self.id = None
         self.index = None
@@ -38,5 +37,16 @@ class Camera(object):
         self.rotate_y = 0
 
         self.adjust_file = None
-        self.image_width = 0.0
-        self.image_height = 0.0
+
+        class view():
+            image_width = 0
+            image_height = 0
+            name = None
+
+        self.view = view()
+        self.view.image_width = 0.0
+        self.view.image_height = 0.0
+        self.view.name = image_name
+        self.name = self.view.name
+        self.image_width = 0
+        self.image_height = 0

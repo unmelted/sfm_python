@@ -63,8 +63,7 @@ class GroupAdjust(object):
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
 
         elif self.config['rotation_center'] == 'zero-cam':
-            center = [self.cameras[0].view.image_width /
-                      2, self.cameras[0].view.image_height/2, 1]
+            center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             np_center = np.array(center)
             pts_3d0 = self.cameras[0].pts_3d
 
@@ -84,8 +83,7 @@ class GroupAdjust(object):
 
                 self.cameras[i].rotate_x = center[0] / center[2]
                 self.cameras[i].rotate_y = center[1] / center[2]
-                print(self.cameras[i].view.name,
-                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
         elif self.config['rotation_center'] == 'each-center':
 
@@ -95,12 +93,10 @@ class GroupAdjust(object):
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = new_center[i][0]
                 self.cameras[i].rotate_y = new_center[i][1]
-                print(self.cameras[i].view.name,
-                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
         elif self.config['rotation_center'] == 'tracking-center':
-            cam_idx = get_camera_index_byname(
-                self.cameras, self.config['tracking_camidx'])
+            cam_idx = get_camera_index_byname(self.cameras, self.config['tracking_camidx'])
             pts_3d0 = self.cameras[cam_idx].pts_3d
             center = [track_cx, track_cy, 1]
             np_center = np.array(center)
@@ -112,7 +108,6 @@ class GroupAdjust(object):
                     continue
 
                 h, _ = cv2.findHomography(pts_3d0, self.cameras[i].pts_3d)
-                # print("rotatecenter homography ---- \n" , h)
                 center = np.dot(h, np_center)
                 # print(center)
                 if center[2] < 0:
@@ -121,8 +116,7 @@ class GroupAdjust(object):
 
                 self.cameras[i].rotate_x = center[0] / center[2]
                 self.cameras[i].rotate_y = center[1] / center[2]
-                print(self.cameras[i].view.name,
-                      self.cameras[i].rotate_x, self.cameras[i].rotate_y)
+                print(self.cameras[i].view.name, self.cameras[i].rotate_x, self.cameras[i].rotate_y)
 
     def calculate_radian(self):
         for i in range(len(self.cameras)):
@@ -179,8 +173,7 @@ class GroupAdjust(object):
             targx = avex
             targy = avey
         elif df.test_applyshift_type == 'center':
-            center = [self.cameras[0].view.image_width /
-                      2, self.cameras[0].view.image_height/2, 1]
+            center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             targx = center[0]
             targy = center[1]
             dsccnt = len(self.cameras)
@@ -402,7 +395,7 @@ class GroupAdjust(object):
         h = camera.image_height
 
         file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, False, 2.0)
+        mat = self.get_affine_matrix(camera, True, 2.0)
         cv2.circle(camera.image, (int(camera.rotate_x), int(camera.rotate_y)), 8, (0, 0, 255), -1)
 
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (1920, 1080))
@@ -428,19 +421,14 @@ class GroupAdjust(object):
                 mx, my = tf.homography_fromF(
                     self.cameras[0], self.cameras[1], initx, inity)
                 print("index == 1 ", mx, my)
-                cv2.circle(self.cameras[0].view.image, (int(
-                    initx), int(inity)), 10, (255, 255, 255), -1)
-                cv2.circle(self.cameras[1].view.image, (int(
-                    mx), int(my)), 10, (255, 255, 255), -1)
-                filename2 = os.path.join(
-                    output_path, self.cameras[0].view.name[:-4] + '_hm.jpg')
+                cv2.circle(self.cameras[0].view.image, (int(initx), int(inity)), 10, (255, 255, 255), -1)
+                cv2.circle(self.cameras[1].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
+                filename2 = os.path.join(output_path, self.cameras[0].view.name[:-4] + '_hm.jpg')
                 cv2.imwrite(filename2, self.cameras[0].view.image)
                 cv2.imwrite(filename, self.cameras[1].view.image)
 
             else:
                 return
-                mx, my = tf.homography_fromF(
-                    self.cameras[i-1], self.cameras[i], mx, my)
-                cv2.circle(self.cameras[i].view.image, (int(
-                    mx), int(my)), 10, (255, 255, 255), -1)
+                mx, my = tf.homography_fromF(self.cameras[i-1], self.cameras[i], mx, my)
+                cv2.circle(self.cameras[i].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
                 cv2.imwrite(filename, self.cameras[i].view.image)

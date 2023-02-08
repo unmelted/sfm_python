@@ -193,9 +193,9 @@ def show_image(camera, crns, scale=1.0):
     cv2.waitKey()
 
 
-from_path = './Cal3D_085658'
-to_path = './Cal3D_085658'
-out_path = './Cal3D_085658/output/'
+from_path = '../simulation/Cal3D_085658'
+to_path = '../simulation/Cal3D_085658'
+out_path = '../simulation/Cal3D_085658/output/'
 #prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
@@ -237,6 +237,8 @@ for item in lists:
 
     ncam.image_width = img.shape[1]
     ncam.image_height = img.shape[0]
+    ncam.view.image_width = img.shape[1]
+    ncam.view.image_height = img.shape[0]
 
     ncam.image = img
     if ncam.name in standard:
@@ -244,8 +246,8 @@ for item in lists:
 
     cameras.append(ncam)
     index += 1
-
-adjust = GroupAdjust(cameras)
+world = [282.0, 191.0, 279.0, 608.0, 515.0, 607.0, 519.0, 190.0]
+adjust = GroupAdjust(cameras, world, None, None)
 adjust.calculate_rotatecenter('3D')
 adjust.calculate_radian()
 adjust.calculate_scaleshift(calibtype='ave', standard_index=standard_index)  # for type4
@@ -253,7 +255,7 @@ adjust.calculate_scaleshift(calibtype='ave', standard_index=standard_index)  # f
 
 #left, right, top, bottom, width, height = adjust.calculate_margin_ori()
 # left, right, top, bottom, width, height = adjust.calculate_margin()
-left, right, top, bottom, width, height = adjust.calculate_margin2()
+left, right, top, bottom, width, height = adjust.calculate_margin()
 
 print("From adj margin : ", cameras[0].adjust_file["RectMargin"]["Left"],
       cameras[0].adjust_file["RectMargin"]["Right"],
