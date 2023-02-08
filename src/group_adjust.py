@@ -21,6 +21,12 @@ class GroupAdjust(object):
         self.x_fit = []
         self.y_fit = []
         self.config = config
+        self.left = 0
+        self.top = 0
+        self.right = 0
+        self.bottom = 0
+        self.width = 0
+        self.height = 0
 
     def set_group_margin(self, left, top, right, bottom, width, height):
         self.left = left
@@ -46,7 +52,7 @@ class GroupAdjust(object):
 
     def calculate_rotatecenter(self, cal_type, track_cx=0, track_cy=0):
 
-        if cal_type == '2D':
+        if cal_type == '2D' or cal_type == '3D':
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
@@ -163,8 +169,6 @@ class GroupAdjust(object):
 
         if df.test_applyshift_type == 'ave':
             for i in range(len(self.cameras)):
-                # sumx += self.cameras[i].pts_extra[1][0]
-                # sumy += self.cameras[i].pts_extra[1][1]
                 sumx += self.cameras[i].rotate_x
                 sumy += self.cameras[i].rotate_y
 
@@ -186,8 +190,6 @@ class GroupAdjust(object):
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
             self.cameras[i].scale = dist_len / self.cameras[i].rod_length
-            # self.cameras[i].adjust_x = targx - self.cameras[i].pts_extra[1][0]
-            # self.cameras[i].adjust_y = targy - self.cameras[i].pts_extra[1][1]
             self.cameras[i].adjust_x = targx - self.cameras[i].rotate_x
             self.cameras[i].adjust_y = targy - self.cameras[i].rotate_y
 
@@ -219,24 +221,23 @@ class GroupAdjust(object):
         right = []
         top = []
         bottom = []
+        w = self.cameras[0].view.image_width
+        h = self.cameras[0].view.image_height
 
         left.append(0)
-        right.append(3839)
+        right.append(w-1)
         top.append(0)
-        bottom.append(2159)
+        bottom.append(h-1)
         flip = True
 
         for i in range(len(self.cameras)):
             if self.cameras[i].adjust_x == 0 and self.cameras[i].adjust_y == 0 and self.cameras[i].degree == -90.0:  # will be modifed condition
                 continue
 
-            w = self.cameras[i].image_width
-            h = self.cameras[i].image_height
             edge = np.empty((4, 2), dtype=np.float64)
-
             edges = np.float32(np.array([[[0, 0], [w, 0], [w, h], [0, h]]]))
 
-            mat = self.get_affine_matrix_for_margin(self.cameras[i], 1.0)
+            mat = self.get_affine_matrix(self.cameras[i], True, 1.0)
             print(mat)
             dst = cv2.perspectiveTransform(edges, mat)
             print(dst)
@@ -316,8 +317,8 @@ class GroupAdjust(object):
         self.set_group_margin(left[0], top[0], right[0], bottom[0], margin_width, margin_height)
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
-    def get_affine_matrix(self, cam, scale = 1.0):
-        mat0 = get_flip_matrix(cam.image_width, cam.image_height, True, True)
+    def get_affine_matrix(self, cam, margin = False, scale = 1.0):
+        mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
         print("flip : ", mat0)
         mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
         print("rot : ", mat1)
@@ -325,11 +326,12 @@ class GroupAdjust(object):
         print("scale : ", mat2)
         mat3 = get_translation_matrix(cam.adjust_x/scale, cam.adjust_y/scale)
         print("mtran : ", mat3)
-        mat4 = get_margin_matrix(cam.image_width, cam.image_height, self.left/scale, self.right/scale, self.width/scale, self.height/scale)
-        #mat5 = get_scale_matrix(1, 1)
-        mat5 = get_scale_matrix(1920/(self.width/scale), 1080/(self.height/scale))
+        if margin == False :
+            mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.right/scale, self.width/scale, self.height/scale)
+            #mat5 = get_scale_matrix(1, 1)
+            mat5 = get_scale_matrix(1920/(self.width/scale), 1080/(self.height/scale))
 
-        test_applycrop = True
+        test_applycrop = False
 
         if test_applycrop == True:
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
@@ -400,7 +402,7 @@ class GroupAdjust(object):
         h = camera.image_height
 
         file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, 2.0)
+        mat = self.get_affine_matrix(camera, False, 2.0)
         cv2.circle(camera.image, (int(camera.rotate_x), int(camera.rotate_y)), 8, (0, 0, 255), -1)
 
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (1920, 1080))
