@@ -39,20 +39,33 @@ class GroupAdjust(object):
     def calculate_extra_point_3d(self):
 
         dist_coeff = np.zeros((4, 1))
+        inverse = 0 # 0: unknown // 1: upper->lower  // -1 : lower->upper => should be exchange
 
         for i, _ in enumerate(self.cameras):
-            print(self.cameras[i].view.name, self.cameras[i].pts_3d)
-            result, vector_rotation, vector_translation = cv2.solvePnP(
-                self.world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
+            # print(self.cameras[i].view.name, self.cameras[i].K, self.world)
+            result, vector_rotation, vector_translation = cv2.solvePnP(self.world, self.cameras[i].pts_3d, self.cameras[i].K, dist_coeff, cv2.SOLVEPNP_ITERATIVE)
 
             normal2d, jacobian = cv2.projectPoints(np.array([[50.0, 50.0, 0.0], [
-                50.0, 50.0, -10.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
+                50.0, 50.0, -50.0]]), vector_rotation, vector_translation, self.cameras[i].K, dist_coeff)
             self.cameras[i].pts_extra = normal2d[:, 0, :]
-            l.get().w.info("3d make extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra))
+            if inverse == 0 : 
+                if self.cameras[i].pts_extra[0][1] > self.cameras[i].pts_extra[1][1] :
+                    inverse = -1
+                else :
+                    inverse = 1
+            if inverse == -1 :
+                t_x = self.cameras[i].pts_extra[0][0]
+                t_y = self.cameras[i].pts_extra[0][1]
+                self.cameras[i].pts_extra[0][0] = self.cameras[i].pts_extra[1][0]
+                self.cameras[i].pts_extra[0][1] = self.cameras[i].pts_extra[1][1]
+                self.cameras[i].pts_extra[1][0] = t_x
+                self.cameras[i].pts_extra[1][1] = t_y
+
+            l.get().w.debug("3d make extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def calculate_rotatecenter(self, cal_type, track_cx=0, track_cy=0):
 
-        if cal_type == '2D' or cal_type == '3D':
+        if cal_type == '2D' : # simulation mode or cal_type == '3D'
             for i in range(len(self.cameras)):
                 self.cameras[i].rotate_x = self.cameras[i].pts_extra[1][0]
                 self.cameras[i].rotate_y = self.cameras[i].pts_extra[1][1]
@@ -156,16 +169,13 @@ class GroupAdjust(object):
         targy = 0
         targs = 0
 
-        startx = self.cameras[0].pts_extra[1][0]
-        startx = self.cameras[0].pts_extra[1][1]
         start_len = self.cameras[0].rod_length
         target_len = self.cameras[len(self.cameras) - 1].rod_length
 
-        if df.test_applyshift_type == 'ave':
+        if df.test_applyshift_type == 'ave' or calibtype == 'ave':
             for i in range(len(self.cameras)):
                 sumx += self.cameras[i].rotate_x
                 sumy += self.cameras[i].rotate_y
-
                 dsccnt += 1
 
             avex = sumx / dsccnt
@@ -179,6 +189,8 @@ class GroupAdjust(object):
             dsccnt = len(self.cameras)
 
         interval = (target_len - start_len) / (dsccnt - 1)
+
+        # print("scale shift ...", avex, avey, targx, targy)
 
         for i in range(len(self.cameras)):
             dist_len = start_len + (interval * i)
@@ -310,7 +322,7 @@ class GroupAdjust(object):
         self.set_group_margin(left[0], top[0], right[0], bottom[0], margin_width, margin_height)
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
-    def get_affine_matrix(self, cam, margin = False, scale = 1.0):
+    def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
         mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
         print("flip : ", mat0)
         mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
@@ -319,14 +331,13 @@ class GroupAdjust(object):
         print("scale : ", mat2)
         mat3 = get_translation_matrix(cam.adjust_x/scale, cam.adjust_y/scale)
         print("mtran : ", mat3)
-        if margin == False :
-            mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.right/scale, self.width/scale, self.height/scale)
+        if margin_proc == False :
+            print("margin matrix ", self.left, self.top, self.width, self.height, cam.view.image_width, cam.view.image_height)
+            mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.top/scale, self.width/scale, self.height/scale)
             #mat5 = get_scale_matrix(1, 1)
             mat5 = get_scale_matrix(1920/(self.width/scale), 1080/(self.height/scale))
 
-        test_applycrop = False
-
-        if test_applycrop == True:
+        if margin_proc == False:
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
         else:
             out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])
@@ -391,15 +402,11 @@ class GroupAdjust(object):
         process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
     def adjust_image(self, output_path, camera, scale=1.0):
-        w = camera.image_width
-        h = camera.image_height
-
         file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, True, 2.0)
-        cv2.circle(camera.image, (int(camera.rotate_x), int(camera.rotate_y)), 8, (0, 0, 255), -1)
-
+        mat = self.get_affine_matrix(camera, False, 2.0)
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (1920, 1080))
-        print("rectangle draw : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
+
+        print("rectangle : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
         cv2.imwrite(file_name, dst_img)
         return dst_img
 

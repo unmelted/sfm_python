@@ -8,6 +8,7 @@ import math
 from camera_sim import *
 from group_adjust import GroupAdjust 
 from logger import Logger as l
+from world import *
 
 def prepare_video_job(from_path, to_path):
 
@@ -85,6 +86,9 @@ def get_pts_info(from_path, camera, group_limit):
             camera.pts_3d[2][1] = from_data['points'][j]['pts_3d']['Y3']
             camera.pts_3d[3][0] = from_data['points'][j]['pts_3d']['X4']
             camera.pts_3d[3][1] = from_data['points'][j]['pts_3d']['Y4']
+            camera.rotate_x = from_data['points'][j]['pts_3d']['CenterX']
+            camera.rotate_y = from_data['points'][j]['pts_3d']['CenterY']       
+            camera.focal = from_data['points'][j]['FocalLength']
 
             camera.pts_2d[0][0] = from_data['points'][j]['pts_2d']['UpperPosX']
             camera.pts_2d[0][1] = from_data['points'][j]['pts_2d']['UpperPosY']
@@ -93,7 +97,7 @@ def get_pts_info(from_path, camera, group_limit):
             camera.pts_2d[1][0] = from_data['points'][j]['pts_2d']['LowerPosX']
             camera.pts_2d[1][1] = from_data['points'][j]['pts_2d']['LowerPosY']
 
-            print("3d : ", camera.pts_3d)
+            print("3d : ", camera.pts_3d, camera.rotate_x, camera.rotate_y)
             print("2d : ", camera.pts_2d)
             result = True
             break
@@ -180,6 +184,8 @@ def show_image(camera, crns, scale=1.0):
     if scale != 1.0:
         camera.image_width = int(camera.image_width / scale)
         camera.image_height = int(camera.image_height / scale)
+        camera.view.image_width = camera.image_width
+        camera.view.image_height = camera.image_height
         camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
 
     adj_image = adjust.adjust_image(out_path, camera, scale)
@@ -193,6 +199,9 @@ def show_image(camera, crns, scale=1.0):
     cv2.waitKey()
 
 
+    
+''' Main Process Start '''
+
 from_path = '../simulation/Cal3D_085658'
 to_path = '../simulation/Cal3D_085658'
 out_path = '../simulation/Cal3D_085658/output/'
@@ -205,12 +214,16 @@ lists = get_camera_list(from_path)
 files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
 isflip = False
 group_limit = "Group1"
+cal_type = '3D'
+world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0]
 # standard = ['001024']  # 2D
 #standard = ['021119']
 standard = []
-
+world = World()
+world.set_world(world_pts)
 cameras = []
 standard_index = []
+
 scale = 2
 index = 0
 
@@ -225,9 +238,10 @@ for item in lists:
     if bpts == False:
         continue
 
-    binfo = get_adjust_info(to_path, ncam, 2)
-    ncam.pts_extra = ncam.pts_2d
+    if cal_type == '2D' :
+        ncam.pts_extra = ncam.pts_2d
 
+    binfo = get_adjust_info(to_path, ncam, 2)
     if binfo == False:
         print("tartet is skipped. No data..")
         continue
@@ -235,20 +249,21 @@ for item in lists:
     file = os.path.join(to_path, item + '.jpg')
     img = cv2.imread(file)
 
-    ncam.image_width = img.shape[1]
-    ncam.image_height = img.shape[0]
-    ncam.view.image_width = img.shape[1]
-    ncam.view.image_height = img.shape[0]
-
+    ncam.set_extra_info(img.shape[1], img.shape[0], cal_type)
     ncam.image = img
+
     if ncam.name in standard:
         standard_index.append(index)
 
     cameras.append(ncam)
     index += 1
-world = [282.0, 191.0, 279.0, 608.0, 515.0, 607.0, 519.0, 190.0]
-adjust = GroupAdjust(cameras, world, None, None)
-adjust.calculate_rotatecenter('3D')
+
+adjust = GroupAdjust(cameras, world.get_world() , None, None)
+if cal_type == '3D':
+    adjust.calculate_extra_point_3d()
+else :
+    adjust.calculate_rotatecenter('2D')
+
 adjust.calculate_radian()
 adjust.calculate_scaleshift(calibtype='ave', standard_index=standard_index)  # for type4
 # adjust.calculate_scaleshift(calibtype='ave') # type 3
