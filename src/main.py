@@ -5,6 +5,7 @@ from flask import request, jsonify
 from flask_restx import fields, Resource, Api, reqparse, marshal
 import definition as df
 from exodus import *
+from job_manager import JobManager
 from db_layer import NewPool, DBLayer
 
 app = Flask(__name__)
