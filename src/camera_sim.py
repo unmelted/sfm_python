@@ -53,6 +53,7 @@ class Camera(object):
 
         self.K = np.zeros((3, 3))
         self.focal = 0
+        self.prj_crns = np.empty((4, 2), dtype=np.float64)        
 
     def convert_focal2px(self) :
         focalPx = 0

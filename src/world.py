@@ -31,6 +31,9 @@ class World(object):
     def get_world(self) :
         return self.world_npoints
 
+    def get_raw_world(self) :
+        return self.world_points
+
     def calculate_center_inworld(self, cameras, root_path) :
         self.root_path = root_path
         ground = cv2.imread(self.stadium)

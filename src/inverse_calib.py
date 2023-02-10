@@ -7,6 +7,7 @@ import os
 import math
 from camera_sim import *
 from group_adjust import GroupAdjust 
+from group_adjust_ex import GroupAdjustEx
 from logger import Logger as l
 from world import *
 
@@ -189,13 +190,14 @@ def show_image(camera, crns, scale=1.0):
         camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
 
     adj_image = adjust.adjust_image(out_path, camera, scale)
-
+    adjustEx.calculate_projection_corners(out_path, camera, world_pts)
     # cv2.circle(camera.image, (crns[0], crns[1]), 6, (255, 0, 255), -1)
     # cv2.circle(camera.image, (crns[2], crns[3]), 6, (255, 0, 255), -1)
     # cv2.circle(camera.image, (crns[4], crns[5]), 6, (255, 0, 255), -1)
     # cv2.circle(camera.image, (crns[6], crns[7]), 6, (255, 0, 255), -1)
     cv2.imshow("CAL", adj_image)
     cv2.imshow("INV", camera.image)
+    # cv2.imshow("MV_P", gr_img)
     cv2.waitKey()
 
 
@@ -259,6 +261,7 @@ for item in lists:
     index += 1
 
 adjust = GroupAdjust(cameras, world.get_world() , None, None)
+adjustEx = GroupAdjustEx()
 if cal_type == '3D':
     adjust.calculate_extra_point_3d()
 else :
@@ -291,3 +294,5 @@ for camera in cameras:
 
     # show_image(camera, cal_inv_calib(camera.adjust_file), scale)
     show_image(camera, None, scale)
+
+# adjustEx.calculate_projection(out_path, cameras, world_pts)
