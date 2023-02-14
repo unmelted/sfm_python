@@ -180,8 +180,7 @@ def cal_inv_calib(info):
     return crns
 
 
-def show_image(camera, crns, scale=1.0):
-
+def scale_image(camera, sacle = 1.0):
     if scale != 1.0:
         camera.image_width = int(camera.image_width / scale)
         camera.image_height = int(camera.image_height / scale)
@@ -189,24 +188,33 @@ def show_image(camera, crns, scale=1.0):
         camera.view.image_height = camera.image_height
         camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
 
+def show_image(camera, crns, scale=1.0):
     adj_image = adjust.adjust_image(out_path, camera, scale)
-    adjustEx.calculate_projection_corners(out_path, camera, world_pts)
-    # cv2.circle(camera.image, (crns[0], crns[1]), 6, (255, 0, 255), -1)
-    # cv2.circle(camera.image, (crns[2], crns[3]), 6, (255, 0, 255), -1)
-    # cv2.circle(camera.image, (crns[4], crns[5]), 6, (255, 0, 255), -1)
-    # cv2.circle(camera.image, (crns[6], crns[7]), 6, (255, 0, 255), -1)
+    #adjustEx.calculate_projection_corners(out_path, camera, world_pts)
+
     cv2.imshow("CAL", adj_image)
     cv2.imshow("INV", camera.image)
     # cv2.imshow("MV_P", gr_img)
     cv2.waitKey()
 
 
+def calibration(cameras, world) :
+    adjust = GroupAdjust(cameras, world.get_world() , None, None)
+    if cal_type == '3D':
+        adjust.calculate_extra_point_3d()
+    else :
+        adjust.calculate_rotatecenter('2D')
+
+    adjust.calculate_radian()
+    adjust.calculate_scaleshift(calibtype='ave', standard_index=standard_index)  # for type4
+    left, right, top, bottom, width, height = adjust.calculate_margin()
+
     
 ''' Main Process Start '''
 
-from_path = '../simulation/Cal3D_085658'
-to_path = '../simulation/Cal3D_085658'
-out_path = '../simulation/Cal3D_085658/output/'
+from_path = '../simulation/Cal3D_0214'
+to_path = '../simulation/Cal3D_0214'
+out_path = '../simulation/Cal3D_0214/output/'
 #prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
@@ -217,7 +225,9 @@ files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
 isflip = False
 group_limit = "Group1"
 cal_type = '3D'
-world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0]
+#world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball
+world_pts = [204, 605, 600, 605, 600, 765, 202, 764] #soccer 4
+
 # standard = ['001024']  # 2D
 #standard = ['021119']
 standard = []
@@ -228,11 +238,11 @@ standard_index = []
 
 scale = 2
 index = 0
+adj_check = False
 
 for item in lists:
     print("start : ", item)
     # target = file.split('/')[-1][:-4]
-    print(item)
 
     ncam = Camera(item)
     bpts = get_pts_info(to_path, ncam, group_limit)
@@ -243,12 +253,13 @@ for item in lists:
     if cal_type == '2D' :
         ncam.pts_extra = ncam.pts_2d
 
-    binfo = get_adjust_info(to_path, ncam, 2)
-    if binfo == False:
-        print("tartet is skipped. No data..")
-        continue
+    if adj_check == True :
+        binfo = get_adjust_info(to_path, ncam, 2)
+        if binfo == False:
+            print("tartet is skipped. No data..")
+            continue
 
-    file = os.path.join(to_path, item + '.jpg')
+    file = os.path.join(to_path, item + '_3.png')
     img = cv2.imread(file)
 
     ncam.set_extra_info(img.shape[1], img.shape[0], cal_type)
@@ -260,39 +271,31 @@ for item in lists:
     cameras.append(ncam)
     index += 1
 
-adjust = GroupAdjust(cameras, world.get_world() , None, None)
-adjustEx = GroupAdjustEx()
-if cal_type == '3D':
-    adjust.calculate_extra_point_3d()
-else :
-    adjust.calculate_rotatecenter('2D')
 
-adjust.calculate_radian()
-adjust.calculate_scaleshift(calibtype='ave', standard_index=standard_index)  # for type4
-# adjust.calculate_scaleshift(calibtype='ave') # type 3
 
-#left, right, top, bottom, width, height = adjust.calculate_margin_ori()
-# left, right, top, bottom, width, height = adjust.calculate_margin()
-left, right, top, bottom, width, height = adjust.calculate_margin()
-
+# calibration(cameras, world)
+'''
 print("From adj margin : ", cameras[0].adjust_file["RectMargin"]["Left"],
       cameras[0].adjust_file["RectMargin"]["Right"],
       cameras[0].adjust_file["RectMargin"]["Top"],
       cameras[0].adjust_file["RectMargin"]["Bottom"],
       cameras[0].adjust_file["RectMargin"]["Width"],
       cameras[0].adjust_file["RectMargin"]["Height"])
+'''
 
 for camera in cameras:
-    print("-----------------")
-    print("      ", camera.name)
-    print("-----------------")
-    l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} radin {} angle {}  ".format(
-        camera.name, camera.scale, camera.adjust_x, camera.adjust_y, camera.radian, camera.radian * math.pi / 180))
-    print("---------------- From file ")
-    l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} radin {} angle {}  ".format(
-        camera.name, camera.adjust_file["Scale"], camera.adjust_file["AdjustX"], camera.adjust_file["AdjustY"], camera.adjust_file["Angle"], camera.adjust_file["Angle"] * math.pi / 180))
+    # print("-----------------")
+    # print("      ", camera.name)
+    # print("-----------------")
+    # l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} radin {} angle {}  ".format(
+    #     camera.name, camera.scale, camera.adjust_x, camera.adjust_y, camera.radian, camera.radian * math.pi / 180))
+    # print("---------------- From file ")
+    # l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} radin {} angle {}  ".format(
+    #     camera.name, camera.adjust_file["Scale"], camera.adjust_file["AdjustX"], camera.adjust_file["AdjustY"], camera.adjust_file["Angle"], camera.adjust_file["Angle"] * math.pi / 180))
 
-    # show_image(camera, cal_inv_calib(camera.adjust_file), scale)
-    show_image(camera, None, scale)
+    scale_image(camera, scale) 
 
-# adjustEx.calculate_projection(out_path, cameras, world_pts)
+adjustEx = GroupAdjustEx()
+adjustEx.set_world(world_pts, False)
+poly = adjustEx.calculate_projection(out_path, cameras)
+adjustEx.calculate_back_projection(out_path, cameras, poly)
