@@ -75,9 +75,10 @@ def get_pts_info(from_path, camera, group_limit):
         from_data = json.load(json_file)
 
     for j in range(len(from_data["points"])):
+        # print("check ..", from_data["points"][j]["dsc_id"], camera.name)
         if from_data["points"][j]["dsc_id"] == camera.name:
             if from_data["points"][j]["Group"] != group_limit:
-                return False
+               return False
             print("camera : ", camera.name)
             camera.pts_3d[0][0] = from_data['points'][j]['pts_3d']['X1']
             camera.pts_3d[0][1] = from_data['points'][j]['pts_3d']['Y1']
@@ -89,7 +90,7 @@ def get_pts_info(from_path, camera, group_limit):
             camera.pts_3d[3][1] = from_data['points'][j]['pts_3d']['Y4']
             camera.rotate_x = from_data['points'][j]['pts_3d']['CenterX']
             camera.rotate_y = from_data['points'][j]['pts_3d']['CenterY']       
-            camera.focal = from_data['points'][j]['FocalLength']
+            camera.focal = 22 # from_data['points'][j]['FocalLength']
 
             camera.pts_2d[0][0] = from_data['points'][j]['pts_2d']['UpperPosX']
             camera.pts_2d[0][1] = from_data['points'][j]['pts_2d']['UpperPosY']
@@ -212,9 +213,9 @@ def calibration(cameras, world) :
     
 ''' Main Process Start '''
 
-from_path = '../simulation/Cal3D_0214'
-to_path = '../simulation/Cal3D_0214'
-out_path = '../simulation/Cal3D_0214/output/'
+from_path = '../simulation/Cal3D_085658'
+to_path = '../simulation/Cal3D_085658'
+out_path = '../simulation/Cal3D_085658/output/'
 #prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
@@ -225,8 +226,11 @@ files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
 isflip = False
 group_limit = "Group1"
 cal_type = '3D'
-#world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball
-world_pts = [204, 605, 600, 605, 600, 765, 202, 764] #soccer 4
+world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball
+# world_pts = [204, 605, 600, 605, 600, 765, 202, 764] #soccer 4
+#world_pts = [401, 463, 139, 450, 138, 351, 397, 338]  #Cal200627
+# world_pts = [176, 518, 612, 518, 612, 605, 176, 604] #hockey
+print(world_pts)
 
 # standard = ['001024']  # 2D
 #standard = ['021119']
@@ -256,10 +260,10 @@ for item in lists:
     if adj_check == True :
         binfo = get_adjust_info(to_path, ncam, 2)
         if binfo == False:
-            print("tartet is skipped. No data..")
+            print("target is skipped. No data..")
             continue
 
-    file = os.path.join(to_path, item + '_3.png')
+    file = os.path.join(to_path, item + '.jpg')
     img = cv2.imread(file)
 
     ncam.set_extra_info(img.shape[1], img.shape[0], cal_type)
@@ -296,6 +300,6 @@ for camera in cameras:
     scale_image(camera, scale) 
 
 adjustEx = GroupAdjustEx()
-adjustEx.set_world(world_pts, False)
+adjustEx.set_world(world_pts, True)
 poly = adjustEx.calculate_projection(out_path, cameras)
 adjustEx.calculate_back_projection(out_path, cameras, poly)
