@@ -7,7 +7,6 @@ class Camera(object):
     """ Class for representing pin-hole camera """
 
     def __init__(self, image_name):
-        self.name = image_name
         self.image = None
         self.id = None
         self.index = None
@@ -38,5 +37,44 @@ class Camera(object):
         self.rotate_y = 0
 
         self.adjust_file = None
-        self.image_width = 0.0
-        self.image_height = 0.0
+
+        class view():
+            image_width = 0
+            image_height = 0
+            name = None
+
+        self.view = view()
+        self.view.image_width = 0.0
+        self.view.image_height = 0.0
+        self.view.name = image_name
+        self.name = self.view.name
+        self.image_width = 0
+        self.image_height = 0
+
+        self.K = np.zeros((3, 3))
+        self.focal = 0
+        self.prj_crns = np.empty((4, 2), dtype=np.float64)        
+
+    def convert_focal2px(self) :
+        focalPx = 0
+        sensor_size = 17.30
+        if self.image_width == 3840 :
+            sensor_size /= 1.35
+
+        focalPx = (self.focal / sensor_size) * self.image_width
+        return focalPx
+    
+    def set_extra_info(self, width, height, type):
+        self.view.image_width = width
+        self.view.image_height = height
+        self.image_width = width
+        self.image_height = height
+
+        if type == '3D': 
+            focalPx = self.convert_focal2px()
+            self.K[0][0] = focalPx
+            self.K[0][1] = 0
+            self.K[0][2] = self.image_width / 2
+            self.K[1][1] = focalPx
+            self.K[1][2] = self.image_height / 2
+            self.K[2][2] = 1

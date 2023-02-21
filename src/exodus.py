@@ -9,7 +9,7 @@ from camera_group import *
 
 from logger import Logger as l
 # from db_layer import NewPool
-from job_manager import JobManager, JobActivity
+from job_manager import JobActivity
 from db_manager import DbManager
 from intrn_util import *
 from auto_calib import Autocalib
@@ -119,8 +119,7 @@ class Commander():
         jconfig = jobj
 
         if task is df.TaskCategory.AUTOCALIB:
-            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(
-                job_id, obj[0]["input_dir"], obj[0]["group"], jobj["scale"]))
+            l.get().w.info("{} Task Autocalib start obj : {} {} ".format(job_id, obj[0]["input_dir"], obj[0]["group"], jobj["scale"]))
             desc = obj[1]
             DbManager.insert_requesthistory(job_id, obj[1], task, desc)
             p = Process(target=calculate, args=(

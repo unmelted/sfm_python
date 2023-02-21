@@ -460,8 +460,7 @@ class Group():
         else:
             for i in range(len(self.cameras)):
                 self.cameras[i].pts_extra = self.cameras[i].pts_2d
-                l.get().w.info("2d set extra {} : {}".format(
-                    self.cameras[i].view.name, self.cameras[i].pts_extra))
+                l.get().w.info("2d set extra {} : {}".format(self.cameras[i].view.name, self.cameras[i].pts_extra))
 
     def generate_adjust(self, job_id, cal_type, config):
         gadj = GroupAdjust(self.cameras, self.world, self.root_path, config)
