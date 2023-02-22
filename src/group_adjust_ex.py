@@ -16,16 +16,19 @@ class GroupAdjustEx(object):
 	x_pad = 5000
 	y_pad = 5000
 	p = None
-	cal_mode = 'first_ch' #'world'
+	cal_mode = 'world' # 'first'
+	use_pts = 'after_cal' # 'raw_pts'
 	prev_3dpts = None
+	scale = 1.0
 
-	def set_world(self, world, flip) :
+	def set_world(self, world, flip, scale) :
 		self.p = np.float32(np.array([[world[0], world[1]], [world[2], world[3]], [world[4], world[5]], [world[6], world[7]]]))
 		self.p[:, 0] = self.p[:, 0] + self.x_pad
 		self.p[:, 1] = self.p[:, 1] + self.y_pad		
 		self.flip = flip
 		self.dump = True
-	
+		self.scale = scale
+
 	def calculate_back_projection(self, output_path, cameras, polygon) :
 		first = True
 
@@ -33,11 +36,17 @@ class GroupAdjustEx(object):
 			print(" ------ ", camera.name)
 			file_name = os.path.join(output_path, camera.name + '_bp.jpg')			
 			if self.dump == True :
-				in_img = camera.image
-			if self.flip == True :
+				if self.use_pts == 'raw_pts' :
+					in_img = camera.image
+				elif self.use_pts == 'after_cal' :
+					in_img = camera.adj_image					
+			if self.flip == True and self.use_pts == 'raw_pts':
 				in_img = cv2.flip(in_img, -1)
 
-			pts_3d = camera.pts_3d / 2
+			if self.use_pts == 'raw_pts' :
+				pts_3d = camera.pts_3d / self.scale
+			elif self.use_pts == 'after_cal' :
+				pts_3d = camera.adj_pts3d 				
 			mv_poly = None
 
 			if self.cal_mode == 'world' :
@@ -104,7 +113,7 @@ class GroupAdjustEx(object):
 			print(pt)
 			cv2.circle(canvas, (int(pt[0][0]), int(pt[0][1])), 20, (0, 0, 255), -1)
 
-		poly = cv2.approxPolyDP(vertices, cv2.arcLength(vertices, True) * 0.01, True);
+		poly = cv2.approxPolyDP(vertices, cv2.arcLength(vertices, True) * 0.03, True); #0.03 - octagon
 
 		print("---- approx polygon --- ")
 		prev = None
@@ -120,7 +129,7 @@ class GroupAdjustEx(object):
 		file_name = os.path.join(output_path, 'canvas2.jpg')
 		cv2.imwrite(file_name, canvas)			
 
-		return vertices
+		return poly
 
 	def calculate_projection_corners(self, output_path, camera, canvas, vertices, first) :
 
@@ -140,17 +149,21 @@ class GroupAdjustEx(object):
 
 
 		print(" ------ ", camera.name)
-		pts_3d = camera.pts_3d / 2 + self.x_pad
-		# print(p, pts_3d)
-		crns = np.float32(np.array([[[0, 0], [camera.image_width, 0], [camera.image_width, camera.image_height], [0, camera.image_height]]])) + self.x_pad
+		if self.use_pts == 'raw_pts' :
+			pts_3d = camera.pts_3d / self.scale # by origin point from pts
+		elif self.use_pts == 'after_cal' :
+			pts_3d = camera.adj_pts3d # by adjust point from calibrated image
+
+		# print(pts_3d)
+		crns = np.float32(np.array([[[0, 0], [camera.image_width, 0], [camera.image_width, camera.image_height], [0, camera.image_height]]])) #+ self.x_pad
 		mv_crns = None
 		mv_img = None
 		intst_pt = None
 
 		if self.cal_mode == 'world' :
 			H, ret = cv2.findHomography(pts_3d, self.p, cv2.RANSAC)
-			print("homogray return .. : ", ret)
-			print("h .", H)
+			print("homogray return .. ")
+			print(H)
 			std_rect = np.float32(np.array([[[200, 200], [9800, 200], [9800, 9800], [200, 9800]]]))
 
 			if self.dump == True:
@@ -206,7 +219,7 @@ class GroupAdjustEx(object):
 		xmax = -sys.maxsize -1
 		ymin = sys.maxsize
 		ymax = -sys.maxsize -1
-
+		'''
 		prev = None
 		for i, mv_pt in enumerate(mv_crns[0]) :
 			# print(mv_pt) 
@@ -242,5 +255,8 @@ class GroupAdjustEx(object):
 			cv2.line(canvas, (int(intst_pt[0][0][0]), int(intst_pt[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
 			cv2.imwrite(file_name, mv_img)
 			cv2.imwrite(file_name2, bl_img)
-
+		'''
 		return vertices, xmin, xmax, ymin, ymax
+
+
+	def calculate_polygon_to_raw(self, cameras, polygon) :

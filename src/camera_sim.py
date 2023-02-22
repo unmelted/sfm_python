@@ -55,6 +55,9 @@ class Camera(object):
         self.focal = 0
         self.prj_crns = np.empty((4, 2), dtype=np.float64)        
 
+        self.adj_image = None
+        self.adj_pts3d = None
+        
     def convert_focal2px(self) :
         focalPx = 0
         sensor_size = 17.30

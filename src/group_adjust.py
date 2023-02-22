@@ -13,10 +13,11 @@ from camera_transform import *
 
 class GroupAdjust(object):
 
-    def __init__(self, cameras, world, root_path, config):
+    def __init__(self, cameras, world, root_path, flip, config):
         self.cameras = cameras
         self.world = world
         self.root_path = root_path
+        self.flip = flip
 
         self.x_fit = []
         self.y_fit = []
@@ -233,7 +234,6 @@ class GroupAdjust(object):
         right.append(w-1)
         top.append(0)
         bottom.append(h-1)
-        flip = True
 
         for i in range(len(self.cameras)):
             if self.cameras[i].adjust_x == 0 and self.cameras[i].adjust_y == 0 and self.cameras[i].degree == -90.0:  # will be modifed condition
@@ -242,12 +242,12 @@ class GroupAdjust(object):
             edge = np.empty((4, 2), dtype=np.float64)
             edges = np.float32(np.array([[[0, 0], [w, 0], [w, h], [0, h]]]))
 
-            mat = self.get_affine_matrix(self.cameras[i], True, 1.0)
+            mat = self.get_affine_matrix(self.cameras[i], 'cal_margin', 1.0)
             print(mat)
             dst = cv2.perspectiveTransform(edges, mat)
-            print(dst)
+
             print(" --- Transform --- ", self.cameras[i].name)
-            if flip == False:
+            if self.flip == False:
                 edge[0] = dst[0][0]
                 edge[1] = dst[0][1]
                 edge[2] = dst[0][2]
@@ -323,27 +323,43 @@ class GroupAdjust(object):
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
     def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
-        mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
-        print("flip : ", mat0)
+        print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+        mat0 = None
+        if self.flip == True :
+            mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
+        else :
+            mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, False, False)
+
+        # print("flip : ", mat0)
         mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
-        print("rot : ", mat1)
+        # print("rot : ", cam.radian, mat1)
         mat2 = get_scale_matrix_center(cam.scale, cam.scale, cam.rotate_x/scale, cam.rotate_y/scale)
-        print("scale : ", mat2)
+        # print("scale : ", cam.scale, mat2)
         mat3 = get_translation_matrix(cam.adjust_x/scale, cam.adjust_y/scale)
-        print("mtran : ", mat3)
-        if margin_proc == False :
-            print("margin matrix ", self.left, self.top, self.width, self.height, cam.view.image_width, cam.view.image_height)
+        # print("mtran : ", mat3)
+        
+        if margin_proc != 'cal_margin' :
+            w = 3840
+            h = 2160
+            if scale == 2.0:
+                w = 1920
+                h = 1080
+
+            print("margin matrix ", self.left/scale, self.top/scale, self.width/scale, self.height/scale)
             mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.top/scale, self.width/scale, self.height/scale)
-            #mat5 = get_scale_matrix(1, 1)
-            mat5 = get_scale_matrix(1920/(self.width/scale), 1080/(self.height/scale))
 
-        if margin_proc == False:
+            mat5 = get_scale_matrix(w/(self.width/scale), h/(self.height/scale))
+
+        if margin_proc == 'apply_margin':
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
-        else:
-            out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])
-            # out = np.linalg.multi_dot([mat2, mat3, mat1, mat0])
 
-        print(out[:2, :3])
+        elif margin_proc == 'apply_outscale' :
+            out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) #must exclude flip matrix           
+
+        elif margin_proc == 'cal_margin':
+            out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])
+
+        # print(out[:2, :3])
         return out
 
     def adjust_images(self, output_path, ext, job_id):
@@ -357,7 +373,7 @@ class GroupAdjust(object):
 
         for i in range(len(self.cameras)):
             file_name = os.path.join(output_path, get_viewname(self.cameras[i].view.name, ext) + '_adj.jpg')
-            mat = self.get_affine_matrix(self.cameras[i])
+            mat = self.get_affine_matrix(self.cameras[i], 'apply_margin')
             # l.get().w.debug("view name adjust : {} matrix {} ".format(self.cameras[i].view.name, mat))
 
             for j in range(self.cameras[i].pts_3d.shape[0]):
@@ -402,13 +418,43 @@ class GroupAdjust(object):
         process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
     def adjust_image(self, output_path, camera, scale=1.0):
+        w = 3840
+        h = 2160
+        if scale == 2.0:
+            w = 1920
+            h = 1080
         file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, False, 2.0)
-        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (1920, 1080))
+        mat = self.get_affine_matrix(camera, 'apply_margin', scale)
+        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
 
         print("rectangle : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
         cv2.imwrite(file_name, dst_img)
         return dst_img
+
+    def adjust_pts(self, output_path ,cameras, scale=1.0) :
+        print("adjust_pts..", scale)
+        index = 0
+        
+        for camera in cameras : 
+            print("--- cam : ", camera.name, camera.pts_3d)
+            file_name = os.path.join(output_path, camera.name + '_adj_pt.jpg')
+            mat = self.get_affine_matrix(camera, 'apply_outscale', scale)
+            dst_img = camera.adj_image
+            pts_3d = np.array([camera.pts_3d]) / scale
+            print(pts_3d)
+            mv_pts = cv2.perspectiveTransform(pts_3d, mat)
+            prev = None
+            
+            camera.adj_pts3d = mv_pts
+            for i, pt in enumerate(mv_pts[0]) :
+                print(pt)
+                cv2.circle(dst_img, (int(pt[0]), int(pt[1])), 5, (0, 255,255), -1)
+                # if i > 0 :
+                    # cv2.line(dst_img (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 0, 255), 3)
+                prev = pt
+
+            # cv2.line(dst_img, (int(mv_pts[0][0][0]), int(mv_pts[0][0][1])), (int(prev[0]), int(prev[1])), (255, 0 , 255), 3)
+            cv2.imwrite(file_name, dst_img)
 
     def test_homography(self, initx, inity):
         mx = 0
