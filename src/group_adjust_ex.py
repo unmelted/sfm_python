@@ -47,19 +47,12 @@ class GroupAdjustEx(object):
 				pts_3d = camera.pts_3d / self.scale
 			elif self.use_pts == 'after_cal' :
 				pts_3d = camera.adj_pts3d 				
+
 			mv_poly = None
 
 			if self.cal_mode == 'world' :
 				H, _ = cv2.findHomography(self.p, pts_3d, 1)
 				mv_poly = cv2.perspectiveTransform(polygon, H)
-
-			elif self.cal_mode == 'first_cn':
-				if first == True :
-					mv_poly = polygon
-					self.prev_3dpts = pts_3d					
-				else : 
-					H, _ = cv2.findHomography(pts_3d, self.prev_3dpts, 1)
-					mv_poly = cv2.perspectiveTransform(polygon, H)
 
 			
 			if self.dump == True :
@@ -78,34 +71,13 @@ class GroupAdjustEx(object):
 		print("---- calculate projection \n ")
 		canvas  = np.zeros((10000, 10000, 3), dtype="uint8")		
 		vertices = None
-		ax_min = 100000
-		ax_max = -100000
-		ay_min = 100000 
-		ay_max = -100000
-		xmin = 0
-		xmax = 0 
-		ymin = 0 
-		ymax = 0
+
 		first = True
 		index = 0
 		for camera in cameras : 
-			vertices, xmin, xmax, ymin, ymax = self.calculate_projection_corners(output_path, camera, canvas, vertices, first)
+			vertices = self.calculate_projection_corners(output_path, camera, canvas, vertices, first)
 			first = False
 			index += 1
-			if xmin < ax_min : 
-				ax_min = xmin
-			if xmax > ax_max :
-				ax_max = xmax
-
-			if ymin < ay_min : 
-				ay_min = ymin
-			if ymax > ay_max :
-				ay_max = ymax
-
-			# if index == 3 :
-			# 	break		
-		print(ax_min, ax_max, ay_min, ay_max)
-
 
 		print("---- intersect point --- ")
 		prev = None
@@ -162,8 +134,8 @@ class GroupAdjustEx(object):
 
 		if self.cal_mode == 'world' :
 			H, ret = cv2.findHomography(pts_3d, self.p, cv2.RANSAC)
-			print("homogray return .. ")
-			print(H)
+			# print("homogray return .. ")
+			# print(H)
 			std_rect = np.float32(np.array([[[200, 200], [9800, 200], [9800, 9800], [200, 9800]]]))
 
 			if self.dump == True:
@@ -185,40 +157,10 @@ class GroupAdjustEx(object):
 				print("--- after convex2")
 				print(intst_pt)
 
-		elif self.cal_mode == 'first_ch':
-			if first == True :
-				self.prev_3dpts = pts_3d
-				mv_crns = crns
-				intst_pt = crns
-				mv_img = in_img
-				print("first ch..--- ")
-				print(self.prev_3dpts)
-				print(mv_crns)
-
-			else : 
-				H, ret = cv2.findHomography(pts_3d, self.prev_3dpts, cv2.RANSAC)			
-				print("homogray return .. : ", ret)
-				print("h .", H)
-
-				if self.dump == True:
-					mv_img = cv2.warpPerspective(in_img, H, (10000, 10000))		
-
-				mv_crns = cv2.perspectiveTransform(crns, H)
-				camera.prj_crns = mv_crns
-				print("-- mv corner")
-				print(mv_crns)
-				print("-- input vertices")
-				print(vertices)
-				nested, intst_pt = cv2.intersectConvexConvex(vertices, mv_crns, True)		
-				print("--- after convex2")
-				print(intst_pt)
 
 		vertices = intst_pt
 
-		xmin = sys.maxsize
-		xmax = -sys.maxsize -1
-		ymin = sys.maxsize
-		ymax = -sys.maxsize -1
+	
 		'''
 		prev = None
 		for i, mv_pt in enumerate(mv_crns[0]) :
@@ -256,7 +198,8 @@ class GroupAdjustEx(object):
 			cv2.imwrite(file_name, mv_img)
 			cv2.imwrite(file_name2, bl_img)
 		'''
-		return vertices, xmin, xmax, ymin, ymax
+		return vertices
 
 
 	def calculate_polygon_to_raw(self, cameras, polygon) :
+		pass
