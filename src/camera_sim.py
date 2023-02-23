@@ -57,7 +57,8 @@ class Camera(object):
 
         self.adj_image = None
         self.adj_pts3d = None
-        
+        self.adj_polygon = None
+
     def convert_focal2px(self) :
         focalPx = 0
         sensor_size = 17.30

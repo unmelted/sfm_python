@@ -325,6 +325,7 @@ class GroupAdjust(object):
     def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
         print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
         mat0 = None
+        out = None
         if self.flip == True :
             mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
         else :
@@ -350,10 +351,10 @@ class GroupAdjust(object):
 
             mat5 = get_scale_matrix(w/(self.width/scale), h/(self.height/scale))
 
-        if margin_proc == 'apply_margin':
+        if margin_proc == 'adjust_image':
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
 
-        elif margin_proc == 'apply_outscale' :
+        elif margin_proc == 'adjust_pts' :
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) #must exclude flip matrix           
 
         elif margin_proc == 'cal_margin':
@@ -373,7 +374,7 @@ class GroupAdjust(object):
 
         for i in range(len(self.cameras)):
             file_name = os.path.join(output_path, get_viewname(self.cameras[i].view.name, ext) + '_adj.jpg')
-            mat = self.get_affine_matrix(self.cameras[i], 'apply_margin')
+            mat = self.get_affine_matrix(self.cameras[i], 'adjust_image')
             # l.get().w.debug("view name adjust : {} matrix {} ".format(self.cameras[i].view.name, mat))
 
             for j in range(self.cameras[i].pts_3d.shape[0]):
@@ -424,7 +425,7 @@ class GroupAdjust(object):
             w = 1920
             h = 1080
         file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, 'apply_margin', scale)
+        mat = self.get_affine_matrix(camera, 'adjust_image', scale)
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
 
         print("rectangle : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
@@ -438,7 +439,7 @@ class GroupAdjust(object):
         for camera in cameras : 
             print("--- cam : ", camera.name, camera.pts_3d)
             file_name = os.path.join(output_path, camera.name + '_adj_pt.jpg')
-            mat = self.get_affine_matrix(camera, 'apply_outscale', scale)
+            mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
             dst_img = camera.adj_image
             pts_3d = np.array([camera.pts_3d]) / scale
             print(pts_3d)

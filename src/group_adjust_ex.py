@@ -19,6 +19,8 @@ class GroupAdjustEx(object):
 	cal_mode = 'world' # 'first'
 	use_pts = 'after_cal' # 'raw_pts'
 	prev_3dpts = None
+	flip = False
+	dump = False
 	scale = 1.0
 
 	def set_world(self, world, flip, scale) :
@@ -53,7 +55,7 @@ class GroupAdjustEx(object):
 			if self.cal_mode == 'world' :
 				H, _ = cv2.findHomography(self.p, pts_3d, 1)
 				mv_poly = cv2.perspectiveTransform(polygon, H)
-
+				camera.adj_polygon = mv_poly
 			
 			if self.dump == True :
 				prev = None
@@ -201,5 +203,45 @@ class GroupAdjustEx(object):
 		return vertices
 
 
-	def calculate_polygon_to_raw(self, cameras, polygon) :
-		pass
+	def get_reverse_affine_matrix(self, cam, margin, scale = 1.0) :
+		print("get_reverse_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+
+		mat1 = get_rotation_matrix_with_center(-cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
+		# print("rot : ", cam.radian, mat1)
+		mat2 = get_scale_matrix_center(1/cam.scale, 1/cam.scale, cam.rotate_x/scale, cam.rotate_y/scale)
+		# print("scale : ", cam.scale, mat2)
+		mat3 = get_translation_matrix(-cam.adjust_x/scale, -cam.adjust_y/scale)
+		# print("mtran : ", mat3)
+
+		mat4 = get_reverse_margin_matrix(cam.view.image_width, cam.view.image_height, margin[0]/scale, margin[1]/scale, margin[2]/scale, margin[3]/scale)
+
+		out = np.linalg.multi_dot([mat3, mat1, mat2, mat4])
+
+		return out
+
+	def calculate_polygon_to_raw(self, output_path, cameras, margin) :
+		print("-------- calculate_polygon_to_raw.. ")	
+		index = 0
+
+		for camera in cameras : 
+			file_name = os.path.join(output_path, camera.name + '_rev.jpg')
+			if self.dump == True :
+				in_img = camera.image
+	
+			if self.flip == True :
+				in_img = cv2.flip(in_img, -1)
+
+			mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
+			mv_poly = cv2.perspectiveTransform(camera.adj_polygon, mat)
+
+			if self.dump == True :
+				prev = None
+				for i, pt in enumerate(mv_poly) :
+					print(pt)
+					cv2.circle(in_img, (int(pt[0][0]), int(pt[0][1])), 7, (255, 0, 255), -1)
+					if i > 0 :
+						cv2.line(in_img, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
+					prev = pt
+		
+				cv2.line(in_img, (int(mv_poly[0][0][0]), int(mv_poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+				cv2.imwrite(file_name, in_img)

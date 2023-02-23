@@ -182,12 +182,12 @@ def cal_inv_calib(info):
 
 
 def scale_image(camera, sacle = 1.0):
-    if scale != 1.0:
-        camera.image_width = int(camera.image_width / scale)
-        camera.image_height = int(camera.image_height / scale)
-        camera.view.image_width = camera.image_width
-        camera.view.image_height = camera.image_height
-        camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
+
+    camera.image_width = int(camera.image_width / scale)
+    camera.image_height = int(camera.image_height / scale)
+    camera.view.image_width = camera.image_width
+    camera.view.image_height = camera.image_height
+    camera.image = cv2.resize(camera.image, (int(camera.image_width), int(camera.image_height)))
 
 def calibration(cameras, world, flip) :
     adjust = GroupAdjust(cameras, world.get_world() , None, flip, None)
@@ -220,12 +220,14 @@ def calibration(cameras, world, flip) :
     
     adjust.adjust_pts(out_path, cameras, scale)
 
+    return adjust
+
 
 ''' Main Process Start '''
 
-from_path = '../simulation/Cal3D_131840'
-to_path = '../simulation/Cal3D_131840'
-out_path = '../simulation/Cal3D_131840/output/'
+from_path = '../simulation/Cal3D_085658'
+to_path = '../simulation/Cal3D_085658'
+out_path = '../simulation/Cal3D_085658/output/'
 #prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
@@ -233,11 +235,11 @@ if not os.path.exists(out_path):
 
 lists = get_camera_list(from_path)
 files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
-isflip = False
+isflip = True
 group_limit = "Group1"
 cal_type = '3D'
-#world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball
-world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
+world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball Cal3D_085658
+# world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
 
 print(world_pts)
 
@@ -272,7 +274,7 @@ for item in lists:
             print("target is skipped. No data..")
             continue
 
-    file = os.path.join(to_path, item + '_2.jpeg')
+    file = os.path.join(to_path, item + '.jpg')
     img = cv2.imread(file)
 
     ncam.set_extra_info(img.shape[1], img.shape[0], cal_type)
@@ -286,11 +288,11 @@ for item in lists:
 
 
 
-calibration(cameras, world, isflip)
-
+adjustBase = calibration(cameras, world, isflip)
+margin = [adjustBase.left, adjustBase.top, adjustBase.width, adjustBase.height]
 
 adjustEx = GroupAdjustEx()
-adjustEx.set_world(world_pts, False, scale)
+adjustEx.set_world(world_pts, isflip, scale)
 poly = adjustEx.calculate_projection(out_path, cameras)
 adjustEx.calculate_back_projection(out_path, cameras, poly)
-#adjustEx.caluclate_poly_to_raw(output_path, camera, poly)
+adjustEx.calculate_polygon_to_raw(out_path, cameras, margin)
