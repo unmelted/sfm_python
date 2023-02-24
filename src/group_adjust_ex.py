@@ -270,7 +270,7 @@ class GroupAdjustEx(object):
 	
 
 	
-	def calculate_livepd_crop(self, base, camera, points, center, first):
+	def calculate_livepd_crop(self, base, camera, points, center, width, height, first):
 		print("-------- calculate_livepd_crop ", base)	
 
 		in_img = camera.adj_image.copy()
@@ -293,7 +293,15 @@ class GroupAdjustEx(object):
 			print(pt)
 			cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), )
 
-		cv2.rectangle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), (int(mv_pt[0][1][0]), int(mv_pt[0][1][1])), 
-		(255, 0, 0), 3)
+		print("cam scale : ", camera.scale)
+		adj_width = width / camera.scale
+		adj_height = height / camera.scale
+		left_top = (int(mv_pt[0][2][0] - adj_width / 2),  int(mv_pt[0][2][1] - adj_height /2))
+		right_bottom = (int(mv_pt[0][2][0] + adj_width / 2),  int(mv_pt[0][2][1] + adj_height /2))
+		# cv2.rectangle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), (int(mv_pt[0][1][0]), int(mv_pt[0][1][1])), 
+		# (255, 0, 0), 3)
+
+		print(left_top, right_bottom)
+		cv2.rectangle(in_img, left_top, right_bottom, (255, 0, 0), 3)
 
 		return in_img			

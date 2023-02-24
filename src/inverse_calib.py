@@ -398,7 +398,7 @@ if 'livepd_crop' in simulation_mode :
 
     for camera in cameras :
         print(camera.name)
-        mobile_show = adjustEx.calculate_livepd_crop(base, camera, points, center, bfirst)
+        mobile_show = adjustEx.calculate_livepd_crop(base, camera, points, center, width, height, bfirst)
         cv2.imshow("Mobile", mobile_show)
         cv2.waitKey()                
         if bfirst == True :                    
