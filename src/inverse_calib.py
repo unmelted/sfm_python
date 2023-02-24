@@ -224,6 +224,10 @@ def calibration(cameras, world, flip) :
 
 
 ''' Main Process Start '''
+# 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
+#simulation_mode = ['calibration', 'position_swipe']
+simulation_mode = ['calibration', 'common_area', 'livepd_crop']
+
 
 from_path = '../simulation/Cal3D_085658'
 to_path = '../simulation/Cal3D_085658'
@@ -253,7 +257,6 @@ standard_index = []
 
 scale = 2.0
 index = 0
-adj_check = False
 
 for item in lists:
     print("start : ", item)
@@ -268,7 +271,7 @@ for item in lists:
     if cal_type == '2D' :
         ncam.pts_extra = ncam.pts_2d
 
-    if adj_check == True :
+    if 'inverse_calib' in simulation_mode:
         binfo = get_adjust_info(to_path, ncam, 2)
         if binfo == False:
             print("target is skipped. No data..")
@@ -286,13 +289,118 @@ for item in lists:
     cameras.append(ncam)
     index += 1
 
+margin = []
+adjustEx = None
+
+if 'calibration' in simulation_mode :
+    adjustBase = calibration(cameras, world, isflip)
+    margin = [adjustBase.left, adjustBase.top, adjustBase.width, adjustBase.height]
 
 
-adjustBase = calibration(cameras, world, isflip)
-margin = [adjustBase.left, adjustBase.top, adjustBase.width, adjustBase.height]
+if 'common_area' in simulation_mode : 
+    adjustEx = GroupAdjustEx()
+    adjustEx.set_world(world_pts, isflip, scale)
+    poly = adjustEx.calculate_projection(out_path, cameras)
+    adjustEx.calculate_back_projection(out_path, cameras, poly)
+    adjustEx.calculate_polygon_to_raw(out_path, cameras, margin)
 
-adjustEx = GroupAdjustEx()
-adjustEx.set_world(world_pts, isflip, scale)
-poly = adjustEx.calculate_projection(out_path, cameras)
-adjustEx.calculate_back_projection(out_path, cameras, poly)
-adjustEx.calculate_polygon_to_raw(out_path, cameras, margin)
+
+if 'position_swipe_inf' in simulation_mode :
+    if adjustEx == None : 
+        adjustEx = GroupAdjustEx()
+        adjustEx.set_world(world_pts, isflip, scale)    
+
+    while(True) :
+        insert = input(" input point, zoom ")
+        print(insert)
+
+        if insert == 'q' :
+            break
+        else :
+            in_list = insert.split(',')
+            x = in_list[0]
+            y = in_list[1]
+            zoom = in_list[2]
+            print("input point, zoom " , x, y, zoom )
+            first = True
+            base =cameras[0].adj_pts3d
+            print("first channel base : ", base )
+            y = int(y) + 59
+            for camera in cameras :
+                print(camera.name)
+                if first == True :                    
+                    first = False
+
+                print(y)
+                mobile_show = adjustEx.calculate_swipe_position(base, camera, x, y, zoom, first)
+                cv2.imshow("Mobile", mobile_show)
+                cv2.waitKey()                
+
+
+if 'livepd_crop' in simulation_mode :
+    point_cnt = 2
+    points = []
+    insert_pt = 0
+    first = cameras[0].image.copy()
+
+    if isflip == True :
+        first = cv2.flip(first, -1)
+
+    prev = None
+    for i, pt in enumerate(cameras[0].adj_polygon_toraw) :
+        print(pt)
+        cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 7, (255, 0, 255), -1)
+        if i > 0 :
+            cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
+        prev = pt
+
+    cv2.line(first, (int(cameras[0].adj_polygon_toraw[0][0][0]), int(cameras[0].adj_polygon_toraw[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+
+    running = True
+
+    def onMouse(event, x, y, flags, param) :
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if (len(points)) > 3 :
+                points.clear()
+
+            points.append(x)
+            points.append(y)
+            cv2.circle(first, (x, y), 5, (255, 0, 255), -1)                
+            if (len(points)) > 3 :
+                cv2.rectangle(first, (points[0], points[1]), (points[2], points[3]), (255, 0, 0), 3)
+
+    cv2.namedWindow("LIVEPD")            
+    cv2.setMouseCallback("LIVEPD", onMouse)
+
+    while(running) :
+        cv2.imshow("LIVEPD", first)
+        key = cv2.waitKey()     
+
+        if key == ord('q'):
+            running = False
+
+
+    print('insert fhinish ', points)
+    center = []
+    center.append((points[0] + points[2] ) / 2)
+    center.append((points[1] + points[3] ) / 2)
+
+    width = max(points[0], points[2]) - min(points[0], points[2])
+    height = max(points[1], points[3]) - min(points[1], points[3])
+    print('insert width / height ', width, height)
+
+    if adjustEx == None : 
+        adjustEx = GroupAdjustEx()
+        adjustEx.set_world(world_pts, isflip, scale)    
+
+    base = cameras[0].adj_pts3d
+    bfirst = True
+
+    for camera in cameras :
+        print(camera.name)
+        mobile_show = adjustEx.calculate_livepd_crop(base, camera, points, center, bfirst)
+        cv2.imshow("Mobile", mobile_show)
+        cv2.waitKey()                
+        if bfirst == True :                    
+            bfirst = False
+

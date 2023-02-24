@@ -22,6 +22,7 @@ class GroupAdjustEx(object):
 	flip = False
 	dump = False
 	scale = 1.0
+	poly_mode = 'vertices' #polygon
 
 	def set_world(self, world, flip, scale) :
 		self.p = np.float32(np.array([[world[0], world[1]], [world[2], world[3]], [world[4], world[5]], [world[6], world[7]]]))
@@ -87,7 +88,10 @@ class GroupAdjustEx(object):
 			print(pt)
 			cv2.circle(canvas, (int(pt[0][0]), int(pt[0][1])), 20, (0, 0, 255), -1)
 
-		poly = cv2.approxPolyDP(vertices, cv2.arcLength(vertices, True) * 0.03, True); #0.03 - octagon
+		if self.poly_mode == 'polygon' :
+			poly = cv2.approxPolyDP(vertices, cv2.arcLength(vertices, True) * 0.03, True); #0.03 - octagon
+		elif self.poly_mode == 'vertices' :
+			poly = vertices
 
 		print("---- approx polygon --- ")
 		prev = None
@@ -221,7 +225,6 @@ class GroupAdjustEx(object):
 
 	def calculate_polygon_to_raw(self, output_path, cameras, margin) :
 		print("-------- calculate_polygon_to_raw.. ")	
-		index = 0
 
 		for camera in cameras : 
 			file_name = os.path.join(output_path, camera.name + '_rev.jpg')
@@ -233,6 +236,7 @@ class GroupAdjustEx(object):
 
 			mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
 			mv_poly = cv2.perspectiveTransform(camera.adj_polygon, mat)
+			camera.adj_polygon_toraw = mv_poly
 
 			if self.dump == True :
 				prev = None
@@ -245,3 +249,51 @@ class GroupAdjustEx(object):
 		
 				cv2.line(in_img, (int(mv_poly[0][0][0]), int(mv_poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 				cv2.imwrite(file_name, in_img)
+
+
+	def calculate_swipe_position(self, base, camera, x, y, zoom, first):
+		print("-------- calculate_swipe_position. ")	
+
+		in_img = camera.adj_image.copy()
+
+		if first == False : 
+			H, ret = cv2.findHomography(base, camera.adj_pts3d, cv2.RANSAC)
+			mv_pt = cv2.perspectiveTransform(np.float32(np.array([[[int(x), int(y)]]])), H)
+			print(mv_pt)
+		else :
+			mv_pt = base
+
+		print(mv_pt)
+		cv2.circle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), 7, (255, 0, 255), -1)
+
+		return in_img		
+	
+
+	
+	def calculate_livepd_crop(self, base, camera, points, center, first):
+		print("-------- calculate_livepd_crop ", base)	
+
+		in_img = camera.adj_image.copy()
+		width = max(points[0], points[2]) - min(points[0], points[2])
+		height = max(points[1], points[3]) - min(points[1], points[3])
+		pd_pts = np.float32(np.array([[[points[0], points[1]], [points[2], points[3]], [center[0], center[1]]]]))
+		print(pd_pts)
+
+		if first == False : 
+			H, ret = cv2.findHomography(base, camera.adj_pts3d, cv2.RANSAC)
+			mv_pt = cv2.perspectiveTransform(pd_pts, H)
+		else :
+			mv_pt = pd_pts
+
+		print(mv_pt)
+		print("width , height ", abs(int(mv_pt[0][0][0]) - int(mv_pt[0][1][0])), 
+			 abs(int(mv_pt[0][0][1]) - int(mv_pt[0][1][1])))
+		
+		for pt in mv_pt[0] :
+			print(pt)
+			cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), )
+
+		cv2.rectangle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), (int(mv_pt[0][1][0]), int(mv_pt[0][1][1])), 
+		(255, 0, 0), 3)
+
+		return in_img			
