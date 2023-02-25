@@ -239,23 +239,22 @@ if not os.path.exists(out_path):
 
 lists = get_camera_list(from_path)
 files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
+
 isflip = True
+scale = 1.0
 group_limit = "Group1"
 cal_type = '3D'
 world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball Cal3D_085658
 # world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
-
 print(world_pts)
 
-# standard = ['001024']  # 2D
-#standard = ['021119']
 standard = []
 world = World()
 world.set_world(world_pts)
 cameras = []
 standard_index = []
 
-scale = 1.0
+
 index = 0
 
 for item in lists:
@@ -290,25 +289,26 @@ for item in lists:
     index += 1
 
 margin = []
+adjustBase = None
 adjustEx = None
 margin_pt = None
 
 if 'calibration' in simulation_mode :
     adjustBase = calibration(cameras, world, isflip)
     margin = [adjustBase.left, adjustBase.top, adjustBase.width, adjustBase.height]
-    margin_pt = np.int16(np.array([
+    margin_pt = np.int16(np.array([[
         [adjustBase.left, adjustBase.top],
         [adjustBase.left + adjustBase.width, adjustBase.top],
         [adjustBase.left + adjustBase.width, adjustBase.top + adjustBase.height],
         [adjustBase.left, adjustBase.top + adjustBase.height]
-    ]))
+    ]]))
 
 if 'common_area' in simulation_mode : 
     adjustEx = GroupAdjustEx()
-    adjustEx.set_world(world_pts, isflip, scale)
-    poly = adjustEx.calculate_projection(out_path, cameras)
-    adjustEx.calculate_back_projection(out_path, cameras, poly)
-    adjustEx.calculate_polygon_to_raw(out_path, cameras, margin, margin_pt)
+    adjustEx.set_world(world_pts, isflip, scale, out_path)
+    poly = adjustEx.calculate_common_area_3D(cameras, margin_pt)
+    adjustEx.calculate_back_projection(cameras, poly)
+    adjustEx.calculate_polygon_to_raw(cameras, margin, margin_pt)
 
 
 if 'position_swipe_inf' in simulation_mode :
@@ -374,14 +374,20 @@ if 'livepd_crop' in simulation_mode :
             if scale != 1.0 :
                 margin_pt = margin_pt / scale
 
-            for i, pt in enumerate(margin_pt) :
-                print(pt)
-                cv2.circle(first, (pt[0], pt[1]), 5, (0, 255, 0), -1)
+            target_margin_pt = margin_pt
+
+            if(False):
+                mv_margin_pt = adjustBase.adjust_pts_any(cameras[0], scale, margin_pt, True)
+                target_margin_pt = mv_margin_pt
+
+
+            for i, pt in enumerate(target_margin_pt) :
+                cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 5, (0, 255, 0), -1)
 
                 if i > 0 :
-                    cv2.line(first, (pt[0], pt[1]), (prev[0], prev[1]), (255, 255, 0), 3)
+                    cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (prev[0][0], prev[0][1]), (255, 255, 0), 3)
                 prev = pt
-            cv2.line(first, (int(margin_pt[0][0]), int(margin_pt[0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+            cv2.line(first, (int(target_margin_pt[0][0][0]), int(target_margin_pt[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 
             running = True
             cen_x = 0
@@ -417,20 +423,25 @@ if 'livepd_crop' in simulation_mode :
             center.append((points[0] + points[2] ) / 2)
             center.append((points[1] + points[3] ) / 2)
 
-            width = max(points[0], points[2]) - min(points[0], points[2])
-            height =  width / 1.778 #max(points[1], points[3]) - min(points[1], points[3])
+            width = int( (max(points[0], points[2]) - min(points[0], points[2])) / scale)
+            height =  int(width / 1.778 / scale) #max(points[1], points[3]) - min(points[1], points[3])
             print('insert width / height ', width, height)
 
             if adjustEx == None : 
                 adjustEx = GroupAdjustEx()
                 adjustEx.set_world(world_pts, isflip, scale)    
 
-            base = cameras[0].adj_pts3d
             bfirst = True
+            mv_center = adjustBase.adjust_pts_any(cameras[0], scale, center, False)
+            center.clear()
+            center.append(mv_center[0][0][0])
+            center.append(mv_center[0][0][1])
+
+            base = cameras[0].adj_pts3d
 
             for camera in cameras :
                 print(camera.name)
-                adj, crop  = adjustEx.calculate_livepd_crop(base, camera, points, center, width, height, bfirst)
+                adj, crop  = adjustEx.calculate_livepd_crop(base, camera, center, width, height, bfirst)
                 cv2.imshow("adj", adj)
                 cv2.imshow("crop", crop)        
                 cv2.waitKey()   

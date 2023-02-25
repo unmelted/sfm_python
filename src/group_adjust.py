@@ -457,32 +457,17 @@ class GroupAdjust(object):
             # cv2.line(dst_img, (int(mv_pts[0][0][0]), int(mv_pts[0][0][1])), (int(prev[0]), int(prev[1])), (255, 0 , 255), 3)
             # cv2.imwrite(file_name, dst_img)
 
-    def test_homography(self, initx, inity):
-        mx = 0
-        my = 0
-        output_path = os.path.join(self.root_path, 'htest')
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+    def adjust_pts_any(self, camera, scale, points, many) :
+        print("adjust_pts_any .. ", many, points)
 
-        tf = CameraTransform()
+        mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
+        if many == True :
+            n_pts = np.float32(points)
+        else : 
+            n_pts = np.array([[[points[0], points[1]]]])
 
-        for i in range(1, len(self.cameras)):
-            filename = os.path.join(
-                output_path, self.cameras[i].view.name[:-4] + '_hm.jpg')
-            print(filename)
+        print(n_pts)
+        mv_pts = cv2.perspectiveTransform(n_pts, mat)
+        print("adjust_pts_any \n", mv_pts)
 
-            if i == 1:
-                mx, my = tf.homography_fromF(
-                    self.cameras[0], self.cameras[1], initx, inity)
-                print("index == 1 ", mx, my)
-                cv2.circle(self.cameras[0].view.image, (int(initx), int(inity)), 10, (255, 255, 255), -1)
-                cv2.circle(self.cameras[1].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
-                filename2 = os.path.join(output_path, self.cameras[0].view.name[:-4] + '_hm.jpg')
-                cv2.imwrite(filename2, self.cameras[0].view.image)
-                cv2.imwrite(filename, self.cameras[1].view.image)
-
-            else:
-                return
-                mx, my = tf.homography_fromF(self.cameras[i-1], self.cameras[i], mx, my)
-                cv2.circle(self.cameras[i].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
-                cv2.imwrite(filename, self.cameras[i].view.image)
+        return mv_pts
