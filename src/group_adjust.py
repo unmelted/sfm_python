@@ -425,11 +425,11 @@ class GroupAdjust(object):
         if scale == 2.0:
             w = 1920
             h = 1080
-        # file_name = os.path.join(output_path, camera.name + '_adj.jpg')
+        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
         mat = self.get_affine_matrix(camera, 'adjust_image', scale)
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
 
-        # cv2.imwrite(file_name, dst_img)
+        cv2.imwrite(file_name, dst_img)
         return dst_img
 
     def adjust_pts(self, output_path ,cameras, scale=1.0) :

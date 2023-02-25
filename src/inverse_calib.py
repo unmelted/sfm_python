@@ -98,6 +98,7 @@ def get_pts_info(from_path, camera, group_limit):
             # camera.pts_2d[1][1] = from_data['points'][j]['pts_2d']['MiddlePosY']
             camera.pts_2d[1][0] = from_data['points'][j]['pts_2d']['LowerPosX']
             camera.pts_2d[1][1] = from_data['points'][j]['pts_2d']['LowerPosY']
+            camera.pts_extra = camera.pts_2d
 
             print("3d : ", camera.pts_3d, camera.rotate_x, camera.rotate_y)
             print("2d : ", camera.pts_2d)
@@ -306,10 +307,12 @@ if 'calibration' in simulation_mode :
 if 'common_area' in simulation_mode : 
     adjustEx = GroupAdjustEx()
     adjustEx.set_world(world_pts, isflip, scale, out_path)
-    poly = adjustEx.calculate_common_area_3D(cameras, margin_pt)
+    '''
+    poly = adjustEx.calculate_common_area_3d(cameras, margin_pt)
     adjustEx.calculate_back_projection(cameras, poly)
-    adjustEx.calculate_polygon_to_raw(cameras, margin, margin_pt)
-
+    adjustEx.calculate_polygon_to_raw(cameras, margin)
+    '''
+    poly = adjustEx.calculate_common_area_2d(cameras, margin)
 
 if 'position_swipe_inf' in simulation_mode :
     if adjustEx == None : 
@@ -362,13 +365,15 @@ if 'livepd_crop' in simulation_mode :
                 first = cv2.flip(first, -1)
 
             prev = None
-            for i, pt in enumerate(cameras[0].adj_polygon_toraw) :
+            # for i, pt in enumerate(cameras[0].adj_polygon_toraw) :
+            for i, pt in enumerate(poly) :
                 print(pt)
                 cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 7, (255, 0, 255), -1)
                 if i > 0 :
                     cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
                 prev = pt
-            cv2.line(first, (int(cameras[0].adj_polygon_toraw[0][0][0]), int(cameras[0].adj_polygon_toraw[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+            # cv2.line(first, (int(cameras[0].adj_polygon_toraw[0][0][0]), int(cameras[0].adj_polygon_toraw[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+            cv2.line(first, (int(poly[0][0][0]), int(poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 
             print(margin_pt)
             if scale != 1.0 :
@@ -376,19 +381,24 @@ if 'livepd_crop' in simulation_mode :
 
             target_margin_pt = margin_pt
 
-            if(False):
-                mv_margin_pt = adjustBase.adjust_pts_any(cameras[0], scale, margin_pt, True)
-                target_margin_pt = mv_margin_pt
+            if(True):
+                crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]]))
+                mv_crns = adjustEx.reverse_pts_to_raw(cameras[0], margin, crns)
+                target_margin_pt = mv_crns
 
 
-            for i, pt in enumerate(target_margin_pt) :
-                cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 5, (0, 255, 0), -1)
+            for i, pt in enumerate(target_margin_pt[0]) :
+                print(pt)
+                cv2.circle(first, (int(pt[0]), int(pt[1])), 5, (0, 255, 0), -1)
 
                 if i > 0 :
-                    cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (prev[0][0], prev[0][1]), (255, 255, 0), 3)
+                    cv2.line(first, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 255, 0), 3)
                 prev = pt
-            cv2.line(first, (int(target_margin_pt[0][0][0]), int(target_margin_pt[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+            cv2.line(first, (int(target_margin_pt[0][0][0]), int(target_margin_pt[0][0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
 
+            cv2.imshow("check", first)
+            cv2.waitKey()
+            break
             running = True
             cen_x = 0
             cen_y = 0

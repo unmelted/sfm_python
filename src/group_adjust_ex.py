@@ -73,15 +73,15 @@ class GroupAdjustEx(object):
 				cv2.line(in_img, (int(mv_poly[0][0][0]), int(mv_poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 				cv2.imwrite(file_name, in_img)
 
-	def calculate_common_area_3D(self, cameras, margin_pt) :
-		print("---- calculate projection \n ")
+	def calculate_common_area_3d(self, cameras, margin_pt) :
+		print("---- calculate common area 3d \n ")
 		canvas  = np.zeros((10000, 10000, 3), dtype="uint8")		
 		vertices = None
 
 		first = True
 		index = 0
 		for camera in cameras : 
-			vertices = self.calculate_projection_corners_3D(camera, margin_pt, canvas, vertices, first)
+			vertices = self.calculate_projection_corners_3d(camera, margin_pt, canvas, vertices, first)
 			first = False
 			index += 1
 
@@ -112,7 +112,7 @@ class GroupAdjustEx(object):
 
 		return poly
 
-	def calculate_projection_corners_3D(self, camera, margin_pt, canvas, vertices, first) :
+	def calculate_projection_corners_3d(self, camera, margin_pt, canvas, vertices, first) :
 
 		ground = '/Users/4dreplay/work/sfm_python/simulation/Cal3D_085658/Basketball_Half.png'		
 		# gr_img = cv2.imread(ground)			
@@ -230,7 +230,7 @@ class GroupAdjustEx(object):
 
 		return out
 
-	def calculate_polygon_to_raw(self, cameras, margin, margin_pt):
+	def calculate_polygon_to_raw(self, cameras, margin):
 		print("-------- calculate_polygon_to_raw.. ")	
 
 		for camera in cameras : 
@@ -328,3 +328,104 @@ class GroupAdjustEx(object):
 		# crop = cv2.resize(crop, dsize=(960, 540), interpolation=cv2.INTER_CUBIC)
 
 		return in_img, crop		
+	
+
+	def reverse_pts_to_raw(self, camera, margin, pts) :
+		print("reverse pts to raw .. ", pts)
+		mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
+		rev_pts = cv2.perspectiveTransform(pts, mat)
+		print(rev_pts)
+
+		return rev_pts
+	
+
+	def calculate_common_area_2d(self, cameras, margin) :
+		print("---- calculate common area 2d \n ")
+		canvas  = np.zeros((10000, 10000, 3), dtype="uint8")		
+		vertices = None
+		mv_crns_to_1ch = None
+		in_img = None
+		first = True
+		first_img = cameras[0].image.copy()		
+		if self.flip == True :
+			first_img = cv2.flip(first_img, -1)
+
+		crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]])) 
+
+		for camera in cameras : 
+			if self.dump == True :
+				file_name = os.path.join(self.output_path, camera.name + '_2dca.jpg')		
+				file_name2 = os.path.join(self.output_path, camera.name + '_2dcato1.jpg')
+				in_img = camera.image.copy()
+
+			mv_crns = self.reverse_pts_to_raw(camera, margin, crns)
+
+			if first == True :
+				vertices = mv_crns
+
+			else : 
+				H, ret = cv2.findHomography(cameras[0].pts_3d, camera.pts_3d, cv2.RANSAC)
+				mv_crns_to_1ch = cv2.perspectiveTransform(mv_crns, H)
+				nested, intst_pt = cv2.intersectConvexConvex(vertices, mv_crns_to_1ch, True)		
+				print("--- after convex")
+				print(intst_pt)
+				vertices = intst_pt
+
+			if self.dump == True :
+				if self.flip == True :
+					in_img = cv2.flip(in_img, -1)
+
+				prev = None
+				print("--- dump mv_crns")
+				for i , pt in enumerate(mv_crns[0]) :
+					print(pt)
+					cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), -1)
+					if i > 0 :
+						cv2.line(in_img, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+					prev = pt
+				cv2.line(in_img , (int(mv_crns[0][0][0]), int(mv_crns[0][0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+				cv2.imwrite(file_name, in_img)
+
+				if first == False : 
+					print("--- dump mv_crns_to_1ch")					
+					for i , pt in enumerate(mv_crns_to_1ch[0]) :
+						print(pt)
+						cv2.circle(first_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), -1)
+						if i > 0 :
+							cv2.line(first_img, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+						prev = pt
+					cv2.line(first_img , (int(mv_crns_to_1ch[0][0][0]), int(mv_crns_to_1ch[0][0][1])), (int(prev[0]), int(prev[1])), (255, 255, 255,), 7)
+					cv2.imwrite(file_name2, first_img)
+
+			first = False
+
+		print("---- intersect point --- ")
+		prev = None
+		for i, pt in enumerate(vertices) :
+			print(pt)
+			cv2.circle(canvas, (int(pt[0][0]), int(pt[0][1])), 20, (0, 0, 255), -1)
+
+		if self.poly_mode == 'polygon' :
+			poly = cv2.approxPolyDP(vertices, cv2.arcLength(vertices, True) * 0.03, True); #0.03 - octagon
+		
+		elif self.poly_mode == 'vertices' :
+			poly = vertices
+
+		print("---- approx polygon --- ")
+		prev = None
+		for i, pt in enumerate(poly):
+			print(pt)
+			cv2.circle(canvas, (int(pt[0][0]), int(pt[0][1])), 20, (255, 0, 0), -1)
+			if i > 0 :
+				cv2.line(canvas, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
+			prev = pt
+
+		cv2.line(canvas, (int(poly[0][0][0]), int(poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)				
+
+		file_name = os.path.join(self.output_path, 'canvas2.jpg')
+		cv2.imwrite(file_name, canvas)			
+
+		return poly
+		
+	def calculate_reverse_adjcrns_to_raw(self, camera, margin, scale) :
+		pass
