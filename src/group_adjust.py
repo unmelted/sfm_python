@@ -421,15 +421,15 @@ class GroupAdjust(object):
     def adjust_image(self, output_path, camera, scale=1.0):
         w = 3840
         h = 2160
+
         if scale == 2.0:
             w = 1920
             h = 1080
-        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
+        # file_name = os.path.join(output_path, camera.name + '_adj.jpg')
         mat = self.get_affine_matrix(camera, 'adjust_image', scale)
         dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
 
-        print("rectangle : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
-        cv2.imwrite(file_name, dst_img)
+        # cv2.imwrite(file_name, dst_img)
         return dst_img
 
     def adjust_pts(self, output_path ,cameras, scale=1.0) :
@@ -455,7 +455,7 @@ class GroupAdjust(object):
                 prev = pt
 
             # cv2.line(dst_img, (int(mv_pts[0][0][0]), int(mv_pts[0][0][1])), (int(prev[0]), int(prev[1])), (255, 0 , 255), 3)
-            cv2.imwrite(file_name, dst_img)
+            # cv2.imwrite(file_name, dst_img)
 
     def test_homography(self, initx, inity):
         mx = 0

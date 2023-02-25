@@ -223,7 +223,7 @@ class GroupAdjustEx(object):
 
 		return out
 
-	def calculate_polygon_to_raw(self, output_path, cameras, margin) :
+	def calculate_polygon_to_raw(self, output_path, cameras, margin, margin_pt):
 		print("-------- calculate_polygon_to_raw.. ")	
 
 		for camera in cameras : 
@@ -248,6 +248,18 @@ class GroupAdjustEx(object):
 					prev = pt
 		
 				cv2.line(in_img, (int(mv_poly[0][0][0]), int(mv_poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+				'''
+				print("margin_pt draing ... ")
+				print(margin_pt)
+				for i, pt in enumerate(margin_pt) :
+					print(pt)
+					cv2.circle(in_img, (pt[0], pt[1]), 5, (0, 255, 0), -1)
+
+					if i > 0 :
+						cv2.line(in_img, (pt[0], pt[1]), (prev[0], prev[1]), (255, 255, 0), 3)
+					prev = pt
+				cv2.line(in_img, (int(margin_pt[0][0]), int(margin_pt[0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+				'''
 				cv2.imwrite(file_name, in_img)
 
 
@@ -271,13 +283,13 @@ class GroupAdjustEx(object):
 
 	
 	def calculate_livepd_crop(self, base, camera, points, center, width, height, first):
-		print("-------- calculate_livepd_crop ", base)	
+		print("-------- calculate_livepd_crop ")	
 
 		in_img = camera.adj_image.copy()
 		width = max(points[0], points[2]) - min(points[0], points[2])
 		height = max(points[1], points[3]) - min(points[1], points[3])
 		pd_pts = np.float32(np.array([[[points[0], points[1]], [points[2], points[3]], [center[0], center[1]]]]))
-		print(pd_pts)
+		print("center : ", [center[0], center[1]])
 
 		if first == False : 
 			H, ret = cv2.findHomography(base, camera.adj_pts3d, cv2.RANSAC)
@@ -285,23 +297,26 @@ class GroupAdjustEx(object):
 		else :
 			mv_pt = pd_pts
 
-		print(mv_pt)
-		print("width , height ", abs(int(mv_pt[0][0][0]) - int(mv_pt[0][1][0])), 
-			 abs(int(mv_pt[0][0][1]) - int(mv_pt[0][1][1])))
+		for i, pt in enumerate(mv_pt[0]) :
+			if i == 2 :
+				print("moved : " , pt)
+
+			cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (125, 125, 255), -1)
+
+		left_x = int(mv_pt[0][2][0] - width / 2)
+		left_y = int(mv_pt[0][2][1] - height /2)
+		bottom_x = int(mv_pt[0][2][0] + width / 2)
+		bottom_y = int(mv_pt[0][2][1] + height /2)
+
+		print(left_x, left_y, bottom_x, bottom_y)
+		crop = np.zeros((height, width, 3), dtype = "uint8")		
 		
-		for pt in mv_pt[0] :
-			print(pt)
-			cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), )
+		if left_x < 0 or left_y < 0 or bottom_x > 3840 or bottom_y > 2160 :
+			print("================ WARN ===================== ")
+		else : 
+			cv2.rectangle(in_img, (left_x, left_y), (bottom_x, bottom_y), (255, 0, 0), 3)
+			crop = in_img[left_y: bottom_y, left_x: bottom_x]
 
-		print("cam scale : ", camera.scale)
-		adj_width = width / camera.scale
-		adj_height = height / camera.scale
-		left_top = (int(mv_pt[0][2][0] - adj_width / 2),  int(mv_pt[0][2][1] - adj_height /2))
-		right_bottom = (int(mv_pt[0][2][0] + adj_width / 2),  int(mv_pt[0][2][1] + adj_height /2))
-		# cv2.rectangle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), (int(mv_pt[0][1][0]), int(mv_pt[0][1][1])), 
-		# (255, 0, 0), 3)
+		# crop = cv2.resize(crop, dsize=(960, 540), interpolation=cv2.INTER_CUBIC)
 
-		print(left_top, right_bottom)
-		cv2.rectangle(in_img, left_top, right_bottom, (255, 0, 0), 3)
-
-		return in_img			
+		return in_img, crop		
