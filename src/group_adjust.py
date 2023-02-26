@@ -183,7 +183,8 @@ class GroupAdjust(object):
             avey = sumy / dsccnt
             targx = avex
             targy = avey
-        elif df.test_applyshift_type == 'center':
+        elif df.test_applyshift_type == 'center' or calibtype == 'center':
+            print("------------- shift center ! .")
             center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             targx = center[0]
             targy = center[1]
@@ -246,7 +247,7 @@ class GroupAdjust(object):
             print(mat)
             dst = cv2.perspectiveTransform(edges, mat)
 
-            print(" --- Transform --- ", self.cameras[i].name)
+            # print(" --- Transform --- ", self.cameras[i].name)
             if self.flip == False:
                 edge[0] = dst[0][0]
                 edge[1] = dst[0][1]
@@ -323,7 +324,7 @@ class GroupAdjust(object):
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
     def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
-        print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+        # print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
         mat0 = None
         out = None
         if self.flip == True :
@@ -346,7 +347,7 @@ class GroupAdjust(object):
                 w = 1920
                 h = 1080
 
-            print("margin matrix ", self.left/scale, self.top/scale, self.width/scale, self.height/scale)
+            # print("margin matrix ", self.left/scale, self.top/scale, self.width/scale, self.height/scale)
             mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.top/scale, self.width/scale, self.height/scale)
 
             mat5 = get_scale_matrix(w/(self.width/scale), h/(self.height/scale))
@@ -433,7 +434,6 @@ class GroupAdjust(object):
         return dst_img
 
     def adjust_pts(self, output_path ,cameras, scale=1.0) :
-        print("adjust_pts..", scale)
         index = 0
         
         for camera in cameras : 
@@ -442,13 +442,12 @@ class GroupAdjust(object):
             mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
             dst_img = camera.adj_image
             pts_3d = np.array([camera.pts_3d]) / scale
-            print(pts_3d)
             mv_pts = cv2.perspectiveTransform(pts_3d, mat)
             prev = None
             
             camera.adj_pts3d = mv_pts
             for i, pt in enumerate(mv_pts[0]) :
-                print(pt)
+                # print(pt)
                 cv2.circle(dst_img, (int(pt[0]), int(pt[1])), 5, (0, 255,255), -1)
                 # if i > 0 :
                     # cv2.line(dst_img (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 0, 255), 3)

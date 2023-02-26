@@ -228,6 +228,7 @@ def calibration(cameras, world, flip) :
 # 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
 #simulation_mode = ['calibration', 'position_swipe']
 simulation_mode = ['calibration', 'common_area', 'livepd_crop']
+#simulation_mode = ['calibration']
 
 
 from_path = '../simulation/Cal3D_085658'
@@ -293,6 +294,7 @@ margin = []
 adjustBase = None
 adjustEx = None
 margin_pt = None
+common_3d = False
 
 if 'calibration' in simulation_mode :
     adjustBase = calibration(cameras, world, isflip)
@@ -307,12 +309,12 @@ if 'calibration' in simulation_mode :
 if 'common_area' in simulation_mode : 
     adjustEx = GroupAdjustEx()
     adjustEx.set_world(world_pts, isflip, scale, out_path)
-    '''
-    poly = adjustEx.calculate_common_area_3d(cameras, margin_pt)
-    adjustEx.calculate_back_projection(cameras, poly)
-    adjustEx.calculate_polygon_to_raw(cameras, margin)
-    '''
-    poly = adjustEx.calculate_common_area_2d(cameras, margin)
+    if(common_3d) :
+        poly_3d = adjustEx.calculate_common_area_3d(cameras, margin_pt)
+        adjustEx.calculate_back_projection(cameras, poly_3d)
+        adjustEx.calculate_polygon_to_raw(cameras, margin)
+    
+    poly_2d = adjustEx.calculate_common_area_2d(cameras, margin)
 
 if 'position_swipe_inf' in simulation_mode :
     if adjustEx == None : 
@@ -365,15 +367,22 @@ if 'livepd_crop' in simulation_mode :
                 first = cv2.flip(first, -1)
 
             prev = None
-            # for i, pt in enumerate(cameras[0].adj_polygon_toraw) :
-            for i, pt in enumerate(poly) :
+            if(common_3d) : 
+                for i, pt in enumerate(cameras[0].adj_polygon_toraw) :
+                    print(pt)
+                    cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 7, (255, 0, 255), -1)
+                    if i > 0 :
+                        cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
+                    prev = pt
+                cv2.line(first, (int(cameras[0].adj_polygon_toraw[0][0][0]), int(cameras[0].adj_polygon_toraw[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+
+            for i, pt in enumerate(poly_2d) :
                 print(pt)
                 cv2.circle(first, (int(pt[0][0]), int(pt[0][1])), 7, (255, 0, 255), -1)
                 if i > 0 :
                     cv2.line(first, (int(pt[0][0]), int(pt[0][1])), (int(prev[0][0]), int(prev[0][1])), (255, 255, 0), 5)
                 prev = pt
-            # cv2.line(first, (int(cameras[0].adj_polygon_toraw[0][0][0]), int(cameras[0].adj_polygon_toraw[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
-            cv2.line(first, (int(poly[0][0][0]), int(poly[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
+            cv2.line(first, (int(poly_2d[0][0][0]), int(poly_2d[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 
             print(margin_pt)
             if scale != 1.0 :
@@ -396,9 +405,9 @@ if 'livepd_crop' in simulation_mode :
                 prev = pt
             cv2.line(first, (int(target_margin_pt[0][0][0]), int(target_margin_pt[0][0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
 
-            cv2.imshow("check", first)
-            cv2.waitKey()
-            break
+            # cv2.imshow("check", first)
+            # cv2.waitKey()
+            # break
             running = True
             cen_x = 0
             cen_y = 0
@@ -452,6 +461,10 @@ if 'livepd_crop' in simulation_mode :
             for camera in cameras :
                 print(camera.name)
                 adj, crop  = adjustEx.calculate_livepd_crop(base, camera, center, width, height, bfirst)
+                file_name = os.path.join(out_path, camera.name + '_adj2.jpg')		
+                file_name2 = os.path.join(out_path, camera.name + '_crop.jpg')
+                cv2.imwrite(file_name, adj)
+                cv2.imwrite(file_name2, crop)
                 cv2.imshow("adj", adj)
                 cv2.imshow("crop", crop)        
                 cv2.waitKey()   

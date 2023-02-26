@@ -215,7 +215,7 @@ class GroupAdjustEx(object):
 
 
 	def get_reverse_affine_matrix(self, cam, margin, scale = 1.0) :
-		print("get_reverse_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+		print("get_reverse_affine_matrix  : ", cam.scale)
 
 		mat1 = get_rotation_matrix_with_center(-cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
 		# print("rot : ", cam.radian, mat1)
@@ -304,12 +304,10 @@ class GroupAdjustEx(object):
 			# mv_pt = cv2.transform(adj_pd_pts, H[:2, :3])			
 		else :
 			mv_pt = adj_pd_pts
+		print("moved center : ", mv_pt)
 
-		for i, pt in enumerate(mv_pt[0]) :
-			if i == 2 :
-				print("moved : " , pt)
-
-			cv2.circle(in_img, (int(pt[0]), int(pt[1])), 7, (125, 125, 255), -1)
+		# for i, pt in enumerate(mv_pt[0]) :
+		cv2.circle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), 7, (125, 125, 255), -1)
 
 		left_x = int(mv_pt[0][0][0] - width / 2)
 		left_y = int(mv_pt[0][0][1] - height /2)
@@ -334,7 +332,7 @@ class GroupAdjustEx(object):
 		print("reverse pts to raw .. ", pts)
 		mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
 		rev_pts = cv2.perspectiveTransform(pts, mat)
-		print(rev_pts)
+		print("return rev_pts : ", rev_pts)
 
 		return rev_pts
 	
@@ -353,19 +351,23 @@ class GroupAdjustEx(object):
 		crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]])) 
 
 		for camera in cameras : 
+			print(" :::::::::: start cam : ::::::::::::::", camera.name)
 			if self.dump == True :
 				file_name = os.path.join(self.output_path, camera.name + '_2dca.jpg')		
 				file_name2 = os.path.join(self.output_path, camera.name + '_2dcato1.jpg')
 				in_img = camera.image.copy()
 
 			mv_crns = self.reverse_pts_to_raw(camera, margin, crns)
+			print(mv_crns)
 
 			if first == True :
-				vertices = mv_crns
+				vertices = np.copy(mv_crns)
 
 			else : 
-				H, ret = cv2.findHomography(cameras[0].pts_3d, camera.pts_3d, cv2.RANSAC)
-				mv_crns_to_1ch = cv2.perspectiveTransform(mv_crns, H)
+				mv_crns_to_1ch = self.calculate_moved_adjcrns_to_1ch(camera, mv_crns, cameras[0].rotate_x, cameras[0].rotate_y, cameras[0].pts_3d)
+				print("-- returned mv_crns_to_1ch ")
+				print("mv_crns_to_1ch ", mv_crns_to_1ch)
+				print("vertices ", vertices)
 				nested, intst_pt = cv2.intersectConvexConvex(vertices, mv_crns_to_1ch, True)		
 				print("--- after convex")
 				print(intst_pt)
@@ -376,6 +378,7 @@ class GroupAdjustEx(object):
 					in_img = cv2.flip(in_img, -1)
 
 				prev = None
+				
 				print("--- dump mv_crns")
 				for i , pt in enumerate(mv_crns[0]) :
 					print(pt)
@@ -385,16 +388,17 @@ class GroupAdjustEx(object):
 					prev = pt
 				cv2.line(in_img , (int(mv_crns[0][0][0]), int(mv_crns[0][0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
 				cv2.imwrite(file_name, in_img)
+				
 
 				if first == False : 
 					print("--- dump mv_crns_to_1ch")					
-					for i , pt in enumerate(mv_crns_to_1ch[0]) :
+					for i , pt in enumerate(mv_crns_to_1ch) : # previous mv_crns_to_1ch[0]
 						print(pt)
 						cv2.circle(first_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), -1)
 						if i > 0 :
 							cv2.line(first_img, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
 						prev = pt
-					cv2.line(first_img , (int(mv_crns_to_1ch[0][0][0]), int(mv_crns_to_1ch[0][0][1])), (int(prev[0]), int(prev[1])), (255, 255, 255,), 7)
+					cv2.line(first_img , (int(mv_crns_to_1ch[0][0]), int(mv_crns_to_1ch[0][1])), (int(prev[0]), int(prev[1])), (255, 255, 255,), 7)
 					cv2.imwrite(file_name2, first_img)
 
 			first = False
@@ -427,5 +431,31 @@ class GroupAdjustEx(object):
 
 		return poly
 		
-	def calculate_reverse_adjcrns_to_raw(self, camera, margin, scale) :
-		pass
+	def calculate_moved_adjcrns_to_1ch(self, camera, adjcrns, center_x, center_y, base) :
+
+		'''
+		H, ret = cv2.findHomography(camera.pts_3d, base, cv2.RANSAC)
+		mv_pt = cv2.perspectiveTransform(adjcrns, H)
+		return mv_pt
+
+		'''
+		#relative diff based on rotate_center
+		adjcrns__1ch = np.empty((4, 2), dtype=np.float32)
+		print("name , before ... " , camera.name, adjcrns__1ch)
+		print("adjcrns : ", adjcrns)
+
+		print("calculate moved adjcrns to 1ch : ", center_x, center_y)
+
+		for i, pt in enumerate(adjcrns[0]) :
+			x_diff = pt[0] - camera.rotate_x
+			y_diff = pt[1] - camera.rotate_y
+			print("my center : " , camera.rotate_x, camera.rotate_y)
+			print(pt, x_diff, y_diff)
+			x = x_diff + center_x
+			y = y_diff + center_y
+			print("new add : ", x, y)			
+			adjcrns__1ch[i][0] = x
+			adjcrns__1ch[i][1] = y
+
+		print(adjcrns__1ch)
+		return adjcrns__1ch
