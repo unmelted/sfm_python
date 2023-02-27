@@ -47,7 +47,7 @@ def get_camera_list(from_path):
     lines = file.readlines()
     lists = []
     for line in lines:
-        lists.append(line.split('_')[0])
+        lists.append(line.split('.')[0])
 
     print(lists)
     return lists
