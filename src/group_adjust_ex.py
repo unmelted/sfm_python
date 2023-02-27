@@ -327,7 +327,21 @@ class GroupAdjustEx(object):
 
 		return in_img, crop		
 	
+	def make_8center_sampling(self, camera, margin) :
+		w = 3840
+		h = 2160
+		margin_scale = w / margin[2]
+		w_unit = (w / 4) / camera.scale * margin_scale
+		h_unit = (h / 4) / camera.scale * margin_scale
+		print("unit.. ", camera.scale, margin[2], margin_scale)
+		print(w_unit)
+		crns = np.float32(np.array([[[w_unit, h_unit], [w - w_unit, h_unit], 
+	   				[w - w_unit, h - h_unit], [w_unit, h - h_unit] ]])) 
+		print(crns)
+		wait = input(" --- ")
 
+		return crns
+	
 	def reverse_pts_to_raw(self, camera, margin, pts) :
 		print("reverse pts to raw .. ", pts)
 		mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
@@ -339,8 +353,10 @@ class GroupAdjustEx(object):
 
 	def calculate_common_area_2d(self, cameras, margin) :
 		print("---- calculate common area 2d \n ")
+		sampling_mode = '8center' #'edge'
 		canvas  = np.zeros((10000, 10000, 3), dtype="uint8")		
 		vertices = None
+		crns = None
 		mv_crns_to_1ch = None
 		in_img = None
 		first = True
@@ -348,17 +364,20 @@ class GroupAdjustEx(object):
 		if self.flip == True :
 			first_img = cv2.flip(first_img, -1)
 
-		crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]])) 
+		if sampling_mode == 'edge' :
+			crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]])) 
 
 		for camera in cameras : 
 			print(" :::::::::: start cam : ::::::::::::::", camera.name)
+			if sampling_mode == '8center':
+				crns = self.make_8center_sampling(camera, margin)
+
 			if self.dump == True :
 				file_name = os.path.join(self.output_path, camera.name + '_2dca.jpg')		
 				file_name2 = os.path.join(self.output_path, camera.name + '_2dcato1.jpg')
 				in_img = camera.image.copy()
 
 			mv_crns = self.reverse_pts_to_raw(camera, margin, crns)
-			print(mv_crns)
 
 			if first == True :
 				vertices = np.copy(mv_crns)
