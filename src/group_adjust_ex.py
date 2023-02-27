@@ -338,7 +338,6 @@ class GroupAdjustEx(object):
 		crns = np.float32(np.array([[[w_unit, h_unit], [w - w_unit, h_unit], 
 	   				[w - w_unit, h - h_unit], [w_unit, h - h_unit] ]])) 
 		print(crns)
-		wait = input(" --- ")
 
 		return crns
 	
@@ -411,13 +410,13 @@ class GroupAdjustEx(object):
 
 				if first == False : 
 					print("--- dump mv_crns_to_1ch")					
-					for i , pt in enumerate(mv_crns_to_1ch) : # previous mv_crns_to_1ch[0]
+					for i , pt in enumerate(mv_crns_to_1ch[0]) : # previous mv_crns_to_1ch
 						print(pt)
 						cv2.circle(first_img, (int(pt[0]), int(pt[1])), 7, (255, 0, 255), -1)
 						if i > 0 :
 							cv2.line(first_img, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
 						prev = pt
-					cv2.line(first_img , (int(mv_crns_to_1ch[0][0]), int(mv_crns_to_1ch[0][1])), (int(prev[0]), int(prev[1])), (255, 255, 255,), 7)
+					cv2.line(first_img , (int(mv_crns_to_1ch[0][0][0]), int(mv_crns_to_1ch[0][0][1])), (int(prev[0]), int(prev[1])), (255, 255, 255,), 7)
 					cv2.imwrite(file_name2, first_img)
 
 			first = False
@@ -452,12 +451,13 @@ class GroupAdjustEx(object):
 		
 	def calculate_moved_adjcrns_to_1ch(self, camera, adjcrns, center_x, center_y, base) :
 
-		'''
+		#3D move
 		H, ret = cv2.findHomography(camera.pts_3d, base, cv2.RANSAC)
 		mv_pt = cv2.perspectiveTransform(adjcrns, H)
+		print(mv_pt)
 		return mv_pt
 
-		'''
+		''' # 2D move
 		#relative diff based on rotate_center
 		adjcrns__1ch = np.empty((4, 2), dtype=np.float32)
 		print("name , before ... " , camera.name, adjcrns__1ch)
@@ -475,6 +475,6 @@ class GroupAdjustEx(object):
 			print("new add : ", x, y)			
 			adjcrns__1ch[i][0] = x
 			adjcrns__1ch[i][1] = y
-
+		'''
 		print(adjcrns__1ch)
 		return adjcrns__1ch
