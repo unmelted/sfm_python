@@ -356,6 +356,7 @@ class GroupAdjust(object):
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
 
         elif margin_proc == 'adjust_pts' :
+            # mat3 = np.int16(mat3)
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) #must exclude flip matrix           
 
         elif margin_proc == 'cal_margin':
@@ -435,19 +436,22 @@ class GroupAdjust(object):
 
     def adjust_pts(self, output_path ,cameras, scale=1.0) :
         index = 0
-        
+        check_detail = True
+
         for camera in cameras : 
             print("--- cam : ", camera.name, camera.pts_3d)
             file_name = os.path.join(output_path, camera.name + '_adj_pt.jpg')
             mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
             dst_img = camera.adj_image
             pts_3d = np.array([camera.pts_3d]) / scale
-            mv_pts = cv2.perspectiveTransform(pts_3d, mat)
+            # mv_pts = cv2.perspectiveTransform(pts_3d, mat)
+            mv_pts = cv2.transform(pts_3d, mat[:2, :3])
             prev = None
             
             camera.adj_pts3d = mv_pts
             for i, pt in enumerate(mv_pts[0]) :
-                # print(pt)
+                if check_detail :
+                    print(pt)
                 cv2.circle(dst_img, (int(pt[0]), int(pt[1])), 5, (0, 255,255), -1)
                 # if i > 0 :
                     # cv2.line(dst_img (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 0, 255), 3)
@@ -455,6 +459,9 @@ class GroupAdjust(object):
 
             # cv2.line(dst_img, (int(mv_pts[0][0][0]), int(mv_pts[0][0][1])), (int(prev[0]), int(prev[1])), (255, 0 , 255), 3)
             # cv2.imwrite(file_name, dst_img)
+            # if check_detail :
+            #     cv2.imshow("check pts", dst_img)
+            #     cv2.waitKey()
 
     def adjust_pts_any(self, camera, scale, points, many) :
         print("adjust_pts_any .. ", many, points)

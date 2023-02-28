@@ -272,14 +272,13 @@ class GroupAdjustEx(object):
 
 
 	def calculate_swipe_position(self, base, camera, x, y, zoom, first):
-		print("-------- calculate_swipe_position. ")	
+		print("-------- calculate_swipe_position : ", camera.name)	
 
 		in_img = camera.adj_image.copy()
 
 		if first == False : 
 			H, ret = cv2.findHomography(base, camera.adj_pts3d, cv2.RANSAC)
 			mv_pt = cv2.perspectiveTransform(np.float32(np.array([[[int(x), int(y)]]])), H)
-			print(mv_pt)
 		else :
 			mv_pt = base
 
@@ -312,7 +311,7 @@ class GroupAdjustEx(object):
 		left_x = int(mv_pt[0][0][0] - width / 2)
 		left_y = int(mv_pt[0][0][1] - height /2)
 		bottom_x = int(mv_pt[0][0][0] + width / 2)
-		bottom_y = int(mv_pt[0][0][1] + height /2)
+		bottom_y = int(mv_pt[0][0][1] + height /2) 
 
 		print(left_x, left_y, bottom_x, bottom_y)
 		crop = np.zeros((height, width, 3), dtype = "uint8")		

@@ -41,13 +41,16 @@ def prepare_video_job(from_path, to_path):
     return 0
 
 
-def get_camera_list(from_path):
+def get_camera_list(from_path, has_= False):
     filename = os.path.join(from_path, "file_list.txt")
     file = open(filename, 'r')
     lines = file.readlines()
     lists = []
     for line in lines:
-        lists.append(line.split('.')[0])
+        if has_ == False :
+            lists.append(line.split('.')[0])  #it is proper for image name without '_'
+        else :
+           lists.append(line.split('_')[0])
 
     print(lists)
     return lists
@@ -226,28 +229,44 @@ def calibration(cameras, world, flip) :
 
 ''' Main Process Start '''
 # 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
-#simulation_mode = ['calibration', 'position_swipe']
-simulation_mode = ['calibration', 'common_area', 'livepd_crop']
-#simulation_mode = ['calibration']
+# simulation_mode = ['calibration', 'position_swipe_inf']
+# simulation_mode = ['calibration', 'common_area', 'livepd_crop']
+simulation_mode = ['calibration']
 
+#prepare_video_job(from_path, to_path)
 
 from_path = '../simulation/Cal3D_085658'
 to_path = '../simulation/Cal3D_085658'
 out_path = '../simulation/Cal3D_085658/output/'
-#prepare_video_job(from_path, to_path)
+ext = '.jpg'
+img_ext = '.jpg'
+world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball Cal3D_085658
+isflip = True
+has_= False
+'''
+from_path = '../simulation/Cal3D_0214'
+to_path = '../simulation/Cal3D_0214'
+out_path = '../simulation/Cal3D_0214/output/'
+ext = '.png'
+img_ext = '_3.png'
+world_pts = [200, 600, 600, 600, 600, 765, 200, 765] #Cal3D_0214
+isflip = False
+has_ = True
+'''
+
 
 if not os.path.exists(out_path):
     os.makedirs(out_path)
 
-lists = get_camera_list(from_path)
-files = sorted(glob.glob(os.path.join(to_path, '*.jpg')))
+lists = get_camera_list(from_path, has_)
+files = sorted(glob.glob(os.path.join(to_path, '*' + ext)))
 
-isflip = True
 scale = 1.0
 group_limit = "Group1"
 cal_type = '3D'
-world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball Cal3D_085658
-# world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
+
+#world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
+
 print(world_pts)
 
 standard = []
@@ -278,7 +297,7 @@ for item in lists:
             print("target is skipped. No data..")
             continue
 
-    file = os.path.join(to_path, item + '.jpg')
+    file = os.path.join(to_path, item + img_ext)
     img = cv2.imread(file)
 
     ncam.set_extra_info(img.shape[1], img.shape[0], cal_type)
@@ -319,7 +338,7 @@ if 'common_area' in simulation_mode :
 if 'position_swipe_inf' in simulation_mode :
     if adjustEx == None : 
         adjustEx = GroupAdjustEx()
-        adjustEx.set_world(world_pts, isflip, scale)    
+        adjustEx.set_world(world_pts, isflip, scale, out_path)    
 
     while(True) :
         insert = input(" input point, zoom ")
@@ -336,13 +355,12 @@ if 'position_swipe_inf' in simulation_mode :
             first = True
             base =cameras[0].adj_pts3d
             print("first channel base : ", base )
-            y = int(y) + 59
+            # y = int(y) + 59
             for camera in cameras :
-                print(camera.name)
                 if first == True :                    
                     first = False
 
-                print(y)
+                # print(y)
                 mobile_show = adjustEx.calculate_swipe_position(base, camera, x, y, zoom, first)
                 cv2.imshow("Mobile", mobile_show)
                 cv2.waitKey()                
