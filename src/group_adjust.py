@@ -323,8 +323,9 @@ class GroupAdjust(object):
         self.set_group_margin(left[0], top[0], right[0], bottom[0], margin_width, margin_height)
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
-    def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
-        # print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+    def get_affine_matrix(self, cam, proc = 'adjust_image', scale = 1.0):
+        print("get_affine_matrix margin_proc : ", scale, cam.view.image_width, cam.view.image_height)
+        print(proc)
         mat0 = None
         out = None
         if self.flip == True :
@@ -340,7 +341,7 @@ class GroupAdjust(object):
         mat3 = get_translation_matrix(cam.adjust_x/scale, cam.adjust_y/scale)
         # print("mtran : ", mat3)
         
-        if margin_proc != 'cal_margin' :
+        if proc != 'cal_margin' :
             w = 3840
             h = 2160
             if scale == 2.0:
@@ -352,15 +353,20 @@ class GroupAdjust(object):
 
             mat5 = get_scale_matrix(w/(self.width/scale), h/(self.height/scale))
 
-        if margin_proc == 'adjust_image':
+        if proc == 'adjust_image':
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
 
-        elif margin_proc == 'adjust_pts' :
-            # mat3 = np.int16(mat3)
+        elif proc == 'adjust_pts' :
             out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) #must exclude flip matrix           
 
-        elif margin_proc == 'cal_margin':
+        elif proc == 'cal_margin':
             out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])
+
+        elif proc == 'replay_image':
+            out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])        
+
+        elif proc == 'replay_pts' :
+            out = np.linalg.multi_dot([mat2, mat1, mat3]) 
 
         # print(out[:2, :3])
         return out
@@ -420,6 +426,20 @@ class GroupAdjust(object):
         print(cli)
         process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
+    def adjust_image_re(self, output_path, camera, scale=1.0):
+        w = 3840
+        h = 2160
+
+        if scale == 2.0:
+            w = 1920
+            h = 1080
+        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
+        mat = self.get_affine_matrix(camera, 'replay_image', scale)
+        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
+
+        cv2.imwrite(file_name, dst_img)
+        return dst_img
+
     def adjust_image(self, output_path, camera, scale=1.0):
         w = 3840
         h = 2160
@@ -463,16 +483,26 @@ class GroupAdjust(object):
             #     cv2.imshow("check pts", dst_img)
             #     cv2.waitKey()
 
-    def adjust_pts_any(self, camera, scale, points, many) :
+    def adjust_pts_any(self, mode, camera, scale, points, many) :
         print("adjust_pts_any .. ", many, points)
 
-        mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
+        mat = None
+        n_pts = None
+
+        if mode == 'adjust_pts' :
+            mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
+
+        elif mode == 'replay_pts' :
+            mat = self.get_affine_matrix(camera, 'replay_pts', scale)
+
         if many == True :
             n_pts = np.float32(points)
         else : 
             n_pts = np.array([[[points[0], points[1]]]])
 
+
         print(n_pts)
+        print(mat)
         mv_pts = cv2.perspectiveTransform(n_pts, mat)
         print("adjust_pts_any \n", mv_pts)
 

@@ -231,7 +231,8 @@ def calibration(cameras, world, flip) :
 # 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
 # simulation_mode = ['calibration', 'position_swipe_inf']
 # simulation_mode = ['calibration', 'common_area', 'livepd_crop']
-simulation_mode = ['calibration']
+#simulation_mode = ['calibration']
+simulation_mode = ['calibration', 'replay_making']
 
 #prepare_video_job(from_path, to_path)
 
@@ -366,7 +367,7 @@ if 'position_swipe_inf' in simulation_mode :
                 cv2.waitKey()                
 
 
-if 'livepd_crop' in simulation_mode :
+if 'livepd_crop' in simulation_mode:
     print(" ----- START LIVE PD CROP SIMULATION ----- ")
 
     while(True) :
@@ -469,7 +470,7 @@ if 'livepd_crop' in simulation_mode :
                 adjustEx.set_world(world_pts, isflip, scale)    
 
             bfirst = True
-            mv_center = adjustBase.adjust_pts_any(cameras[0], scale, center, False)
+            mv_center = adjustBase.adjust_pts_any('adjust_pts', cameras[0], scale, center, False)
             center.clear()
             center.append(mv_center[0][0][0])
             center.append(mv_center[0][0][1])
@@ -485,6 +486,121 @@ if 'livepd_crop' in simulation_mode :
                 cv2.imwrite(file_name2, crop)
                 cv2.imshow("adj", adj)
                 cv2.imshow("crop", crop)        
+                cv2.waitKey()   
+
+                if bfirst == True :                    
+                    bfirst = False
+
+
+if 'replay_making' in simulation_mode:
+    print(" ----- START LIVE REPLAY MAKING SIMULATION ----- ")
+    if adjustEx == None : 
+        adjustEx = GroupAdjustEx()
+        adjustEx.set_world(world_pts, isflip, scale, out_path)   
+    print('reverse... 1', adjustEx.scale)
+    adjustEx.set_adjustbase(adjustBase)
+
+    while(True) :
+        insert = input(" type 's' if you want to start or 'q' to quit ")
+        print(insert)
+
+        if insert == 'q' :
+            break
+        else :
+
+            points = []
+            insert_pt = 0
+            first = cameras[0].image.copy()
+
+            if isflip == True :
+                first = cv2.flip(first, -1)
+
+            print(margin_pt)
+            if scale != 1.0 :
+                margin_pt = margin_pt / scale
+
+
+            crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]]))
+            mv_crns = adjustEx.reverse_pts_to_raw(cameras[0], margin, crns)
+            target_margin_pt = mv_crns
+
+            prev = None
+            for i, pt in enumerate(target_margin_pt[0]) :
+                print(pt)
+                cv2.circle(first, (int(pt[0]), int(pt[1])), 5, (0, 255, 0), -1)
+
+                if i > 0 :
+                    cv2.line(first, (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 255, 0), 3)
+                prev = pt
+            cv2.line(first, (int(target_margin_pt[0][0][0]), int(target_margin_pt[0][0][1])), (int(prev[0]), int(prev[1])), (0, 255, 255), 5)
+
+            # cv2.imshow("check", first)
+            # cv2.waitKey()
+            # break
+
+            running = True
+            cen_x = 0
+            cen_y = 0
+            def onMouse(event, x, y, flags, param) :
+                if event == cv2.EVENT_LBUTTONDOWN:
+                    points.clear()
+                    cen_x = x
+                    cen_y = y
+
+                    cv2.circle(first, (x, y), 5, (255, 0, 255), -1)
+                    print("click! ", cen_x, cen_y)
+                    cv2.rectangle(first, (cen_x - 960, cen_y - 540), (cen_x + 960, cen_y + 540), (255, 0, 0), 3)
+                    points.append((cen_x - 960)) 
+                    points.append((cen_y - 540))
+                    points.append((cen_x + 960))
+                    points.append((cen_y + 540))
+
+
+            cv2.namedWindow("REPLAY-PD")            
+            cv2.setMouseCallback("REPLAY-PD", onMouse)
+
+            while(running) :
+                cv2.imshow("REPLAY-PD", first)
+                key = cv2.waitKey()     
+
+                if key == ord('q'):
+                    running = False
+
+
+            print('insert fhinish ', points)
+            center_raw = []
+            center_raw.append((points[0] + points[2] ) / 2)
+            center_raw.append((points[1] + points[3] ) / 2)
+
+            width = 1920
+            height =  1080
+
+            bfirst = True
+            mv_center = adjustBase.adjust_pts_any('replay_pts', cameras[0], scale, center_raw, False)
+            center_adj = []
+            center_adj.append(mv_center[0][0][0])
+            center_adj.append(mv_center[0][0][1])
+
+            base = cameras[0].pts_3d
+            adj_base = cameras[0].adj_pts3d
+
+            for camera in cameras :
+                print(camera.name)
+                adj, crop  = adjustEx.calculate_livepd_crop(adj_base, camera, center_adj, width, height, bfirst)                
+                adj2, replay  = adjustEx.calculate_improve_replay(base, camera, center_raw, width, height, bfirst)
+                file_name = os.path.join(out_path, camera.name + '_adj2.jpg')		
+                file_name2 = os.path.join(out_path, camera.name + '_crop.jpg')
+                file_name3 = os.path.join(out_path, camera.name + '_rep_adj.jpg')                                
+                file_name4 = os.path.join(out_path, camera.name + '_replay.jpg')                
+                cv2.imwrite(file_name, adj)
+                cv2.imwrite(file_name2, crop)
+                cv2.imwrite(file_name3, adj2)
+                cv2.imwrite(file_name4, replay)
+                
+                cv2.imshow("adj", adj)
+                cv2.imshow("crop", crop)
+                cv2.imshow("rep_adj", replay)                
+                cv2.imshow("replay", replay)
                 cv2.waitKey()   
 
                 if bfirst == True :                    

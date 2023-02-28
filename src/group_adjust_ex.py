@@ -24,6 +24,7 @@ class GroupAdjustEx(object):
 	scale = 1.0
 	poly_mode = 'vertices' #polygon
 	output_path = None
+	adjust_base = None
 
 	def set_world(self, world, flip, scale, output_path) :
 		self.p = np.float32(np.array([[world[0], world[1]], [world[2], world[3]], [world[4], world[5]], [world[6], world[7]]]))
@@ -33,6 +34,9 @@ class GroupAdjustEx(object):
 		self.dump = True
 		self.scale = scale
 		self.output_path = output_path
+
+	def set_adjustbase(self, adjustbase) :
+		self.adjust_base = adjustbase
 
 	def calculate_back_projection(self, cameras, polygon) :
 		first = True
@@ -341,8 +345,8 @@ class GroupAdjustEx(object):
 		return crns
 	
 	def reverse_pts_to_raw(self, camera, margin, pts) :
-		print("reverse pts to raw .. ", pts)
-		mat = self.get_reverse_affine_matrix(camera, margin, self.scale)
+
+		mat = self.get_reverse_affine_matrix(camera, margin, self.scale) #self.scale.. error! te
 		rev_pts = cv2.perspectiveTransform(pts, mat)
 		print("return rev_pts : ", rev_pts)
 
@@ -477,3 +481,43 @@ class GroupAdjustEx(object):
 		'''
 		print(adjcrns__1ch)
 		return adjcrns__1ch
+
+
+
+	
+	def calculate_improve_replay(self, base, camera, center, width, height, first):
+		print("-------- calculate replay making ")	
+
+		center_pts = np.float32(np.array([[[center[0], center[1]]]]))		
+		print("center : ", center_pts)
+
+		if first == False : 
+			H, ret = cv2.findHomography(base, camera.pts_3d, cv2.RANSAC)
+			mv_center = cv2.perspectiveTransform(center_pts, H)
+
+		else :
+			mv_center = center_pts
+		print("moved center : ", mv_center)
+
+		in_img = self.adjust_base.adjust_image_re(self.output_path, camera,  self.scale)
+		adj_center = self.adjust_base.adjust_pts_any('replay_pts', camera, self.scale, mv_center, True)
+
+		cv2.circle(in_img, (int(adj_center[0][0][0]), int(adj_center[0][0][1])), 7, (125, 125, 255), -1)
+
+		left_x = int(adj_center[0][0][0] - width / 2)
+		left_y = int(adj_center[0][0][1] - height /2)
+		bottom_x = int(adj_center[0][0][0] + width / 2)
+		bottom_y = int(adj_center[0][0][1] + height /2) 
+
+		print(left_x, left_y, bottom_x, bottom_y)
+		crop = np.zeros((height, width, 3), dtype = "uint8")		
+
+		if left_x < 0 or left_y < 0 or bottom_x > 3840 or bottom_y > 2160 :
+			print("================ WARN ===================== ")
+		else : 
+			cv2.rectangle(in_img, (left_x, left_y), (bottom_x, bottom_y), (255, 0, 0), 3)
+			replay = in_img[left_y: bottom_y, left_x: bottom_x]
+
+		# crop = cv2.resize(crop, dsize=(960, 540), interpolation=cv2.INTER_CUBIC)
+
+		return in_img, replay
