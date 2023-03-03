@@ -427,17 +427,11 @@ class GroupAdjust(object):
         process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
     def adjust_image_re(self, output_path, camera, scale=1.0):
-        w = 3840
-        h = 2160
-
-        if scale == 2.0:
-            w = 1920
-            h = 1080
-        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
+        # file_name = os.path.join(output_path, camera.name + '_rep_adj.jpg')
         mat = self.get_affine_matrix(camera, 'replay_image', scale)
-        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
+        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (self.width, self.height))
 
-        cv2.imwrite(file_name, dst_img)
+        # cv2.imwrite(file_name, dst_img)
         return dst_img
 
     def adjust_image(self, output_path, camera, scale=1.0):
@@ -467,7 +461,7 @@ class GroupAdjust(object):
             # mv_pts = cv2.perspectiveTransform(pts_3d, mat)
             mv_pts = cv2.transform(pts_3d, mat[:2, :3])
             prev = None
-            
+            print("adjust pts mat : ", mat)
             camera.adj_pts3d = mv_pts
             for i, pt in enumerate(mv_pts[0]) :
                 if check_detail :

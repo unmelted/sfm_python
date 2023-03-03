@@ -485,7 +485,7 @@ class GroupAdjustEx(object):
 
 
 	
-	def calculate_improve_replay(self, base, camera, center, width, height, first):
+	def calculate_improve_replay(self, base, camera, center, width, height, zoom, first):
 		print("-------- calculate replay making ")	
 
 		center_pts = np.float32(np.array([[[center[0], center[1]]]]))		
@@ -502,22 +502,13 @@ class GroupAdjustEx(object):
 		in_img = self.adjust_base.adjust_image_re(self.output_path, camera,  self.scale)
 		adj_center = self.adjust_base.adjust_pts_any('replay_pts', camera, self.scale, mv_center, True)
 
-		cv2.circle(in_img, (int(adj_center[0][0][0]), int(adj_center[0][0][1])), 7, (125, 125, 255), -1)
+		cv2.circle(in_img, (int(adj_center[0][0][0]), int(adj_center[0][0][1])), 7, (0, 0, 255), -1)
 
-		left_x = int(adj_center[0][0][0] - width / 2)
-		left_y = int(adj_center[0][0][1] - height /2)
-		bottom_x = int(adj_center[0][0][0] + width / 2)
-		bottom_y = int(adj_center[0][0][1] + height /2) 
+		# left_x = int(adj_center[0][0][0] - width / 2)
+		# left_y = int(adj_center[0][0][1] - height /2)
+		# bottom_x = int(adj_center[0][0][0] + width / 2)
+		# bottom_y = int(adj_center[0][0][1] + height /2) 
 
-		print(left_x, left_y, bottom_x, bottom_y)
-		crop = np.zeros((height, width, 3), dtype = "uint8")		
-
-		if left_x < 0 or left_y < 0 or bottom_x > 3840 or bottom_y > 2160 :
-			print("================ WARN ===================== ")
-		else : 
-			cv2.rectangle(in_img, (left_x, left_y), (bottom_x, bottom_y), (255, 0, 0), 3)
-			replay = in_img[left_y: bottom_y, left_x: bottom_x]
-
-		# crop = cv2.resize(crop, dsize=(960, 540), interpolation=cv2.INTER_CUBIC)
+		replay = cv2.resize(in_img, (1920, 1080), cv2.INTER_CUBIC)
 
 		return in_img, replay

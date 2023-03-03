@@ -229,10 +229,10 @@ def calibration(cameras, world, flip) :
 
 ''' Main Process Start '''
 # 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
-# simulation_mode = ['calibration', 'position_swipe_inf']
+simulation_mode = ['calibration', 'position_swipe_inf']
 # simulation_mode = ['calibration', 'common_area', 'livepd_crop']
 #simulation_mode = ['calibration']
-simulation_mode = ['calibration', 'replay_making']
+# simulation_mode = ['calibration', 'replay_making']
 
 #prepare_video_job(from_path, to_path)
 
@@ -250,11 +250,30 @@ to_path = '../simulation/Cal3D_0214'
 out_path = '../simulation/Cal3D_0214/output/'
 ext = '.png'
 img_ext = '_3.png'
-world_pts = [200, 600, 600, 600, 600, 765, 200, 765] #Cal3D_0214
+world_pts = [200, 600, 600, 600, 600, 765, 200, 765] #Cal3D_0214 #soccer in play
 isflip = False
 has_ = True
 '''
-
+'''
+from_path = '../simulation/Cal3D_131840'
+to_path = '../simulation/Cal3D_131840'
+out_path = '../simulation/Cal3D_131840/output/'
+ext = '.jpeg'
+img_ext = '_2.jpeg'
+world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840 #soccer in calib
+isflip = False
+has_ = True
+'''
+'''
+from_path = '../simulation/Cal3D_131840'
+to_path = '../simulation/Cal3D_131840'
+out_path = '../simulation/Cal3D_131840/output/'
+ext = '.jpeg'
+img_ext = '_2.jpeg'
+world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840 #figure
+isflip = False
+has_ = True
+'''
 
 if not os.path.exists(out_path):
     os.makedirs(out_path)
@@ -266,7 +285,7 @@ scale = 1.0
 group_limit = "Group1"
 cal_type = '3D'
 
-#world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840
+
 
 print(world_pts)
 
@@ -541,6 +560,10 @@ if 'replay_making' in simulation_mode:
             running = True
             cen_x = 0
             cen_y = 0
+            zoom = 1
+            width = 1920
+            height = 1080
+
             def onMouse(event, x, y, flags, param) :
                 if event == cv2.EVENT_LBUTTONDOWN:
                     points.clear()
@@ -555,9 +578,27 @@ if 'replay_making' in simulation_mode:
                     points.append((cen_x + 960))
                     points.append((cen_y + 540))
 
+            def onMouseWheel(event, x, y ,flags, param) :
+                if event == cv2.EVENT_MOUSEWHEEL :
+                    if flags > 0 :
+                        zoom += 0.05
+                    elif flags < 0 : 
+                        zoom -= 0.05
+                    if zoom < 0 : 
+                        zoom = 0.1
+                    elif zoom > 2.0 :
+                        zoom = 2.0
+
+                    print(x, y, flags, zoom)
+                    points.append((cen_x - (width * zoom / 2))) 
+                    points.append((cen_y - (height * zoom / 2)))
+                    points.append((cen_x + (width * zoom / 2)))
+                    points.append((cen_y + (height * zoom / 2)))
+
 
             cv2.namedWindow("REPLAY-PD")            
             cv2.setMouseCallback("REPLAY-PD", onMouse)
+            cv2.setMouseCallback("REPLAY-PD", onMouseWheel)
 
             while(running) :
                 cv2.imshow("REPLAY-PD", first)
@@ -587,7 +628,7 @@ if 'replay_making' in simulation_mode:
             for camera in cameras :
                 print(camera.name)
                 adj, crop  = adjustEx.calculate_livepd_crop(adj_base, camera, center_adj, width, height, bfirst)                
-                adj2, replay  = adjustEx.calculate_improve_replay(base, camera, center_raw, width, height, bfirst)
+                adj2, replay  = adjustEx.calculate_improve_replay(base, camera, center_raw, width, height, zoom, bfirst)
                 file_name = os.path.join(out_path, camera.name + '_adj2.jpg')		
                 file_name2 = os.path.join(out_path, camera.name + '_crop.jpg')
                 file_name3 = os.path.join(out_path, camera.name + '_rep_adj.jpg')                                
