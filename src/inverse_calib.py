@@ -185,7 +185,7 @@ def cal_inv_calib(info):
     return crns
 
 
-def scale_image(camera, sacle = 1.0):
+def scale_image(camera, scale = 1.0):
 
     camera.image_width = int(camera.image_width / scale)
     camera.image_height = int(camera.image_height / scale)
@@ -214,28 +214,36 @@ def calibration(cameras, world, flip) :
         # l.get().w.debug("camera {} scale {} adjustx {} ajdusty {} radin {} angle {}  ".format(
         #     camera.name, camera.adjust_file["Scale"], camera.adjust_file["AdjustX"], camera.adjust_file["AdjustY"], camera.adjust_file["Angle"], camera.adjust_file["Angle"] * math.pi / 180))
 
-        if scale != 1.0 :
-            scale_image(camera, scale) 
+        # if scale != 1.0 :
+            # scale_image(camera, scale) 
 
-        camera.adj_image = adjust.adjust_image(out_path, camera, scale)
+        camera.adj_image = adjust.adjust_image(out_path, camera, cal_scale, out_scale)
         # cv2.imshow("CAL", camera.adj_image)
         # cv2.imshow("INV", camera.image)
         # cv2.waitKey()
     
-    adjust.adjust_pts(out_path, cameras, scale)
+    adjust.adjust_pts(out_path, cameras, cal_scale)
 
     return adjust
 
 
 ''' Main Process Start '''
 # 'calibration', 'common_area', 'position_swipe', 'inverse_calib', 'livepd_crop'
-simulation_mode = ['calibration', 'position_swipe_inf']
+#simulation_mode = ['calibration', 'position_swipe_inf']
 # simulation_mode = ['calibration', 'common_area', 'livepd_crop']
-#simulation_mode = ['calibration']
-# simulation_mode = ['calibration', 'replay_making']
+# simulation_mode = ['calibration']
+simulation_mode = ['calibration', 'replay_making']
 
 #prepare_video_job(from_path, to_path)
-
+from_path = '../simulation/Cal3D_2023_0111'
+to_path = '../simulation/Cal3D_2023_0111'
+out_path = '../simulation/Cal3D_2023_0111/output/'
+ext = '.jpg'
+img_ext = '_0.jpg'
+world_pts = [798, 189, 799, 609, 0, 609, 0, 189] 
+isflip = False
+has_= True
+'''
 from_path = '../simulation/Cal3D_085658'
 to_path = '../simulation/Cal3D_085658'
 out_path = '../simulation/Cal3D_085658/output/'
@@ -244,6 +252,7 @@ img_ext = '.jpg'
 world_pts = [714.0, 383.0, 714.0, 781.0, 91.0, 781.0, 91.0, 383.0] #SBA basket ball Cal3D_085658
 isflip = True
 has_= False
+'''
 '''
 from_path = '../simulation/Cal3D_0214'
 to_path = '../simulation/Cal3D_0214'
@@ -281,10 +290,10 @@ if not os.path.exists(out_path):
 lists = get_camera_list(from_path, has_)
 files = sorted(glob.glob(os.path.join(to_path, '*' + ext)))
 
-scale = 1.0
+cal_scale = 1.0
+out_scale = 2.0
 group_limit = "Group1"
 cal_type = '3D'
-
 
 
 print(world_pts)
@@ -347,7 +356,7 @@ if 'calibration' in simulation_mode :
 
 if 'common_area' in simulation_mode : 
     adjustEx = GroupAdjustEx()
-    adjustEx.set_world(world_pts, isflip, scale, out_path)
+    adjustEx.set_world(world_pts, isflip, cal_scale, out_path)
     if(common_3d) :
         poly_3d = adjustEx.calculate_common_area_3d(cameras, margin_pt)
         adjustEx.calculate_back_projection(cameras, poly_3d)
@@ -358,7 +367,7 @@ if 'common_area' in simulation_mode :
 if 'position_swipe_inf' in simulation_mode :
     if adjustEx == None : 
         adjustEx = GroupAdjustEx()
-        adjustEx.set_world(world_pts, isflip, scale, out_path)    
+        adjustEx.set_world(world_pts, isflip, cal_scale, out_path)    
 
     while(True) :
         insert = input(" input point, zoom ")
@@ -423,8 +432,8 @@ if 'livepd_crop' in simulation_mode:
             cv2.line(first, (int(poly_2d[0][0][0]), int(poly_2d[0][0][1])), (int(prev[0][0]), int(prev[0][1])), (0, 255, 255), 5)
 
             print(margin_pt)
-            if scale != 1.0 :
-                margin_pt = margin_pt / scale
+            if cal_scale != 1.0 :
+                margin_pt = margin_pt / cal_scale
 
             target_margin_pt = margin_pt
 
@@ -480,16 +489,16 @@ if 'livepd_crop' in simulation_mode:
             center.append((points[0] + points[2] ) / 2)
             center.append((points[1] + points[3] ) / 2)
 
-            width = int( (max(points[0], points[2]) - min(points[0], points[2])) / scale)
-            height =  int(width / 1.778 / scale) #max(points[1], points[3]) - min(points[1], points[3])
+            width = int( (max(points[0], points[2]) - min(points[0], points[2])) / cal_scale)
+            height =  int(width / 1.778 / cal_scale) #max(points[1], points[3]) - min(points[1], points[3])
             print('insert width / height ', width, height)
 
             if adjustEx == None : 
                 adjustEx = GroupAdjustEx()
-                adjustEx.set_world(world_pts, isflip, scale)    
+                adjustEx.set_world(world_pts, isflip, cal_scale)    
 
             bfirst = True
-            mv_center = adjustBase.adjust_pts_any('adjust_pts', cameras[0], scale, center, False)
+            mv_center = adjustBase.adjust_pts_any('adjust_pts', cameras[0], cal_scale, center, False)
             center.clear()
             center.append(mv_center[0][0][0])
             center.append(mv_center[0][0][1])
@@ -515,8 +524,8 @@ if 'replay_making' in simulation_mode:
     print(" ----- START LIVE REPLAY MAKING SIMULATION ----- ")
     if adjustEx == None : 
         adjustEx = GroupAdjustEx()
-        adjustEx.set_world(world_pts, isflip, scale, out_path)   
-    print('reverse... 1', adjustEx.scale)
+        adjustEx.set_world(world_pts, isflip, cal_scale, out_path)   
+
     adjustEx.set_adjustbase(adjustBase)
 
     while(True) :
@@ -535,8 +544,8 @@ if 'replay_making' in simulation_mode:
                 first = cv2.flip(first, -1)
 
             print(margin_pt)
-            if scale != 1.0 :
-                margin_pt = margin_pt / scale
+            if cal_scale != 1.0 :
+                margin_pt = margin_pt / cal_scale
 
 
             crns = np.float32(np.array([[[0, 0], [cameras[0].image_width, 0], [cameras[0].image_width, cameras[0].image_height], [0, cameras[0].image_height]]]))
@@ -560,11 +569,11 @@ if 'replay_making' in simulation_mode:
             running = True
             cen_x = 0
             cen_y = 0
-            zoom = 1
+            zoom = 2.0
             width = 1920
             height = 1080
 
-            def onMouse(event, x, y, flags, param) :
+            def mouse_callback(event, x, y, flags, param) :
                 if event == cv2.EVENT_LBUTTONDOWN:
                     points.clear()
                     cen_x = x
@@ -572,33 +581,29 @@ if 'replay_making' in simulation_mode:
 
                     cv2.circle(first, (x, y), 5, (255, 0, 255), -1)
                     print("click! ", cen_x, cen_y)
-                    cv2.rectangle(first, (cen_x - 960, cen_y - 540), (cen_x + 960, cen_y + 540), (255, 0, 0), 3)
-                    points.append((cen_x - 960)) 
-                    points.append((cen_y - 540))
-                    points.append((cen_x + 960))
-                    points.append((cen_y + 540))
+                    cv2.rectangle(first, (cen_x - int(960/zoom), cen_y - int(540 / zoom)), (cen_x + int(960/zoom), cen_y + int(540/ zoom)), (255, 0, 0), 3)
+                    points.append(cen_x) 
+                    points.append(cen_y)
 
-            def onMouseWheel(event, x, y ,flags, param) :
-                if event == cv2.EVENT_MOUSEWHEEL :
-                    if flags > 0 :
-                        zoom += 0.05
-                    elif flags < 0 : 
-                        zoom -= 0.05
-                    if zoom < 0 : 
-                        zoom = 0.1
-                    elif zoom > 2.0 :
-                        zoom = 2.0
+                # elif event == cv2.EVENT_MOUSEWHEEL :
+                #     if flags > 0 :
+                #         zoom += 0.05
+                #     elif flags < 0 : 
+                #         zoom -= 0.05
+                #     if zoom < 1 : 
+                #         zoom = 1
+                #     elif zoom > 2.5 :
+                #         zoom = 2.5
 
-                    print(x, y, flags, zoom)
-                    points.append((cen_x - (width * zoom / 2))) 
-                    points.append((cen_y - (height * zoom / 2)))
-                    points.append((cen_x + (width * zoom / 2)))
-                    points.append((cen_y + (height * zoom / 2)))
+                #     print(x, y, flags, zoom)
+                #     points.append((cen_x - (width * zoom / 2))) 
+                #     points.append((cen_y - (height * zoom / 2)))
+                #     points.append((cen_x + (width * zoom / 2)))
+                #     points.append((cen_y + (height * zoom / 2)))
 
 
             cv2.namedWindow("REPLAY-PD")            
-            cv2.setMouseCallback("REPLAY-PD", onMouse)
-            cv2.setMouseCallback("REPLAY-PD", onMouseWheel)
+            cv2.setMouseCallback("REPLAY-PD", mouse_callback)
 
             while(running) :
                 cv2.imshow("REPLAY-PD", first)
@@ -610,14 +615,14 @@ if 'replay_making' in simulation_mode:
 
             print('insert fhinish ', points)
             center_raw = []
-            center_raw.append((points[0] + points[2] ) / 2)
-            center_raw.append((points[1] + points[3] ) / 2)
+            center_raw.append(points[0])
+            center_raw.append(points[1])
 
             width = 1920
             height =  1080
 
             bfirst = True
-            mv_center = adjustBase.adjust_pts_any('replay_pts', cameras[0], scale, center_raw, False)
+            mv_center = adjustBase.adjust_pts_any('adjust_pts', cameras[0], 1, center_raw, False)
             center_adj = []
             center_adj.append(mv_center[0][0][0])
             center_adj.append(mv_center[0][0][1])
@@ -627,21 +632,19 @@ if 'replay_making' in simulation_mode:
 
             for camera in cameras :
                 print(camera.name)
-                adj, crop  = adjustEx.calculate_livepd_crop(adj_base, camera, center_adj, width, height, bfirst)                
-                adj2, replay  = adjustEx.calculate_improve_replay(base, camera, center_raw, width, height, zoom, bfirst)
-                file_name = os.path.join(out_path, camera.name + '_adj2.jpg')		
-                file_name2 = os.path.join(out_path, camera.name + '_crop.jpg')
-                file_name3 = os.path.join(out_path, camera.name + '_rep_adj.jpg')                                
-                file_name4 = os.path.join(out_path, camera.name + '_replay.jpg')                
+                adj = adjustEx.calculate_replay(adj_base, camera, center_adj, width, height, zoom, out_scale, bfirst) 
+                adj2, replay = adjustEx.calculate_improve_replay(base, camera, margin, center_raw, width, height, zoom, bfirst)
+
+                file_name = os.path.join(out_path, camera.name + '_rep.png')
+                file_name3 = os.path.join(out_path, camera.name + '_im_rep_adj.png')
+                file_name4 = os.path.join(out_path, camera.name + '_im_rep_cr.png')
                 cv2.imwrite(file_name, adj)
-                cv2.imwrite(file_name2, crop)
                 cv2.imwrite(file_name3, adj2)
                 cv2.imwrite(file_name4, replay)
                 
-                cv2.imshow("adj", adj)
-                cv2.imshow("crop", crop)
-                cv2.imshow("rep_adj", replay)                
-                cv2.imshow("replay", replay)
+                cv2.imshow("replay", adj)
+                cv2.imshow("im_replay-in", adj2)
+                cv2.imshow("im_replay-crop", replay)
                 cv2.waitKey()   
 
                 if bfirst == True :                    

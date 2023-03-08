@@ -483,10 +483,48 @@ class GroupAdjustEx(object):
 		return adjcrns__1ch
 
 
+	def calculate_replay(self, base, camera, center, width, height, zoom, out_scale, first):
+		print("-------- calculate_replay ", center)	
+
+		in_img = camera.adj_image.copy()
+		adj_pd_pts = np.float32(np.array([[[center[0], center[1]]]]))
+		print("adj center : ", adj_pd_pts)
+
+		if first == False : 
+			H, ret = cv2.findHomography(base, camera.adj_pts3d, cv2.RANSAC)
+			mv_pt = cv2.perspectiveTransform(adj_pd_pts, H)
+
+		else :
+			mv_pt = adj_pd_pts
+
+		mv_pt = mv_pt / out_scale
+		print("moved center : ", mv_pt)
+
+		# for i, pt in enumerate(mv_pt[0]) :
+		cv2.circle(in_img, (int(mv_pt[0][0][0]), int(mv_pt[0][0][1])), 7, (125, 125, 255), -1)
+
+		z_width =  int(width/ zoom)
+		z_height =  int(height / zoom)
+
+		left_x = int(mv_pt[0][0][0] - z_width / 2)
+		left_y = int(mv_pt[0][0][1] - z_height /2)
+		bottom_x = int(mv_pt[0][0][0] + z_width / 2) + 1
+		bottom_y = int(mv_pt[0][0][1] + z_height /2) + 1
+		print("z width , height ", z_width, z_height)
+		print("left xy, bottom xy  ", left_x, left_y, bottom_x, bottom_y)
+
+		crop = in_img[left_y: bottom_y, left_x: bottom_x]
+		print("replay crop shape : ", crop.shape[0], crop.shape[1])
+		filename = os.path.join(self.output_path, camera.name+ 'rep_o.png')
+		cv2.imwrite(filename, crop)
+		replay = cv2.resize(crop, (1920, 1080), cv2.INTER_CUBIC)
+
+		return replay
+	
 
 	
-	def calculate_improve_replay(self, base, camera, center, width, height, zoom, first):
-		print("-------- calculate replay making ")	
+	def calculate_improve_replay(self, base, camera, margin, center, width, height, zoom, first):
+		print("-------- calculate improve replay ")	
 
 		center_pts = np.float32(np.array([[[center[0], center[1]]]]))		
 		print("center : ", center_pts)
@@ -497,18 +535,29 @@ class GroupAdjustEx(object):
 
 		else :
 			mv_center = center_pts
-		print("moved center : ", mv_center)
 
-		in_img = self.adjust_base.adjust_image_re(self.output_path, camera,  self.scale)
-		adj_center = self.adjust_base.adjust_pts_any('replay_pts', camera, self.scale, mv_center, True)
+		# mv_center2 = mv_center * (3840 / margin[2])
+		print("moved center : ", mv_center)		
+
+		in_img = self.adjust_base.adjust_image_re(self.output_path, camera,  1.0, self.scale)
+		adj_center = self.adjust_base.adjust_pts_any('replay_pts', camera, 1.0, mv_center, True)
 
 		cv2.circle(in_img, (int(adj_center[0][0][0]), int(adj_center[0][0][1])), 7, (0, 0, 255), -1)
 
-		# left_x = int(adj_center[0][0][0] - width / 2)
-		# left_y = int(adj_center[0][0][1] - height /2)
-		# bottom_x = int(adj_center[0][0][0] + width / 2)
-		# bottom_y = int(adj_center[0][0][1] + height /2) 
+		z_width =  margin[2] / zoom 
+		z_height =  margin[3] / zoom 		
 
-		replay = cv2.resize(in_img, (1920, 1080), cv2.INTER_CUBIC)
+		left_x = int(adj_center[0][0][0] - z_width / 2)
+		left_y = int(adj_center[0][0][1] - z_height /2)
+		bottom_x = int(adj_center[0][0][0] + z_width / 2) + 1
+		bottom_y = int(adj_center[0][0][1] + z_height /2) + 1 
+
+		print("z width , height ", z_width, z_height, left_x, left_y, bottom_x, bottom_y)
+
+		crop = in_img[left_y: bottom_y, left_x: bottom_x]
+		print("improve replay crop shape : ", crop.shape[0], crop.shape[1])
+		filename = os.path.join(self.output_path, camera.name+ 'imrep_o.png')
+		cv2.imwrite(filename, crop)
+		replay = cv2.resize(crop, (1920, 1080), cv2.INTER_CUBIC)
 
 		return in_img, replay
