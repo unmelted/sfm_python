@@ -13,10 +13,11 @@ from camera_transform import *
 
 class GroupAdjust(object):
 
-    def __init__(self, cameras, world, root_path, config):
+    def __init__(self, cameras, world, root_path, flip, config):
         self.cameras = cameras
         self.world = world
         self.root_path = root_path
+        self.flip = flip
 
         self.x_fit = []
         self.y_fit = []
@@ -182,7 +183,8 @@ class GroupAdjust(object):
             avey = sumy / dsccnt
             targx = avex
             targy = avey
-        elif df.test_applyshift_type == 'center':
+        elif df.test_applyshift_type == 'center' or calibtype == 'center':
+            print("------------- shift center ! .")
             center = [self.cameras[0].view.image_width/2, self.cameras[0].view.image_height/2, 1]
             targx = center[0]
             targy = center[1]
@@ -233,7 +235,6 @@ class GroupAdjust(object):
         right.append(w-1)
         top.append(0)
         bottom.append(h-1)
-        flip = True
 
         for i in range(len(self.cameras)):
             if self.cameras[i].adjust_x == 0 and self.cameras[i].adjust_y == 0 and self.cameras[i].degree == -90.0:  # will be modifed condition
@@ -242,12 +243,12 @@ class GroupAdjust(object):
             edge = np.empty((4, 2), dtype=np.float64)
             edges = np.float32(np.array([[[0, 0], [w, 0], [w, h], [0, h]]]))
 
-            mat = self.get_affine_matrix(self.cameras[i], True, 1.0)
+            mat = self.get_affine_matrix(self.cameras[i], 'cal_margin', 1.0, 1.0)
             print(mat)
             dst = cv2.perspectiveTransform(edges, mat)
-            print(dst)
-            print(" --- Transform --- ", self.cameras[i].name)
-            if flip == False:
+
+            # print(" --- Transform --- ", self.cameras[i].name)
+            if self.flip == False:
                 edge[0] = dst[0][0]
                 edge[1] = dst[0][1]
                 edge[2] = dst[0][2]
@@ -322,28 +323,53 @@ class GroupAdjust(object):
         self.set_group_margin(left[0], top[0], right[0], bottom[0], margin_width, margin_height)
         return left[0], right[0], top[0], bottom[0], margin_width, margin_height
 
-    def get_affine_matrix(self, cam, margin_proc = False, scale = 1.0):
-        mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
-        print("flip : ", mat0)
-        mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x/scale, cam.rotate_y/scale)
-        print("rot : ", mat1)
-        mat2 = get_scale_matrix_center(cam.scale, cam.scale, cam.rotate_x/scale, cam.rotate_y/scale)
-        print("scale : ", mat2)
-        mat3 = get_translation_matrix(cam.adjust_x/scale, cam.adjust_y/scale)
-        print("mtran : ", mat3)
-        if margin_proc == False :
-            print("margin matrix ", self.left, self.top, self.width, self.height, cam.view.image_width, cam.view.image_height)
-            mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/scale, self.top/scale, self.width/scale, self.height/scale)
-            #mat5 = get_scale_matrix(1, 1)
-            mat5 = get_scale_matrix(1920/(self.width/scale), 1080/(self.height/scale))
+    def get_affine_matrix(self, cam, proc = 'adjust_image', cal_scale = 1.0, out_scale = 2.0):
+        print("get_affine_matrix margin_proc : ", cal_scale, cam.view.image_width, cam.view.image_height)
+        print(proc)
+        mat0 = None
+        out = None
+        if self.flip == True :
+            mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, True, True)
+        else :
+            mat0 = get_flip_matrix(cam.view.image_width, cam.view.image_height, False, False)
 
-        if margin_proc == False:
-            out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])
-        else:
+        # print("flip : ", mat0)
+        mat1 = get_rotation_matrix_with_center(cam.radian, cam.rotate_x/cal_scale, cam.rotate_y/cal_scale)
+        # print("rot : ", cam.radian, mat1)
+        mat2 = get_scale_matrix_center(cam.scale, cam.scale, cam.rotate_x/cal_scale, cam.rotate_y/cal_scale)
+        # print("scale : ", cam.scale, mat2)
+        mat3 = get_translation_matrix(cam.adjust_x/cal_scale, cam.adjust_y/cal_scale)
+        # print("mtran : ", mat3)
+        
+        if proc != 'cal_margin' :
+            w = 3840
+            h = 2160
+            if out_scale == 2.0:
+                w = 1920
+                h = 1080
+
+            # print("margin matrix ", self.left/scale, self.top/scale, self.width/scale, self.height/scale)
+            mat4 = get_margin_matrix(self.width, self.height, self.left, self.top, self.width, self.height)
+            mat5 = get_scale_matrix(w/self.width, h/self.height)
+
+        if proc == 'adjust_image':
+            out = np.linalg.multi_dot([mat5, mat4, mat2, mat1, mat3, mat0])
+
+        elif proc == 'adjust_pts' :
+            mat4 = get_margin_matrix(cam.view.image_width, cam.view.image_height, self.left/cal_scale, self.top/cal_scale, self.width/cal_scale, self.height/cal_scale)
+
+            out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) #must exclude flip matrix           
+
+        elif proc == 'cal_margin':
             out = np.linalg.multi_dot([mat2, mat1, mat3, mat0])
-            # out = np.linalg.multi_dot([mat2, mat3, mat1, mat0])
 
-        print(out[:2, :3])
+        elif proc == 'replay_image':
+            out = np.linalg.multi_dot([mat4, mat2, mat1, mat3, mat0])        
+
+        elif proc == 'replay_pts' :
+            out = np.linalg.multi_dot([mat4, mat2, mat1, mat3]) 
+
+        # print(out[:2, :3])
         return out
 
     def adjust_images(self, output_path, ext, job_id):
@@ -357,7 +383,7 @@ class GroupAdjust(object):
 
         for i in range(len(self.cameras)):
             file_name = os.path.join(output_path, get_viewname(self.cameras[i].view.name, ext) + '_adj.jpg')
-            mat = self.get_affine_matrix(self.cameras[i])
+            mat = self.get_affine_matrix(self.cameras[i], 'adjust_image')
             # l.get().w.debug("view name adjust : {} matrix {} ".format(self.cameras[i].view.name, mat))
 
             for j in range(self.cameras[i].pts_3d.shape[0]):
@@ -401,41 +427,88 @@ class GroupAdjust(object):
         print(cli)
         process = subprocess.Popen(cli, bufsize=1, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
 
-    def adjust_image(self, output_path, camera, scale=1.0):
-        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
-        mat = self.get_affine_matrix(camera, False, 2.0)
-        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (1920, 1080))
+    def adjust_image_re(self, output_path, camera, cal_scale=1.0, out_scale =2.0):
+        file_name = os.path.join(output_path, camera.name + '_rep_adj.jpg')
+        w = self.width
+        h = self.height
 
-        print("rectangle : ", int(self.left/scale), int(self.top/scale), int(self.right/scale), int(self.bottom/scale))
+        # if out_scale == 2.0:
+        #     w = 1920
+        #     h = 1080
+
+        mat = self.get_affine_matrix(camera, 'replay_image', cal_scale, out_scale)
+        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
+        cv2.imwrite(file_name, dst_img)
+
+        return dst_img
+
+    def adjust_image(self, output_path, camera, cal_scale=1.0, out_scale = 2.0):
+        w = 3840
+        h = 2160
+
+        if out_scale == 2.0:
+            w = 1920
+            h = 1080
+
+        print("adjust_image scale : ", out_scale)
+        file_name = os.path.join(output_path, camera.name + '_adj.jpg')
+        mat = self.get_affine_matrix(camera, 'adjust_image', cal_scale, out_scale)
+        dst_img = cv2.warpAffine(camera.image, mat[:2, :3], (w, h))
+        # dst_img = cv2.resize(dst_img , (w, h))
+
         cv2.imwrite(file_name, dst_img)
         return dst_img
 
-    def test_homography(self, initx, inity):
-        mx = 0
-        my = 0
-        output_path = os.path.join(self.root_path, 'htest')
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+    def adjust_pts(self, output_path ,cameras, scale=1.0) :
+        index = 0
+        check_detail = True
 
-        tf = CameraTransform()
+        for camera in cameras : 
+            print("--- cam : ", camera.name, camera.pts_3d)
+            file_name = os.path.join(output_path, camera.name + '_adj_pt.jpg')
+            mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
+            dst_img = camera.adj_image
+            pts_3d = np.array([camera.pts_3d]) / scale
+            # mv_pts = cv2.perspectiveTransform(pts_3d, mat)
+            mv_pts = cv2.transform(pts_3d, mat[:2, :3])
+            prev = None
+            print("adjust pts mat : ", mat)
+            camera.adj_pts3d = mv_pts
+            for i, pt in enumerate(mv_pts[0]) :
+                if check_detail :
+                    print(pt)
+                cv2.circle(dst_img, (int(pt[0]), int(pt[1])), 5, (0, 255,255), -1)
+                # if i > 0 :
+                    # cv2.line(dst_img (int(pt[0]), int(pt[1])), (int(prev[0]), int(prev[1])), (255, 0, 255), 3)
+                prev = pt
 
-        for i in range(1, len(self.cameras)):
-            filename = os.path.join(
-                output_path, self.cameras[i].view.name[:-4] + '_hm.jpg')
-            print(filename)
+            # cv2.line(dst_img, (int(mv_pts[0][0][0]), int(mv_pts[0][0][1])), (int(prev[0]), int(prev[1])), (255, 0 , 255), 3)
+            # cv2.imwrite(file_name, dst_img)
+            # if check_detail :
+            #     cv2.imshow("check pts", dst_img)
+            #     cv2.waitKey()
 
-            if i == 1:
-                mx, my = tf.homography_fromF(
-                    self.cameras[0], self.cameras[1], initx, inity)
-                print("index == 1 ", mx, my)
-                cv2.circle(self.cameras[0].view.image, (int(initx), int(inity)), 10, (255, 255, 255), -1)
-                cv2.circle(self.cameras[1].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
-                filename2 = os.path.join(output_path, self.cameras[0].view.name[:-4] + '_hm.jpg')
-                cv2.imwrite(filename2, self.cameras[0].view.image)
-                cv2.imwrite(filename, self.cameras[1].view.image)
+    def adjust_pts_any(self, mode, camera, scale, points, many) :
+        print("adjust_pts_any .. ", many, points)
 
-            else:
-                return
-                mx, my = tf.homography_fromF(self.cameras[i-1], self.cameras[i], mx, my)
-                cv2.circle(self.cameras[i].view.image, (int(mx), int(my)), 10, (255, 255, 255), -1)
-                cv2.imwrite(filename, self.cameras[i].view.image)
+        mat = None
+        n_pts = None
+
+        if mode == 'adjust_pts' :
+            mat = self.get_affine_matrix(camera, 'adjust_pts', scale)
+
+        elif mode == 'replay_pts' :
+            mat = self.get_affine_matrix(camera, 'replay_pts', scale)
+
+        if many == True :
+            n_pts = np.float32(points)
+        else : 
+            n_pts = np.float32(np.array([[[points[0], points[1]]]]))
+
+
+        print(n_pts)
+        print(mat)
+        mv_pts = cv2.perspectiveTransform(n_pts, mat)
+        print("adjust_pts_any \n", mv_pts)
+
+        return mv_pts

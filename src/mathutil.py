@@ -516,3 +516,23 @@ def get_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_he
     #print("margin matrix ")
     #print(out)
     return out
+
+def get_reverse_margin_matrix(width, height, margin_x, margin_y, margin_width, margin_height) :
+    out = np.eye(3, dtype=np.float64)
+    print(margin_x, margin_y, margin_width, margin_height)
+
+    cx = margin_x + margin_width / 2.0
+    cy = margin_y + margin_height / 2.0
+    scalex = width / margin_width
+    scaley = height / margin_height
+    print(1/scalex, 1/scaley)
+
+    mtran = get_translation_matrix(cx, cy)
+    msc = get_scale_matrix(1/scalex, 1/scaley)
+    mtran2 = get_translation_matrix(-width/ 2.0, -height/ 2.0)
+
+    out = np.linalg.multi_dot([mtran, msc, mtran2])
+
+    #print("margin matrix ")
+    #print(out)
+    return out
