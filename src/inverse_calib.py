@@ -233,8 +233,10 @@ def calibration(cameras, world, flip) :
 # simulation_mode = ['calibration', 'common_area', 'livepd_crop']
 # simulation_mode = ['calibration']
 simulation_mode = ['calibration', 'replay_making']
+#simulation_mode = ['optimize_center']
 
-#prepare_video_job(from_path, to_path)
+
+'''
 from_path = '../simulation/Cal3D_2023_0111'
 to_path = '../simulation/Cal3D_2023_0111'
 out_path = '../simulation/Cal3D_2023_0111/output/'
@@ -243,6 +245,7 @@ img_ext = '_0.jpg'
 world_pts = [798, 189, 799, 609, 0, 609, 0, 189] 
 isflip = False
 has_= True
+'''
 '''
 from_path = '../simulation/Cal3D_085658'
 to_path = '../simulation/Cal3D_085658'
@@ -269,20 +272,31 @@ to_path = '../simulation/Cal3D_131840'
 out_path = '../simulation/Cal3D_131840/output/'
 ext = '.jpeg'
 img_ext = '_2.jpeg'
-world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840 #soccer in calib
+world_pts = [771, 461, 659, 448, 659, 349, 771, 337] 
 isflip = False
 has_ = True
 '''
 '''
-from_path = '../simulation/Cal3D_131840'
-to_path = '../simulation/Cal3D_131840'
-out_path = '../simulation/Cal3D_131840/output/'
-ext = '.jpeg'
-img_ext = '_2.jpeg'
-world_pts = [771, 461, 659, 448, 659, 349, 771, 337] #Cal3D_131840 #figure
+from_path = '../simulation/Cal2DP_Preset0_220824_144739'
+to_path = '../simulation/Cal2DP_Preset0_220824_144739'
+out_path = '../simulation/Cal2DP_Preset0_220824_144739/output/'
+ext = '.jpg'
+img_ext = '.jpg'
+world_pts = [309, 763, 328, 601, 472, 601, 490, 763] 
 isflip = False
 has_ = True
 '''
+
+from_path = '../simulation/error_2D'
+to_path = '../simulation/error_2D'
+out_path = '../simulation/error_2D/output/'
+ext = '.jpg'
+img_ext = '.jpg'
+world_pts = [309, 763, 328, 601, 472, 601, 490, 763]  # dummy
+isflip = False
+has_ = True
+
+# prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
     os.makedirs(out_path)
@@ -649,4 +663,135 @@ if 'replay_making' in simulation_mode:
 
                 if bfirst == True :                    
                     bfirst = False
+
+
+if 'optimize_center' in simulation_mode:
+    print(" ------- optimize center --------")
+    default_offset_x = 1200 #1920
+    default_offset_y = 1200 #1080
+
+    def calculate_h_set() :
+        Hset = []
+        bfirst = True
+        base = cameras[0].pts_3d
+
+        for camera in cameras : 
+            H, ret = cv2.findHomography(base, camera.pts_3d, cv2.RANSAC)
+            Hset.append(H)
+
+        return Hset
+
+    def calculate_cost_along_center(cx, cy, visit_map, cost_map, Hset) :
+        step = 10 #px
+        breadth = 10        
+        dir_index = [ x for x in range(8)]    
+        dir_x = [-1, 0 , 1,  1, 1, 0 , -1, -1] #clockwise from left , top
+        dir_y = [-1, -1, -1, 0, 1, 1,  1,  0]
+
+        best_x = cx
+        best_y = cy
+        costs = []
+        found = False
+
+        for i in range(0 ,8) :
+
+            fx = dir_x[i] + cx - breadth
+            fy = dir_y[i] + cy - breadth
+            print(i, fx, fy)
+
+            if fx < 0 or fy < 0 or fx > breadth* 2 or fy > breadth * 2 :
+                costs.append(-1)
+                continue
+
+            if visit_map[fx][fy] == 0 :
+                cost = 0
+                sx = ( fx  * step) + default_offset_x
+                sy = ( fy  * step) + default_offset_y
+                print("cal start sx {} sy {}".format(sx, sy))
+                center = np.float32(np.array([[[sx, sy]]]))
+
+                for j in range(len(Hset)) :
+                    mv_center = cv2.perspectiveTransform(center, Hset[j])
+                    print(mv_center)
+                    cost += abs(1920 - mv_center[0][0][0])
+                    cost += abs(1080 - mv_center[0][0][1])
+
+                    cost_map[fx][fy]= cost
+                    visit_map[fx][fy] = 1
+
+                found = True
+                costs.append(cost)
+                print("in cost cost {} cx {} cy {} ".format(cost, sx, sy))
+            else :
+                costs.append(cost_map[fx][fy])
+
+        minimum = 1000000000000
+        best = 0
+
+        if found == True : 
+            for i in range(0, 8) :
+                if costs[i] < minimum and costs[i] > 0:
+                    best = i
+                    minimum = costs[i]
+                    print("cost mini : ", minimum)                    
+        
+       
+        best_x = dir_x[best] + cx
+        best_y = dir_y[best] + cy
+        print("return best ", best_x, best_y)
+
+        return minimum, best_x, best_y, found
+
+    # ------------------- main process
+    breadth = 10
+    step = 10
+    visit_map = np.zeros((breadth * 2 + 1, breadth * 2 + 1))
+    cost_map = np.zeros((breadth * 2 + 1, breadth * 2 + 1))
+    init_xid = breadth
+    init_yid = breadth
+    init_x = breadth
+    init_y = breadth
+
+    print(visit_map)
+    hset = calculate_h_set()
+
+    optimum_cost = 1000000000000
+    optimum_x = 0
+    optimum_y = 0
+
+    c, x, y, found = calculate_cost_along_center(init_x, init_y, visit_map, cost_map, hset)
+    print("first call return : ", c, x , y)
+
+    if c < optimum_cost :
+        optimum_cost = c
+        optimum_x = x 
+        optimum_y = y
+
+        index = 1
+        while(True) : 
+            c, x, y, found = calculate_cost_along_center(optimum_x, optimum_y, visit_map, cost_map, hset)
+            print("{} call return : c {} x {} y {} ".format(index, c, x , y))
+
+            if c < optimum_cost and c >= 0 :
+                optimum_cost = c
+                optimum_x = x 
+                optimum_y = y
+                index += 1
+
+                # if index == 10 :
+                #     break;
+            elif c >= optimum_cost : 
+                print("cost over ... ")
+                print(optimum_cost, optimum_x, optimum_y)
+                x = ( optimum_x - breadth ) * step + default_offset_x
+                y = ( optimum_y - breadth ) * step + default_offset_y
+                print(x, y)
+                break
+            elif found == False :
+                print("found false ...")
+                break
+
+    elif found == False :
+        print("terminated at first call")
+    
 
