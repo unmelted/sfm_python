@@ -78,7 +78,7 @@ def get_pts_info(from_path, camera, group_limit):
         from_data = json.load(json_file)
 
     for j in range(len(from_data["points"])):
-        # print("check ..", from_data["points"][j]["dsc_id"], camera.name)
+#        print("check ..", from_data["points"][j]["dsc_id"], camera.name)
         if from_data["points"][j]["dsc_id"] == camera.name:
             if from_data["points"][j]["Group"] != group_limit:
                return False
@@ -101,6 +101,11 @@ def get_pts_info(from_path, camera, group_limit):
             # camera.pts_2d[1][1] = from_data['points'][j]['pts_2d']['MiddlePosY']
             camera.pts_2d[1][0] = from_data['points'][j]['pts_2d']['LowerPosX']
             camera.pts_2d[1][1] = from_data['points'][j]['pts_2d']['LowerPosY']
+
+            if camera.rotate_x == -1 and  camera.rotate_y == -1 :
+                camera.rotate_x = from_data['points'][j]['pts_2d']['LowerPosX']
+                camera.rotate_y = from_data['points'][j]['pts_2d']['LowerPosY']
+
             camera.pts_extra = camera.pts_2d
 
             print("3d : ", camera.pts_3d, camera.rotate_x, camera.rotate_y)
@@ -236,6 +241,15 @@ simulation_mode = ['calibration', 'replay_making']
 #simulation_mode = ['optimize_center']
 
 
+from_path = '../simulation/Cal2DP_230331'
+to_path = '../simulation/Cal2DP_230331'
+out_path = '../simulation/Cal2DP_230331/output/'
+ext = '.jpg'
+img_ext = '.jpg'
+world_pts = [771, 460, 661, 534, 661, 263, 771, 338] 
+isflip = False
+has_inlist= False
+
 '''
 from_path = '../simulation/Cal3D_2023_0111'
 to_path = '../simulation/Cal3D_2023_0111'
@@ -286,7 +300,7 @@ world_pts = [309, 763, 328, 601, 472, 601, 490, 763]
 isflip = False
 has_ = True
 '''
-
+'''
 from_path = '../simulation/error_2D'
 to_path = '../simulation/error_2D'
 out_path = '../simulation/error_2D/output/'
@@ -295,19 +309,20 @@ img_ext = '.jpg'
 world_pts = [309, 763, 328, 601, 472, 601, 490, 763]  # dummy
 isflip = False
 has_ = True
+'''
 
 # prepare_video_job(from_path, to_path)
 
 if not os.path.exists(out_path):
     os.makedirs(out_path)
 
-lists = get_camera_list(from_path, has_)
+lists = get_camera_list(from_path, has_inlist)
 files = sorted(glob.glob(os.path.join(to_path, '*' + ext)))
 
 cal_scale = 1.0
 out_scale = 2.0
-group_limit = "Group1"
-cal_type = '3D'
+group_limit = "Group2"
+cal_type = '2D'
 
 
 print(world_pts)
@@ -583,7 +598,7 @@ if 'replay_making' in simulation_mode:
             running = True
             cen_x = 0
             cen_y = 0
-            zoom = 2.0
+            zoom = 1.3
             width = 1920
             height = 1080
 

@@ -9,7 +9,7 @@ from job_manager import JobManager
 from db_layer import NewPool, DBLayer
 
 app = Flask(__name__)
-api = Api(app, version='0.1', title='AUTO CALIB.',
+api = Api(app, version='0.1', title='EXODUS',
           description='exodus from slavery')
 app.config.SWAGGER_UI_DOC_EXPANSION = 'full'
 # cmd_que = Queue()
