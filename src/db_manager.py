@@ -80,7 +80,7 @@ class DbManager(BaseQuery):
                                    cls.sql_list['query_job_id'])
 
         if rows == None:
-            return defn .base_index
+            return defn.base_index
         if len(rows) == 0:
             return defn.base_index
 
